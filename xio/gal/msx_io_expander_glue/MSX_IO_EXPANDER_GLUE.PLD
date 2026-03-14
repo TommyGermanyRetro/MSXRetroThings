@@ -1,0 +1,60 @@
+Name      MSX_IO_EXPANDER_GLUE;
+Partno    xxx;
+Date      01/09/23;
+Revision  01;
+Designer  Wiesner;
+Company   Wiesnertec;
+Assembly  None;
+Location  None;
+Device    g22V10;
+
+/**  Inputs  **/
+
+PIN 1  = INTEN;		/* INT-FF status  			*/           
+PIN 2  = TAKT;		/* System clock    			*/
+PIN 3  = 0x4x;		/* Addr 0x4x called 			*/
+PIN 4  = RC2014;		/* RC2014 called     		*/
+PIN 5  = IORQ;         	/* /IORQ Z80         		*/
+PIN 6  = IOEN;         	/* Switched IO status		*/
+PIN 7  = WR;           	/* /WR Z80				*/
+PIN 8  = RD;           	/* /RD Z80				*/
+PIN 9  = SLTSL;		/* /SLTSL MSX				*/
+PIN 10 = CS1;			/* /CS1 MSX				*/
+PIN 11 = INTZ80;		/* /INT Z80 RC2014 bus		*/
+PIN 13 = INTPIC;		/* INT PIC 82C59A			*/
+PIN 15 = RST;	        	/* /RESET MSX				*/
+PIN 16 = GETINT;		/* /GETINT addr 0x41    		*/
+
+
+/**  Outputs  **/
+
+PIN 14 = INT;          	/* /INT MSX				*/
+PIN 18 = DIR;          	/* /BUSDIR MSX			*/
+PIN 19 = RCDIR;		/* /DIR RC2014 bus addr 0x47	*/
+PIN 21 = RCWR;          	/* /WR RC2014 bus			*/
+PIN 22 = RCIORQ;		/* /IORQ RC2014 bus			*/
+PIN 23 = RCTAKT;		/* System clock RC2104 bus		*/
+PIN 17 = ENAINT;		/* Set INT-FF and read INT status	*/
+PIN 20 = DISINT;		/* Reset INT-FF			*/
+
+
+/* INT control - OR-Gatter for Z80 (IM2-Mode) and PIC sources */
+/* INT-FF set/reset as program control option */
+!INT = (INTPIC # !INTZ80) & INTEN;
+!ENAINT = !RD & !GETINT;
+!DISINT = !RST # (!WR & !GETINT);
+
+/* DIR control BUSDIR signal */
+!DIR = (!IORQ & !IOEN & 0x4x & !RD) # (!SLTSL & !CS1 & !RD);
+
+/* WR control RC2014 bus */
+!RCWR = RC2014 & !WR;
+
+/* DIR control RC2014 bus */
+!RCDIR = RC2014 & !RD; 
+
+/* IORQ control RC2014 bus */
+!RCIORQ = RC2014;
+
+/* CLK control RC2014 bus */
+RCTAKT = TAKT;

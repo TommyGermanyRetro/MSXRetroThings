@@ -1,0 +1,99 @@
+%SIGNAL
+PIN  15 =  0x40_RD 
+PIN  14 =  0x40_WR 
+PIN  16 =  0x4x 
+PIN   9 =  A0 
+PIN   8 =  A1 
+PIN   7 =  A2 
+PIN   6 =  A3 
+PIN   5 =  A4 
+PIN   4 =  A5 
+PIN  22 =  ALE 
+PIN   3 =  Ax 
+PIN  23 =  GETINT 
+PIN  21 =  INTA 
+PIN   1 =  IOEN 
+PIN  10 =  IORQ 
+PIN  11 =  M1 
+PIN  17 =  M1b 
+PIN  20 =  PIC 
+PIN  19 =  RC2014 
+PIN  13 =  RD 
+PIN  18 =  RDb 
+PIN   2 =  WR 
+%END
+
+%FIELD
+%END
+
+%EQUATION
+0x40_RD =>
+    !A0 & !A1 & !A2 & !A3 & !A4 & !A5 & !Ax & !IOEN & !IORQ & M1 & !RD
+
+0x40_WR =>
+    !A0 & !A1 & !A2 & !A3 & !A4 & !A5 & !Ax & !IORQ & M1 & !WR
+
+0x4x =>
+    !A4 & !A5 & !Ax & !IOEN & !IORQ & M1
+
+ALE =>
+    !A0 & A1 & A2 & !A3 & !A4 & !A5 & !Ax & !IOEN & !IORQ & M1 & !WR
+
+!GETINT =>
+    A0 & !A1 & !A2 & !A3 & !A4 & !A5 & !Ax & !IOEN & !IORQ & M1
+
+IM2RD =>
+    A0 & !A1 & A2 & !A3 & !A4 & !A5 & !Ax & !IOEN & !IORQ & M1 & !RD
+
+!INTA =>
+    !A0 & !A1 & A2 & !A3 & !A4 & !A5 & !Ax & !IOEN & !IORQ & M1 & !RD
+
+IO =>
+    A0 & A1 & A2 & !A3 & !A4 & !A5 & !Ax & !IOEN & !IORQ & M1
+
+!M1b =>
+    !M1 & !RD
+  # A0 & !A1 & A2 & !A3 & !A4 & !A5 & !Ax & !IOEN & !IORQ & !RD
+
+!PIC =>
+    A1 & !A2 & !A3 & !A4 & !A5 & !Ax & !IOEN & !IORQ & M1
+
+RC2014 =>
+    A0 & A1 & A2 & !A3 & !A4 & !A5 & !Ax & !IOEN & !IORQ & M1
+  # A0 & A2 & !A3 & !A4 & !A5 & !Ax & !IOEN & !IORQ & M1 & !RD
+
+!RDb =>
+    !M1 & !RD
+  # A0 & A1 & A2 & !A3 & !A4 & !A5 & !Ax & !IOEN & !IORQ & !RD
+
+0x40_RD.oe  =>
+    1 
+
+0x40_WR.oe  =>
+    1 
+
+0x4x.oe  =>
+    1 
+
+ALE.oe  =>
+    1 
+
+GETINT.oe  =>
+    1 
+
+INTA.oe  =>
+    1 
+
+M1b.oe  =>
+    1 
+
+PIC.oe  =>
+    1 
+
+RC2014.oe  =>
+    1 
+
+RDb.oe  =>
+    1 
+
+%END

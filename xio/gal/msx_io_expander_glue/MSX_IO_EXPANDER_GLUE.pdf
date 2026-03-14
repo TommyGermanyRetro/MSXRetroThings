@@ -1,0 +1,219 @@
+{COMPONENT D:\ONEDRIVE\EISENBAHN\20 - ELEKTRONIK\01 - EAGLE\73 - MSX - IO-EXPANDER\FPGA\MSX_IO_EXPANDER_GLUE\MSX_IO_EXPANDER_GLUE.SYM
+
+ {ENVIRONMENT
+  {PDIFvrev 3.00}
+  {Program "CUPL(WM) Version 5.0a"}
+  {DBtype "Schematic"}
+  {DBvrev 1.01}
+  {DBtime "Thu Jan 15 22:55:33 2026 "}
+  {DBunit "MIL"}
+  {DBgrid 10}
+  {Lyrstr "WIRES" 1 "BUS" 1 "GATE" 2 "IEEE" 2 "PINFUN" 3 "PINNUM" 1 
+          "PINNAM" 6 "PINCON" 4 "REFDES" 2 "ATTR" 6 "SDOT" 1 
+          "DEVICE" 5 "OUTLIN" 5 "ATTR2" 6 "NOTES" 6 "NETNAM" 4 
+          "CMPNAM" 5 "BORDER" 5}
+ }
+
+ {USER
+  {VIEW
+   {Mode SYMB}
+   {Nlst OPEN}
+   {Vw 0 0 2}
+   {Lv 12 2 2 2 0 0 2 2 2 2 0 0 2 1 2 0 0 0 0}
+   {Gs 10 10}
+  }
+ }
+
+ {DISPLAY
+  [Ly "PINNUM"]
+  [Ls "SOLID"][Wd 0]
+  [Ts 15][Tj "LC"][Tr 0][Tm "N"]
+ }
+
+ {SYMBOL
+  {PIN_DEF
+   [Ly "PINCON"]
+   {P INTEN {Pt "INPUT"}{Lq 0}{Ploc 100 300}}
+   {P TAKT {Pt "INPUT"}{Lq 0}{Ploc 100 260}}
+   {P 0X4X {Pt "INPUT"}{Lq 0}{Ploc 100 240}}
+   {P RC2014 {Pt "INPUT"}{Lq 0}{Ploc 100 220}}
+   {P IORQ {Pt "INPUT"}{Lq 0}{Ploc 100 200}}
+   {P IOEN {Pt "INPUT"}{Lq 0}{Ploc 100 180}}
+   {P WR {Pt "INPUT"}{Lq 0}{Ploc 100 160}}
+   {P RD {Pt "INPUT"}{Lq 0}{Ploc 100 140}}
+   {P SLTSL {Pt "INPUT"}{Lq 0}{Ploc 100 120}}
+   {P CS1 {Pt "INPUT"}{Lq 0}{Ploc 100 100}}
+   {P INTZ80 {Pt "INPUT"}{Lq 0}{Ploc 100 80}}
+   {P INTPIC {Pt "INPUT"}{Lq 0}{Ploc 100 60}}
+   {P RST {Pt "INPUT"}{Lq 0}{Ploc 100 40}}
+   {P GETINT {Pt "INPUT"}{Lq 0}{Ploc 100 20}}
+   {P INT {Pt "I/O"}{Lq 0}{Ploc 320 20}}
+   {P ENAINT {Pt "I/O"}{Lq 0}{Ploc 320 40}}
+   {P DIR {Pt "I/O"}{Lq 0}{Ploc 320 60}}
+   {P RCDIR {Pt "I/O"}{Lq 0}{Ploc 320 80}}
+   {P DISINT {Pt "I/O"}{Lq 0}{Ploc 320 100}}
+   {P RCWR {Pt "I/O"}{Lq 0}{Ploc 320 120}}
+   {P RCIORQ {Pt "I/O"}{Lq 0}{Ploc 320 140}}
+   {P RCTAKT {Pt "I/O"}{Lq 0}{Ploc 320 160}}
+  }
+
+  {PKG
+   [Ly "REFDES"]
+   [Ts 25][Tj "CB"][Tr 0][Tm "N"]
+   {Rdl 210 330}
+
+   [Ly "PINNUM"]
+   [Ts 15][Tj "RC"]
+   {Pnl 120 310}
+   [Ts 15][Tj "RC"]
+   {Pnl 120 270}
+   {Pnl 120 250}
+   {Pnl 120 230}
+   {Pnl 120 210}
+   {Pnl 120 190}
+   {Pnl 120 170}
+   {Pnl 120 150}
+   {Pnl 120 130}
+   {Pnl 120 110}
+   {Pnl 120 90}
+   {Pnl 120 70}
+   {Pnl 120 50}
+   {Pnl 120 30}
+   [Ts 15][Tj "LC"]
+   {Pnl 300 30}
+   {Pnl 300 50}
+   {Pnl 300 70}
+   {Pnl 300 90}
+   {Pnl 300 110}
+   {Pnl 300 130}
+   {Pnl 300 150}
+   {Pnl 300 170}
+
+   {Sd A 1 2 3 4 5 6 7 8 9 10 11 13 15 16 14 17 18 19 20 21 22 23}
+  }
+
+  {PIC
+   [Ly "GATE"]
+   [Ts 15][Tj "LC"][Tr 0][Tm "N"]
+   {R 130 320 290 0}
+   {L 130 300 100 300}
+   {L 130 310 140 300 130 290}
+   {L 130 260 100 260}
+   {L 130 240 100 240}
+   {L 130 220 100 220}
+   {L 130 200 100 200}
+   {L 130 180 100 180}
+   {L 130 160 100 160}
+   {L 130 140 100 140}
+   {L 130 120 100 120}
+   {L 130 100 100 100}
+   {L 130 80 100 80}
+   {L 130 60 100 60}
+   {L 130 40 100 40}
+   {L 130 20 100 20}
+   {L 290 20 320 20}
+   {L 290 40 320 40}
+   {L 290 60 320 60}
+   {L 290 80 320 80}
+   {L 290 100 320 100}
+   {L 290 120 320 120}
+   {L 290 140 320 140}
+   {L 290 160 320 160}
+   [Ly "PINNAM"]
+   [Tj "LC"]
+   {T "INTEN" 140 300}
+   {T "TAKT" 140 260}
+   {T "0X4X" 140 240}
+   {T "RC2014" 140 220}
+   {T "IORQ" 140 200}
+   {T "IOEN" 140 180}
+   {T "WR" 140 160}
+   {T "RD" 140 140}
+   {T "SLTSL" 140 120}
+   {T "CS1" 140 100}
+   {T "INTZ80" 140 80}
+   {T "INTPIC" 140 60}
+   {T "RST" 140 40}
+   {T "GETINT" 140 20}
+   [Tj "RC"]
+   {T "INT" 280 20}
+   {T "ENAINT" 280 40}
+   {T "DIR" 280 60}
+   {T "RCDIR" 280 80}
+   {T "DISINT" 280 100}
+   {T "RCWR" 280 120}
+   {T "RCIORQ" 280 140}
+   {T "RCTAKT" 280 160}
+   [Ly "DEVICE"]
+   [Tj "CT"]
+   {T "G22V10" 210 -10}
+  }
+
+  {ATR
+   {IN
+    {Org 100 20}
+    {Ty 255}
+   }
+   {EX
+    [Ly "ATTR2"]
+    [Ts 12][Tj "CT"][Tr 0][Tm "N"]
+    {At PLD D:\ONEDRIVE\EISENBAHN\20 - ELEKTRONIK\01 - EAGLE\73 - MSX - IO-EXPANDER\FPGA\MSX_IO_EXPANDER_GLUE\MSX_IO_EXPANDER_GLUE 210 320}
+   }
+  }
+ }
+
+ {DETAIL
+  {ANNOTATE
+  }
+
+  {NET_DEF
+   {N INTEN
+   }
+   {N TAKT
+   }
+   {N 0X4X
+   }
+   {N RC2014
+   }
+   {N IORQ
+   }
+   {N IOEN
+   }
+   {N WR
+   }
+   {N RD
+   }
+   {N SLTSL
+   }
+   {N CS1
+   }
+   {N INTZ80
+   }
+   {N INTPIC
+   }
+   {N RST
+   }
+   {N GETINT
+   }
+   {N INT
+   }
+   {N ENAINT
+   }
+   {N DIR
+   }
+   {N RCDIR
+   }
+   {N DISINT
+   }
+   {N RCWR
+   }
+   {N RCIORQ
+   }
+   {N RCTAKT
+   }
+  }
+
+  {SUBCOMP
+  }
+ }
+}

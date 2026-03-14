@@ -1,0 +1,140 @@
+
+*******************************************************************************
+                         MSX_IO_EXPANDER_ADDR_DECODER
+*******************************************************************************
+
+CUPL(WM)        5.0a Serial# 60008009
+Device          g22v10  Library DLIB-h-40-1
+Created         Fri Jan 16 00:31:57 2026
+Name            MSX_IO_EXPANDER_ADDR_DECODER
+Partno          xxx
+Revision        01
+Date            01/09/23
+Designer        Wiesner
+Company         Wiesnertec
+Assembly        None
+Location        None
+
+===============================================================================
+                            Expanded Product Terms
+===============================================================================
+
+0x40_RD =>
+    !A0 & !A1 & !A2 & !A3 & !A4 & !A5 & !Ax & !IOEN & !IORQ & M1 & !RD
+
+0x40_WR =>
+    !A0 & !A1 & !A2 & !A3 & !A4 & !A5 & !Ax & !IORQ & M1 & !WR
+
+0x4x =>
+    !A4 & !A5 & !Ax & !IOEN & !IORQ & M1
+
+ALE =>
+    !A0 & A1 & A2 & !A3 & !A4 & !A5 & !Ax & !IOEN & !IORQ & M1 & !WR
+
+!GETINT =>
+    A0 & !A1 & !A2 & !A3 & !A4 & !A5 & !Ax & !IOEN & !IORQ & M1
+
+IM2RD =>
+    A0 & !A1 & A2 & !A3 & !A4 & !A5 & !Ax & !IOEN & !IORQ & M1 & !RD
+
+!INTA =>
+    !A0 & !A1 & A2 & !A3 & !A4 & !A5 & !Ax & !IOEN & !IORQ & M1 & !RD
+
+IO =>
+    A0 & A1 & A2 & !A3 & !A4 & !A5 & !Ax & !IOEN & !IORQ & M1
+
+!M1b =>
+    !M1 & !RD
+  # A0 & !A1 & A2 & !A3 & !A4 & !A5 & !Ax & !IOEN & !IORQ & !RD
+
+!PIC =>
+    A1 & !A2 & !A3 & !A4 & !A5 & !Ax & !IOEN & !IORQ & M1
+
+RC2014 =>
+    A0 & A1 & A2 & !A3 & !A4 & !A5 & !Ax & !IOEN & !IORQ & M1
+  # A0 & A2 & !A3 & !A4 & !A5 & !Ax & !IOEN & !IORQ & M1 & !RD
+
+!RDb =>
+    !M1 & !RD
+  # A0 & A1 & A2 & !A3 & !A4 & !A5 & !Ax & !IOEN & !IORQ & !RD
+
+0x40_RD.oe  =>
+    1 
+
+0x40_WR.oe  =>
+    1 
+
+0x4x.oe  =>
+    1 
+
+ALE.oe  =>
+    1 
+
+GETINT.oe  =>
+    1 
+
+INTA.oe  =>
+    1 
+
+M1b.oe  =>
+    1 
+
+PIC.oe  =>
+    1 
+
+RC2014.oe  =>
+    1 
+
+RDb.oe  =>
+    1 
+
+
+===============================================================================
+                                 Symbol Table
+===============================================================================
+
+Pin Variable                                    Pterms   Max     Min    
+Pol   Name              Ext     Pin     Type     Used   Pterms  Level   
+--- --------            ---     ---     ----    ------  ------  -----   
+
+    0x40_RD                     15       V        1       10      2     
+    0x40_WR                     14       V        1       8       2     
+    0x4x                        16       V        1       12      2     
+    A0                          9        V        -       -       -     
+    A1                          8        V        -       -       -     
+    A2                          7        V        -       -       -     
+    A3                          6        V        -       -       -     
+    A4                          5        V        -       -       -     
+    A5                          4        V        -       -       -     
+    ALE                         22       V        1       10      2     
+    Ax                          3        V        -       -       -     
+    GETINT                      23       V        1       8       2     
+    IM2RD                       0        I        1       -       -     
+    INTA                        21       V        1       12      2     
+    IO                          0        I        1       -       -     
+    IOEN                        1        V        -       -       -     
+    IORQ                        10       V        -       -       -     
+    M1                          11       V        -       -       -     
+    M1b                         17       V        2       14      2     
+    PIC                         20       V        1       14      2     
+    RC2014                      19       V        2       16      2     
+    RD                          13       V        -       -       -     
+    RDb                         18       V        2       16      2     
+    WR                          2        V        -       -       -     
+    0x40_RD             oe      15       D        1       1       0     
+    0x40_WR             oe      14       D        1       1       0     
+    0x4x                oe      16       D        1       1       0     
+    ALE                 oe      22       D        1       1       0     
+    GETINT              oe      23       D        1       1       0     
+    INTA                oe      21       D        1       1       0     
+    M1b                 oe      17       D        1       1       0     
+    PIC                 oe      20       D        1       1       0     
+    RC2014              oe      19       D        1       1       0     
+    RDb                 oe      18       D        1       1       0     
+
+
+LEGEND    D : default variable         F : field      G : group
+          I : intermediate variable    N : node       M : extended node
+          U : undefined                V : variable   X : extended variable
+          T : function
+

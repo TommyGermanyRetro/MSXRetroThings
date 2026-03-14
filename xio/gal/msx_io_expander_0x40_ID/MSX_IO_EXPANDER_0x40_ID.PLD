@@ -1,0 +1,54 @@
+Name      MSX_IO_EXPANDER_0X40_ID;
+Partno    xxx;
+Date      01/09/23;
+Revision  01;
+Designer  Wiesner;
+Company   Wiesnertec;
+Assembly  None;
+Location  None;
+Device    g22V10;
+
+/**  Inputs  **/
+
+PIN 1           = clk;	     /* clk = 0x40 & !WR */
+PIN 2           = D7;	     /*                  */
+PIN 3           = D6;           /*                  */
+PIN 4           = D5;           /*                  */
+PIN 5           = D4;           /*                  */
+PIN 6           = D3;           /*                  */
+PIN 7           = D2;           /*                  */
+PIN 8           = D1;           /*                  */
+PIN 9           = D0;           /*                  */
+PIN 10          = oe;           /* oe = 0x40 & !RD  */
+PIN 11          = RES;          /* /RESET-Ltg CPU   */
+
+/**  Outputs  **/
+
+PIN 23          = OD7;          /*                  */
+PIN 22          = OD6;          /*                  */
+PIN 21          = OD5;          /*                  */
+PIN 20          = OD4;          /*                  */
+PIN 19          = OD3;          /*                  */
+PIN 18          = OD2;          /*                  */
+PIN 17          = OD1;          /*                  */
+PIN 16          = OD0;          /*                  */
+PIN 15          = IOEN;         /* ID getroffen     */
+
+/* 0x40 = Switched ID Manufactor */
+
+Field state = [OD7..OD0];
+Field in    = [D7..D0];
+
+state.d = !in;
+state.oe = oe;
+state.ar = !RES;
+state.sp = 'b'0;
+
+!IOEN  = state:'b'00111111; /* Manufactor 0xC0 / d192 */
+
+
+
+
+
+
+

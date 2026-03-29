@@ -865,6 +865,12 @@ RC2014 card with SJA1000 CAN controller and RJ45 sockets with automatic terminat
 
 Only one card is possible due to RAM allocation and interrupt handling. The interrupt pin of the SJA1000 can be assigned to one of the XIO PIC interrupt channels.
 
+<b>Impressions:</b>
+
+RC2014 card on backplane
+
+![RCX system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_sja1000/pcb/msx_rc2014_sja1000_board.png)
+
 <b>Hardware:</b>
 
 ![RCX schematics](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_sja1000/pcb/rc2014_sja1000.png)
@@ -874,6 +880,12 @@ Details coming soon
 # RC2014 card with 8255A PIO
 
 RC2014 card with a 8255 PIO. Up to 16 cards are possible. The interrupt pins of PORT C can be assigned to one of the XIO PIC interrupt channels. 
+
+<b>Impressions:</b>
+
+RC2014 card on backplane
+
+![RCX system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_8255/pcb/msx_rc2014_8255_board.png)
 
 <b>Hardware:</b>
 
@@ -885,6 +897,12 @@ Details coming soon
 
 RC2014 card with a 8254 CTR. Up to 16 cards are possible. The interrupt pins of TIMER 0 and 1 can be assigned to one of the XIO PIC interrupt channels. 
 
+<b>Impressions:</b>
+
+RC2014 card on backplane
+
+![RCX system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_8254/pcb/msx_rc2014_8254_board.png)
+
 <b>Hardware:</b>
 
 ![RCX schematics](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_8254/pcb/rc2014_8254.png)
@@ -895,6 +913,12 @@ Details coming soon
 
 RC2014 card with 4 SPI busses selectable via software with baudrate up to 2 MHz. Up to 16 SPI cards are possible. The interrupt pin of the ATMEGA8 can be assigned to one of the XIO PIC interrupt channels. 
 
+<b>Impressions:</b>
+
+RC2014 card on backplane
+
+![RCX system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_spi/pcb/msx_rc2014_spi_board.png)
+
 <b>Hardware:</b>
 
 ![RCX schematics](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_spi/pcb/rc2014_spi.png)
@@ -904,6 +928,12 @@ Details coming soon
 # RC2014 card with ADS1220 4 channel 24 bit A/D converter via ATMEGA8
 
 RC2014 card with ADS1220 module. Up to 16 cards are possible. The interrupt pin of ATMEGA8 can be assigned to one of the XIO PIC interrupt channels. 
+
+<b>Impressions:</b>
+
+RC2014 card on backplane
+
+![RCX system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_ads1220/pcb/msx_rc2014_ads1220_board.png)
 
 <b>Hardware:</b>
 
@@ -925,11 +955,23 @@ Details coming soon
 
 The ROM of RCX contains BASIC and UNAPI commands to steer SC103 from original RC2014 manufactor.
 
+<b>Impressions:</b>
+
+RC2014 card on backplane
+
+![RCX system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_sc103/pcb/msx_rc2014_sc103_board.png)
+
 Details coming soon
 
 # RC2014 card SC725 with Z80 SIO and Z80 CTC
 
 The ROM of RCX contains BASIC and UNAPI commands to steer SC725 from original RC2014 manufactor.
+
+<b>Impressions:</b>
+
+RC2014 card on backplane
+
+![RCX system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_sc725/pcb/msx_rc2014_sc725_board.png)
 
 Details coming soon
 

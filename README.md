@@ -428,7 +428,7 @@ Commands implemented in ROM for steering and controlling of the cards functions:
     <td>Syntax</td>
     <td>RCX ISINIT</td>
     <td>_RCX ISINIT(ISI)</td>
-		<td>2</td>
+		<td>3</td>
   </tr>
 	<tr>
     <td>PARA 1</td>
@@ -453,7 +453,7 @@ Commands implemented in ROM for steering and controlling of the cards functions:
     <td>Syntax</td>
     <td>RCX DEINIT</td>
     <td>_RCX DEINIT</td>
-		<td>3</td>
+		<td>4</td>
   </tr>
 	</table>	
 
@@ -472,7 +472,7 @@ Commands implemented in ROM for steering and controlling of the cards functions:
     <td>Syntax</td>
     <td>RCX TABLE</td>
     <td>_RCX TABLE(ADDR)</td>
-		<td>4</td>
+		<td>5</td>
   </tr>
 	<tr>
     <td>PARA 1</td>
@@ -525,7 +525,7 @@ Commands implemented in ROM:
     <td>Syntax</td>
     <td>I2C INIT</td>
     <td>_I2C INIT(ADDR)</td>
-		<td>2</td>
+		<td>6</td>
   </tr>
 	<tr>
     <td>PARA 1</td>

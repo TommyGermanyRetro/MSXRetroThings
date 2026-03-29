@@ -873,6 +873,12 @@ Details coming soon
 
 # RC2014 card with 8255A PIO
 
+RC2014 card with a 8255 PIO. Up to 16 SPI cards are possible. The interrupt pins of PORT C can be assigned to one of the XIO PIC interrupt channels. 
+
+<b>Hardware:</b>
+
+![RCX schematics](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_8255/pcb/rc2014_8255.png)
+
 Details coming soon
 
 # RC2014 card with 8254A CTR

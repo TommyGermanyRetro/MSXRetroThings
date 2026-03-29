@@ -506,11 +506,34 @@ RC2014 card on backplane contacted via BASIC to get TIME and DATE
 
 <b>Software:</b>
 
-The BIOS for the card functions is provided in the on board ROM (EEPROM). It contains the additional BASIC commands and an instance of UNAPI base on the approach of KONAMIMAN. Please have a look at his page to get a deeper impression on how it works.
+The BIOS for the card functions is provided in the RCX slot ROM. It contains the additional BASIC commands and an instance of UNAPI base on the approach of KONAMIMAN. Please have a look at his page to get a deeper impression on how it works.
 
 Commands implemented in ROM:
 
++ <i><b>I2C INIT</i></b>
 
+  Initialises RC2014 I2C base card at IO address 0..255
+	
+	<table style="width:100%">
+  <tr>
+    <th></th>
+    <th>Definition</th>
+    <th>BASIC</th>
+    <th>UNAPI</th>		
+  </tr>
+  <tr>
+    <td>Syntax</td>
+    <td>I2C INIT</td>
+    <td>_I2C INIT(ADDR)</td>
+		<td>2</td>
+  </tr>
+	<tr>
+    <td>PARA 1</td>
+    <td>IO addr 0...255</td>
+    <td>byte or variable</td>
+		<td>C</td>
+  </tr>
+	</table>
 
 # RC2014 card with SJA1000 CAN controller (single use only)
 

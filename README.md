@@ -883,6 +883,12 @@ Details coming soon
 
 # RC2014 card with 8254A CTR
 
+RC2014 card with a 8254 CTR. Up to 16 SPI cards are possible. The interrupt pins of TIMER 0 and 1 can be assigned to one of the XIO PIC interrupt channels. 
+
+<b>Hardware:</b>
+
+![RCX schematics](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_8254/pcb/rc2014_8254.png)
+
 Details coming soon
 
 # RC2014 card with 4x SPI bus up to 2 MHz via ATMEGA8

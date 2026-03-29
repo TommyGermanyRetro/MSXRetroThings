@@ -869,7 +869,7 @@ Only one card is possible due to RAM allocation and interrupt handling. The inte
 
 RC2014 card on backplane
 
-![RCX system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_sja1000/pcb/msx_rc2014_sja1000_board.png)
+![RCX system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_sja1000/pcb/rc2014_sja1000_board.png)
 
 <b>Hardware:</b>
 
@@ -885,7 +885,7 @@ RC2014 card with a 8255 PIO. Up to 16 cards are possible. The interrupt pins of 
 
 RC2014 card on backplane
 
-![RCX system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_8255/pcb/msx_rc2014_8255_board.png)
+![RCX system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_8255/pcb/rc2014_8255_board.png)
 
 <b>Hardware:</b>
 
@@ -901,7 +901,7 @@ RC2014 card with a 8254 CTR. Up to 16 cards are possible. The interrupt pins of 
 
 RC2014 card on backplane
 
-![RCX system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_8254/pcb/msx_rc2014_8254_board.png)
+![RCX system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_8254/pcb/rc2014_8254_board.png)
 
 <b>Hardware:</b>
 
@@ -917,7 +917,7 @@ RC2014 card with 4 SPI busses selectable via software with baudrate up to 2 MHz.
 
 RC2014 card on backplane
 
-![RCX system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_spi/pcb/msx_rc2014_spi_board.png)
+![RCX system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_spi/pcb/rc2014_spi_board.png)
 
 <b>Hardware:</b>
 
@@ -933,7 +933,7 @@ RC2014 card with ADS1220 module. Up to 16 cards are possible. The interrupt pin 
 
 RC2014 card on backplane
 
-![RCX system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_ads1220/pcb/msx_rc2014_ads1220_board.png)
+![RCX system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_ads1220/pcb/rc2014_ads1220_board.png)
 
 <b>Hardware:</b>
 
@@ -959,7 +959,7 @@ The ROM of RCX contains BASIC and UNAPI commands to steer SC103 from original RC
 
 RC2014 card on backplane
 
-![RCX system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_sc103/pcb/msx_rc2014_sc103_board.png)
+![RCX system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_sc103/rc2014_sc103_board.png)
 
 Details coming soon
 
@@ -971,7 +971,7 @@ The ROM of RCX contains BASIC and UNAPI commands to steer SC725 from original RC
 
 RC2014 card on backplane
 
-![RCX system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_sc725/pcb/msx_rc2014_sc725_board.png)
+![RCX system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_sc725/rc2014_sc725_board.png)
 
 Details coming soon
 

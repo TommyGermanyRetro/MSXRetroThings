@@ -873,7 +873,7 @@ Details coming soon
 
 # RC2014 card with 8255A PIO
 
-RC2014 card with a 8255 PIO. Up to 16 SPI cards are possible. The interrupt pins of PORT C can be assigned to one of the XIO PIC interrupt channels. 
+RC2014 card with a 8255 PIO. Up to 16 cards are possible. The interrupt pins of PORT C can be assigned to one of the XIO PIC interrupt channels. 
 
 <b>Hardware:</b>
 
@@ -883,7 +883,7 @@ Details coming soon
 
 # RC2014 card with 8254A CTR
 
-RC2014 card with a 8254 CTR. Up to 16 SPI cards are possible. The interrupt pins of TIMER 0 and 1 can be assigned to one of the XIO PIC interrupt channels. 
+RC2014 card with a 8254 CTR. Up to 16 cards are possible. The interrupt pins of TIMER 0 and 1 can be assigned to one of the XIO PIC interrupt channels. 
 
 <b>Hardware:</b>
 
@@ -903,17 +903,33 @@ Details coming soon
 
 # RC2014 card with ADS1220 4 channel 24 bit A/D converter via ATMEGA8
 
+RC2014 card with ADS1220 module. Up to 16 cards are possible. The interrupt pin of ATMEGA8 can be assigned to one of the XIO PIC interrupt channels. 
+
+<b>Hardware:</b>
+
+![RCX schematics](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_ads1220/pcb/rc2014_ads1220.png)
+
 Details coming soon
 
 # RC2014 card with MCP4822 4 channel 12 bit D/A converter via ATMEGA8
+
+RC2014 card with 2x MCP4822. Up to 16 cards are possible. The interrupt pin of ATMEGA8 can be assigned to one of the XIO PIC interrupt channels. 
+
+<b>Hardware:</b>
+
+![RCX schematics](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_mcp4822/pcb/rc2014_mcp4822.png)
 
 Details coming soon
 
 # RC2014 card SC103 with Z80 PIO
 
+The ROM of RCX contains BASIC and UNAPI commands to steer SC103 from original RC2014 manufactor.
+
 Details coming soon
 
 # RC2014 card SC725 with Z80 SIO and Z80 CTC
+
+The ROM of RCX contains BASIC and UNAPI commands to steer SC725 from original RC2014 manufactor.
 
 Details coming soon
 

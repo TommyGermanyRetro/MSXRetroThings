@@ -792,6 +792,68 @@ Commands implemented in ROM:
 		<td>DE as varptr</td>
   </tr>
 	</table>	
+	
++ <i><b>SET DATE</i></b>
+
+  Sets the DATE for on board PCF8583
+	
+	<table style="width:100%">
+  <tr>
+    <th></th>
+    <th>Definition</th>
+    <th>BASIC</th>
+    <th>UNAPI</th>		
+  </tr>
+  <tr>
+    <td>Syntax</td>
+    <td>SET DATE</td>
+    <td>_SET DATE RD(BUS,DATE)</td>
+		<td>14</td>
+  </tr>
+	<tr>
+    <td>PARA 1</td>
+    <td>IO bus addr 0...255</td>
+    <td>byte or variable</td>
+		<td>C</td>
+  </tr>
+	<tr>
+    <td>PARA 2</td>
+    <td>DATE</td>
+    <td>String variable</td>
+		<td>DE as varptr</td>
+  </tr>
+	</table>	
+	
++ <i><b>GET DATE</i></b>
+
+  Gets the DATE from on board PCF8583
+	
+	<table style="width:100%">
+  <tr>
+    <th></th>
+    <th>Definition</th>
+    <th>BASIC</th>
+    <th>UNAPI</th>		
+  </tr>
+  <tr>
+    <td>Syntax</td>
+    <td>GET DATE</td>
+    <td>_GET DATE RD(BUS,DATE)</td>
+		<td>15</td>
+  </tr>
+	<tr>
+    <td>PARA 1</td>
+    <td>IO bus addr 0...255</td>
+    <td>byte or variable</td>
+		<td>C</td>
+  </tr>
+	<tr>
+    <td>PARA 2</td>
+    <td>DATE</td>
+    <td>String variable</td>
+		<td>DE as varptr</td>
+  </tr>
+	</table>	
 
 # RC2014 card with SJA1000 CAN controller (single use only)
 

@@ -495,6 +495,7 @@ Commands implemented in ROM for steering and controlling of the cards functions:
 # RC2014 card with PCF8584 I2C Controller (3 ports via Seeed) and PCF8583 battery buffered RTC:
 
 This RC2014 card contains an I2C bus controller PCF8584 and a PCF8583 RTC buffered by battery. The interrupt pins of both chips can be assigned to one of the XIO PIC interrupt channels.
+Up to 16 cards of this type are possible.
 
 <b>Impressions:</b>
 
@@ -613,7 +614,7 @@ Commands implemented in ROM:
   </tr>
 	<tr>
     <td>PARA 3</td>
-    <td>length</td>
+    <td>Length</td>
     <td>byte or variable</td>
 		<td>B</td>
   </tr>
@@ -677,7 +678,7 @@ Commands implemented in ROM:
     <td>Syntax</td>
     <td>I2C RDB</td>
     <td>_I2C RDB(BUS,CHIP,LEN,DATA)</td>
-		<td>8</td>
+		<td>10</td>
   </tr>
 	<tr>
     <td>PARA 1</td>
@@ -693,7 +694,7 @@ Commands implemented in ROM:
   </tr>
 	<tr>
     <td>PARA 3</td>
-    <td>length</td>
+    <td>Length</td>
     <td>byte or variable</td>
 		<td>B</td>
   </tr>
@@ -703,7 +704,94 @@ Commands implemented in ROM:
     <td>variable</td>
 		<td>DE as varptr</td>
   </tr>	
-	</table>		
+	</table>	
+
++ <i><b>I2C RESET</i></b>
+
+  Resets the I2C bus at IO address 0..255
+	
+	<table style="width:100%">
+  <tr>
+    <th></th>
+    <th>Definition</th>
+    <th>BASIC</th>
+    <th>UNAPI</th>		
+  </tr>
+  <tr>
+    <td>Syntax</td>
+    <td>I2C RESET</td>
+    <td>_I2C RESET(ADDR)</td>
+		<td>11</td>
+  </tr>
+	<tr>
+    <td>PARA 1</td>
+    <td>IO addr 0...255</td>
+    <td>byte or variable</td>
+		<td>C</td>
+  </tr>
+	</table>	
+	
++ <i><b>SET TIME</i></b>
+
+  Sets the TIME for on board PCF8583
+	
+	<table style="width:100%">
+  <tr>
+    <th></th>
+    <th>Definition</th>
+    <th>BASIC</th>
+    <th>UNAPI</th>		
+  </tr>
+  <tr>
+    <td>Syntax</td>
+    <td>SET TIME</td>
+    <td>_SET TIME RD(BUS,TIME)</td>
+		<td>12</td>
+  </tr>
+	<tr>
+    <td>PARA 1</td>
+    <td>IO bus addr 0...255</td>
+    <td>byte or variable</td>
+		<td>C</td>
+  </tr>
+	<tr>
+    <td>PARA 2</td>
+    <td>TIME</td>
+    <td>String variable</td>
+		<td>DE as varptr</td>
+  </tr>
+	</table>	
+	
++ <i><b>GET TIME</i></b>
+
+  Gets the TIME from on board PCF8583
+	
+	<table style="width:100%">
+  <tr>
+    <th></th>
+    <th>Definition</th>
+    <th>BASIC</th>
+    <th>UNAPI</th>		
+  </tr>
+  <tr>
+    <td>Syntax</td>
+    <td>GET TIME</td>
+    <td>_GET TIME RD(BUS,TIME)</td>
+		<td>13</td>
+  </tr>
+	<tr>
+    <td>PARA 1</td>
+    <td>IO bus addr 0...255</td>
+    <td>byte or variable</td>
+		<td>C</td>
+  </tr>
+	<tr>
+    <td>PARA 2</td>
+    <td>TIME</td>
+    <td>String variable</td>
+		<td>DE as varptr</td>
+  </tr>
+	</table>	
 
 # RC2014 card with SJA1000 CAN controller (single use only)
 

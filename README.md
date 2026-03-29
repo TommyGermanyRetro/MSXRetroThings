@@ -373,7 +373,6 @@ Boot message from BIOS ROM
 
 ![RCX boot](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_rom/pcb/rcx_boot.png)
 
-
 <b>Hardware:</b>
 
 ![RCX schematics](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_rom/pcb/msx_rom.png)
@@ -862,6 +861,12 @@ Commands implemented in ROM:
 
 # RC2014 card with SJA1000 CAN controller (single use only)
 
+RC2014 card with SJA1000 CAN controller and RJ45 sockets with automatic termination function. The software provides PELICAN Mode and 250 kBit/s.
+
+<b>Hardware:</b>
+
+![RCX schematics](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_sja1000/pcb/rc2014_sja1000.png)
+
 Details coming soon
 
 # RC2014 card with 8255A PIO
@@ -873,6 +878,12 @@ Details coming soon
 Details coming soon
 
 # RC2014 card with 4x SPI bus up to 2 MHz via ATMEGA8
+
+RC2014 card with 4 SPI busses selectable via software with baudrate up to 2 MHz.
+
+<b>Hardware:</b>
+
+![RCX schematics](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_spi/pcb/rc2014_spi.png)
 
 Details coming soon
 

@@ -472,7 +472,7 @@ Commands implemented in ROM for steering and controlling of the cards functions:
     <td>Syntax</td>
     <td>RCX TABLE</td>
     <td>_RCX TABLE(ADDR)</td>
-		<td>2</td>
+		<td>4</td>
   </tr>
 	<tr>
     <td>PARA 1</td>

@@ -363,6 +363,16 @@ Commands implemented in ROM:
 
 The schematics of RC2014 cards are strictly build up in non smd method to enable people without special tools to rebuild the pcb.
 
+<b>Impressions:</b>
+
+Slot ROM
+
+![RCX system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_rom/pcb/msx_rom_slot.png)
+
+<b>Hardware:</b>
+
+![XIO schematics](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_rom/pcb/msx_rom.png)
+
 <b>Software:</b>
 
 The BIOS for the card functions is provided in the on board ROM (EEPROM). It contains the additional BASIC commands and an instance of UNAPI base on the approach of KONAMIMAN. Please have a look at his page to get a deeper impression on how it works.

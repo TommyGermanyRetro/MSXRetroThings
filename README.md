@@ -544,6 +544,43 @@ Commands implemented in ROM:
 		<td>C</td>
   </tr>
 	</table>
+	
++ <i><b>I2C WR</i></b>
+
+  Sends a byte to via I2C bus to special chip
+	
+	<table style="width:100%">
+  <tr>
+    <th></th>
+    <th>Definition</th>
+    <th>BASIC</th>
+    <th>UNAPI</th>		
+  </tr>
+  <tr>
+    <td>Syntax</td>
+    <td>I2C WR</td>
+    <td>_I2C WR(BUS,CHIP,DATA)</td>
+		<td>7</td>
+  </tr>
+	<tr>
+    <td>PARA 1</td>
+    <td>IO bus addr 0...255</td>
+    <td>byte or variable</td>
+		<td>E</td>
+  </tr>
+	<tr>
+    <td>PARA 2</td>
+    <td>I2C addr 0...254</td>
+    <td>byte or variable</td>
+		<td>C</td>
+  </tr>
+		<tr>
+    <td>PARA 3</td>
+    <td>Data</td>
+    <td>byte or variable</td>
+		<td>B</td>
+  </tr>
+	</table>	
 
 # RC2014 card with SJA1000 CAN controller (single use only)
 

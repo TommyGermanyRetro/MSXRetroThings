@@ -863,6 +863,8 @@ Commands implemented in ROM:
 
 RC2014 card with SJA1000 CAN controller and RJ45 sockets with automatic termination function. The software provides PELICAN Mode and 250 kBit/s.
 
+Only one card is possible due to RAM allocation and interrupt handling. The interrupt pin of the SJA1000 can be assigned to one of the XIO PIC interrupt channels.
+
 <b>Hardware:</b>
 
 ![RCX schematics](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_sja1000/pcb/rc2014_sja1000.png)
@@ -879,7 +881,7 @@ Details coming soon
 
 # RC2014 card with 4x SPI bus up to 2 MHz via ATMEGA8
 
-RC2014 card with 4 SPI busses selectable via software with baudrate up to 2 MHz.
+RC2014 card with 4 SPI busses selectable via software with baudrate up to 2 MHz. Up to 16 SPI cards are possible. The interrupt pin of the ATMEGA8 can be assigned to one of the XIO PIC interrupt channels. 
 
 <b>Hardware:</b>
 

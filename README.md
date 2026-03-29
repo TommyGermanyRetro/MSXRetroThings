@@ -369,21 +369,21 @@ This RC2014 card contains an I2C bus controller PCF8584 and a PCF8583 RTC buffer
 
 RC2014 card on backplane
 
-![RCX system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/msx_rc2014_i2c_base/pcb/msx_rc2014_i2c_base.png)
+![RCX system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_i2c_base/pcb/msx_rc2014_i2c_base.png)
 
 RC2014 card on backplane with I2C LCD from Seeed
 
-![RCX system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/msx_rc2014_i2c_base/pcb/msx_rc2014_i2c_base_seeed_lcd.png)
+![RCX system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_i2c_base/pcb/msx_rc2014_i2c_base_seeed_lcd.png)
 
 RC2014 card on backplane contacted via BASIC to get TIME and DATE
 
-![RCX system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/msx_rc2014_i2c_base/pcb/msx_rc2014_i2c_rtc_prompt.png)
+![RCX system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_i2c_base/pcb/msx_rc2014_i2c_rtc_prompt.png)
 
 <b>Hardware:</b>
 
 The schematics of RC2014 I2C base is strictly build up in non smd method to enable people without special tools to rebuild the pcb.
 
-![XIO schematics](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/msx_rc2014_i2c_base/pcb/rc2014_i2c_base.png)
+![XIO schematics](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_i2c_base/pcb/rc2014_i2c_base.png)
 
 Details coming soon
 

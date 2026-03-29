@@ -361,7 +361,7 @@ Commands implemented in ROM:
 
 + BASIC and UNAPI commands to controll the functions of the cartridge in separate BIOS ROM cartridge
 
-# <b>RC2014 card with PCF8584 I2C Controller (3 ports via Seeed) and PCF8583 battery buffered RTC:</b>
+- <b>RC2014 card with PCF8584 I2C Controller (3 ports via Seeed) and PCF8583 battery buffered RTC:</b>
 
 This RC2014 card contains an I2C bus controller PCF8584 and a PCF8583 RTC buffered by battery. The interrupt pins of both chips can be assigned to one of the XIO PIC interrupt channels.
 

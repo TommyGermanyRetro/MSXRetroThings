@@ -373,7 +373,7 @@ RC2014 card on backplane
 
 RC2014 card on backplane with I2C LCD from Seeed
 
-![RCX system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_i2c_base/pcb/msx_rc2014_i2c_base_seeed_lcd.png)
+![RCX system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_i2c_base/pcb/msx_rc2014_base_seeed_lcd.png)
 
 RC2014 card on backplane contacted via BASIC to get TIME and DATE
 

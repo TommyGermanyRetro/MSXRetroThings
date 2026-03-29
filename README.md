@@ -369,6 +369,118 @@ The BIOS for the card functions is provided in the on board ROM (EEPROM). It con
 
 Commands implemented in ROM for steering and controlling of the cards functions:
 
++ <i><b>RCX ?</i></b>
+
+  Open the help information. It works independently from RCX INIT
+	
+	<table style="width:100%">
+  <tr>
+    <th></th>
+    <th>Definition</th>
+    <th>BASIC</th>
+    <th>UNAPI</th>		
+  </tr>
+  <tr>
+    <td>Syntax</td>
+    <td>RCX ?</td>
+    <td>_RCX ?</td>
+		<td>1</td>
+  </tr>
+	</table>
+ 
++ <i><b>RCX INIT</i></b>
+
+  Install RCX card. Clears table for 16 RC2014 cards and allocates RAM
+	
+	<table style="width:100%">
+  <tr>
+    <th></th>
+    <th>Definition</th>
+    <th>BASIC</th>
+    <th>UNAPI</th>		
+  </tr>
+  <tr>
+    <td>Syntax</td>
+    <td>RCX INIT</td>
+    <td>_RCX INIT</td>
+		<td>2</td>
+  </tr>
+	<tr>
+    <td>PARA 1</td>
+    <td>Working area in RAM</td>
+    <td>automatic by BIOS</td>
+		<td>HL</td>
+  </tr>
+	</table>	
+ 
++ <i><b>RCX ISINIT</i></b>
+
+  Check if RCX is installed
+	
+	<table style="width:100%">
+  <tr>
+    <th></th>
+    <th>Definition</th>
+    <th>BASIC</th>
+    <th>UNAPI</th>		
+  </tr>
+  <tr>
+    <td>Syntax</td>
+    <td>RCX ISINIT</td>
+    <td>_RCX ISINIT(ISI)</td>
+		<td>2</td>
+  </tr>
+	<tr>
+    <td>PARA 1</td>
+    <td>0 = not installed, 1 = installed</td>
+    <td>variable</td>
+		<td>DE as varptr</td>
+  </tr>
+	</table>	
+  
++ <i><b>RCX DEINIT</i></b>
+
+  Uninstall RCX card
+	
+	<table style="width:100%">
+  <tr>
+    <th></th>
+    <th>Definition</th>
+    <th>BASIC</th>
+    <th>UNAPI</th>		
+  </tr>
+  <tr>
+    <td>Syntax</td>
+    <td>RCX DEINIT</td>
+    <td>_RCX DEINIT</td>
+		<td>3</td>
+  </tr>
+	</table>	
+
++ <i><b>RCX TABLE</i></b>
+
+  Returns the beginning of the RCX table in RAM for card infos
+	
+	<table style="width:100%">
+  <tr>
+    <th></th>
+    <th>Definition</th>
+    <th>BASIC</th>
+    <th>UNAPI</th>		
+  </tr>
+  <tr>
+    <td>Syntax</td>
+    <td>RCX TABLE</td>
+    <td>_RCX TABLE(ADDR)</td>
+		<td>2</td>
+  </tr>
+	<tr>
+    <td>PARA 1</td>
+    <td>ADDR of RCX table</td>
+    <td>variable</td>
+		<td>DE as varptr</td>
+  </tr>
+	</table>
 
 # RC2014 card with PCF8584 I2C Controller (3 ports via Seeed) and PCF8583 battery buffered RTC:
 
@@ -397,6 +509,8 @@ RC2014 card on backplane contacted via BASIC to get TIME and DATE
 The BIOS for the card functions is provided in the on board ROM (EEPROM). It contains the additional BASIC commands and an instance of UNAPI base on the approach of KONAMIMAN. Please have a look at his page to get a deeper impression on how it works.
 
 Commands implemented in ROM:
+
+
 
 # RC2014 card with SJA1000 CAN controller (single use only)
 

@@ -361,7 +361,16 @@ Commands implemented in ROM:
 
 + BASIC and UNAPI commands to controll the functions of the cartridge in separate BIOS ROM cartridge
 
-<h0><b>RC2014 card with PCF8584 I2C Controller (3 ports via Seeed) and PCF8583 battery buffered RTC:</b></h0>
+The schematics of RC2014 cards are strictly build up in non smd method to enable people without special tools to rebuild the pcb.
+
+<b>Software:</b>
+
+The BIOS for the card functions is provided in the on board ROM (EEPROM). It contains the additional BASIC commands and an instance of UNAPI base on the approach of KONAMIMAN. Please have a look at his page to get a deeper impression on how it works.
+
+Commands implemented in ROM for steering and controlling of the cards functions:
+
+
+# RC2014 card with PCF8584 I2C Controller (3 ports via Seeed) and PCF8583 battery buffered RTC:
 
 This RC2014 card contains an I2C bus controller PCF8584 and a PCF8583 RTC buffered by battery. The interrupt pins of both chips can be assigned to one of the XIO PIC interrupt channels.
 
@@ -381,10 +390,46 @@ RC2014 card on backplane contacted via BASIC to get TIME and DATE
 
 <b>Hardware:</b>
 
-The schematics of RC2014 I2C base is strictly build up in non smd method to enable people without special tools to rebuild the pcb.
-
 ![XIO schematics](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_i2c_base/pcb/rc2014_i2c_base.png)
 
+<b>Software:</b>
+
+The BIOS for the card functions is provided in the on board ROM (EEPROM). It contains the additional BASIC commands and an instance of UNAPI base on the approach of KONAMIMAN. Please have a look at his page to get a deeper impression on how it works.
+
+Commands implemented in ROM:
+
+# RC2014 card with SJA1000 CAN controller (single use only)
+
 Details coming soon
+
+# RC2014 card with 8255A PIO
+
+Details coming soon
+
+# RC2014 card with 8254A CTR
+
+Details coming soon
+
+# RC2014 card with 4x SPI bus up to 2 MHz via ATMEGA8
+
+Details coming soon
+
+# RC2014 card with ADS1220 4 channel 24 bit A/D converter via ATMEGA8
+
+Details coming soon
+
+# RC2014 card with MCP4822 4 channel 12 bit D/A converter via ATMEGA8
+
+Details coming soon
+
+# RC2014 card SC103 with Z80 PIO
+
+Details coming soon
+
+# RC2014 card SC725 with Z80 SIO and Z80 CTC
+
+Details coming soon
+
+
 
 

@@ -369,9 +369,14 @@ Slot ROM
 
 ![RCX system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_rom/pcb/msx_rom_slot.png)
 
+Boot message from BIOS ROM
+
+![RCX boot](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_rom/pcb/rcx_boot.png)
+
+
 <b>Hardware:</b>
 
-![XIO schematics](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_rom/pcb/msx_rom.png)
+![RCX schematics](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_rom/pcb/msx_rom.png)
 
 <b>Software:</b>
 
@@ -513,7 +518,7 @@ RC2014 card on backplane contacted via BASIC to get TIME and DATE
 
 <b>Hardware:</b>
 
-![XIO schematics](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_i2c_base/pcb/rc2014_i2c_base.png)
+![RCX schematics](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_i2c_base/pcb/rc2014_i2c_base.png)
 
 <b>Software:</b>
 

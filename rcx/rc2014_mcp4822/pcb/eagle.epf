@@ -10,12 +10,6 @@ AutoSaveProject=1
 UsedLibrary="D:/OneDrive/Eisenbahn/20 - Elektronik/01 - Eagle/99 - LBR/mbc.lbr"
 
 [Win_1]
-Type="Control Panel"
-Loc="0 0 942 960"
-State=2
-Number=0
-
-[Win_2]
 Type="Board Editor"
 Loc="0 0 1719 1368"
 State=1
@@ -61,7 +55,7 @@ AddLevel=2
 PadsSameType=0
 Layer=16
 
-[Win_3]
+[Win_2]
 Type="Schematic Editor"
 Loc="0 0 1719 1368"
 State=1
@@ -108,6 +102,12 @@ PadsSameType=0
 Layer=91
 Views=" 1: -5.80736 -4.13096 269.759 184.263"
 Sheet="1"
+
+[Win_3]
+Type="Control Panel"
+Loc="0 0 942 960"
+State=2
+Number=0
 
 [Desktop]
 Screen="3440 1440"

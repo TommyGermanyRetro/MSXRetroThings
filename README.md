@@ -35,6 +35,10 @@ XIO cartridge
 
 ![XIO cartridge](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/xio/pcb/msx_io_expander_card.png)
 
+XIO2RC2014 adapter
+
+![XIO system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_adapter/rc2014_adapter_board.png)
+
 Boot message from BIOS ROM
 
 ![XIO boot](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/xio/pcb/msx_io_expander_boot.png)
@@ -44,6 +48,8 @@ Boot message from BIOS ROM
 The schematics of XIO is strictly build up in non smd method to enable people without special tools to rebuild the pcb. But it uses GAL chips for the switched IO decoder, the glue decoder for controll signals and the address decoder.
 
 ![XIO schematics](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/xio/pcb/msx_io_expander.png)
+
+![XIO system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_adapter/rc2014_adapter.png)
 
 The XIO OUT/IN functions work without installing the XIO card. If the XIO card is installed correctly, the green LED shows that alle 16 interrupt channels are ready to use. A blinking yellow LED shows activities to the switched IO addresses. It signals, that the switched IO is selected via &H40 of the original MSX IO bus. The red LED shows a working supply.
 

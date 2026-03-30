@@ -35,10 +35,6 @@ XIO cartridge
 
 ![XIO cartridge](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/xio/pcb/msx_io_expander_card.png)
 
-XIO2RC2014 adapter
-
-![XIO system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_adapter/rc2014_adapter_board.png)
-
 Boot message from BIOS ROM
 
 ![XIO boot](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/xio/pcb/msx_io_expander_boot.png)

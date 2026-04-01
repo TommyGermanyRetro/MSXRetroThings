@@ -7,7 +7,7 @@ Unfortunatelly, I had no real clou to connect the signals to my Z80 PIO in a way
 
 Now, 40 years later, I got a <a href="https://www.msx.org/wiki/Spectravideo_SVI-728">SVI 728</a> and a  <a href="https://www.ebay.de/sch/i.html?item=332817640567&rt=nc&_trksid=p4429486.m145687.l2562&_ssn=fractal2000">memory mapper / sd card cartridge</a> from the bay and also a <a href="https://www.8bits4ever.net/product-page/sxe-msx2-fpga-computer">SX-E MSX2+</a> and started over. 
 
-I had a lot of chips in my basket like Z80 PIO, 8255, 8254, SJA1000, PCF8584 etc. The results are several MSX cartridges, ROM code and RC2014 cards which I would like to show you here as retro and nerdy stuff for own developments or just for gambling.
+I had a lot of chips in my basket like Z80 PIO, 8255, 8254, SJA1000, PCF8584 etc. The results are several MSX cartridges, ROM code and <a href="https://rc2014.co.uk/">RC2014 cards</a> which I would like to show you here as retro and nerdy stuff for own developments or just for gambling.
 
 Some of the software stuff comes from KONAMIMAN, especially the UNAPI structure and also the memory allocation in basic for working areas in RAM. Please have a look at his <a href="https://www.konamiman.com/msx/msx-e.html">git</a> for further information.
 
@@ -16,7 +16,7 @@ Have fun and stay healthy,
 Thomas
 
 
-# MSXRetroThings - The XIO cartridge
+## 1. MSXRetroThings - The XIO cartridge
 
 <b>The XIO cartridge contains these functions:</b>
 
@@ -337,7 +337,7 @@ Commands implemented in ROM:
 	</table>	
 
 	
-# MSXRetroThings - The RCX ROM cartridge and RC2014 cards
+## 2. MSXRetroThings - The RCX ROM cartridge and RC2014 cards
 
 <b>The RCX ROM cartridge contains these functions:</b>
 
@@ -498,7 +498,7 @@ Commands implemented in ROM for steering and controlling of the cards functions:
   </tr>
 	</table>
 
-# RC2014 card with PCF8584 I2C Controller (3 ports via Seeed) and PCF8583 battery buffered RTC:
+## A) RC2014 card with PCF8584 I2C Controller (3 ports via Seeed) and PCF8583 battery buffered RTC:
 
 This RC2014 card contains an I2C bus controller PCF8584 and a PCF8583 RTC buffered by battery. The interrupt pins of both chips can be assigned to one of the XIO PIC interrupt channels.
 Up to 16 cards of this type are possible.
@@ -861,7 +861,7 @@ Commands implemented in ROM:
   </tr>
 	</table>	
 
-# RC2014 card with SJA1000 CAN controller (single use only)
+## B) RC2014 card with SJA1000 CAN controller (single use only)
 
 RC2014 card with SJA1000 CAN controller and RJ45 sockets with automatic termination function. The software provides PELICAN Mode and 250 kBit/s.
 
@@ -879,7 +879,7 @@ RC2014 card on backplane
 
 Details coming soon
 
-# RC2014 card with 8255A PIO
+## C) RC2014 card with 8255A PIO
 
 RC2014 card with a 8255 PIO. Up to 16 cards are possible. The interrupt pins of PORT C can be assigned to one of the XIO PIC interrupt channels. 
 
@@ -895,7 +895,7 @@ RC2014 card on backplane
 
 Details coming soon
 
-# RC2014 card with 8254A CTR
+## D) RC2014 card with 8254A CTR
 
 RC2014 card with a 8254 CTR. Up to 16 cards are possible. The interrupt pins of TIMER 0 and 1 can be assigned to one of the XIO PIC interrupt channels. 
 
@@ -911,7 +911,7 @@ RC2014 card on backplane
 
 Details coming soon
 
-# RC2014 card with 4x SPI bus up to 2 MHz via ATMEGA8
+## E) RC2014 card with 4x SPI bus up to 2 MHz via ATMEGA8
 
 RC2014 card with 4 SPI busses selectable via software with baudrate up to 2 MHz. Up to 16 SPI cards are possible. The interrupt pin of the ATMEGA8 can be assigned to one of the XIO PIC interrupt channels. 
 
@@ -927,7 +927,7 @@ RC2014 card on backplane
 
 Details coming soon
 
-# RC2014 card with ADS1220 4 channel 24 bit A/D converter via ATMEGA8
+## F) RC2014 card with ADS1220 4 channel 24 bit A/D converter via ATMEGA8
 
 RC2014 card with ADS1220 module. Up to 16 cards are possible. The interrupt pin of ATMEGA8 can be assigned to one of the XIO PIC interrupt channels. 
 
@@ -943,7 +943,7 @@ RC2014 card on backplane
 
 Details coming soon
 
-# RC2014 card with MCP4822 4 channel 12 bit D/A converter via ATMEGA8
+## G) RC2014 card with MCP4822 4 channel 12 bit D/A converter via ATMEGA8
 
 RC2014 card with 2x MCP4822. Up to 16 cards are possible. The interrupt pin of ATMEGA8 can be assigned to one of the XIO PIC interrupt channels. 
 
@@ -953,7 +953,7 @@ RC2014 card with 2x MCP4822. Up to 16 cards are possible. The interrupt pin of A
 
 Details coming soon
 
-# RC2014 card SC103 with Z80 PIO
+## H) RC2014 card SC103 with Z80 PIO
 
 The ROM of RCX contains BASIC and UNAPI commands to steer SC103 from original RC2014 manufactor.
 
@@ -965,7 +965,7 @@ RC2014 card on backplane
 
 Details coming soon
 
-# RC2014 card SC725 with Z80 SIO and Z80 CTC
+## I) RC2014 card SC725 with Z80 SIO and Z80 CTC
 
 The ROM of RCX contains BASIC and UNAPI commands to steer SC725 from original RC2014 manufactor.
 

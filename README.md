@@ -18,14 +18,14 @@ Thomas
 
 ## 1. MSXRetroThings - The XIO cartridge
 
-<b>The XIO cartridge contains these functions:</b>
+#### <b>The XIO cartridge contains these functions:</b>
 
 + Switched IO based on the idea of ASCII to achive 256 additional IO locations
 + 8 channel programable interrupt controller 8259 with fallen edge sensitive inputs
 + 8 channel daisy chain IM2 emulator
 + BASIC and UNAPI commands to controll the functionallities of the cartridge in on board BIOS ROM
 
-<b>Impressions:</b>
+#### <b>Impressions:</b>
 
 XIO cartridge used in a SX-E MSX2+ with adapter to RC2014 backplane
 
@@ -39,7 +39,7 @@ Boot message from BIOS ROM
 
 ![XIO boot](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/xio/pcb/msx_io_expander_boot.png)
 
-<b>Hardware:</b>
+#### <b>Hardware:</b>
 
 The schematics of XIO is strictly build up in non smd method to enable people without special tools to rebuild the pcb. But it uses GAL chips for the switched IO decoder, the glue decoder for controll signals and the address decoder.
 
@@ -49,8 +49,7 @@ The schematics of XIO is strictly build up in non smd method to enable people wi
 
 The XIO OUT/IN functions work without installing the XIO card. If the XIO card is installed correctly, the green LED shows that alle 16 interrupt channels are ready to use. A blinking yellow LED shows activities to the switched IO addresses. It signals, that the switched IO is selected via &H40 of the original MSX IO bus. The red LED shows a working supply.
 
-
-<b>Software:</b>
+#### <b>Software:</b>
 
 The BIOS for the card functions is provided in the on board ROM (EEPROM). It contains the additional BASIC commands and an instance of UNAPI base on the approach of KONAMIMAN. Please have a look at his page to get a deeper impression on how it works.
 

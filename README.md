@@ -1105,7 +1105,7 @@ Commands implemented in ROM:
     <td>Syntax</td>
     <td>PIO B CTRL</td>
     <td>_PIO B CTRL(ADDR,VALUE)</td>
-		<td>21</td>
+		<td>22</td>
   </tr>
 	<tr>
     <td>PARA 1</td>
@@ -1141,7 +1141,363 @@ RC2014 card on backplane
 
 ![RCX schematics](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_8255/pcb/rc2014_8255.png)
 
-Details coming soon
+#### <b>C.3 Software:</b>
+
+The BIOS for the card functions is provided in the RCX slot ROM. It contains the additional BASIC commands and an instance of UNAPI base on the approach of KONAMIMAN. Please have a look at his page to get a deeper impression on how it works.
+
+Commands implemented in ROM:
+
++ <i><b>PPI INIT</i></b>
+
+  Initialises RC2014 PIO card with 8255A at IO address 0..255
+	
+	<table style="width:100%">
+  <tr>
+    <th></th>
+    <th>Definition</th>
+    <th>BASIC</th>
+    <th>UNAPI</th>		
+  </tr>
+  <tr>
+    <td>Syntax</td>
+    <td>PPI INIT</td>
+    <td>_PPI INIT(ADDR)</td>
+		<td>23</td>
+  </tr>
+	</table>
+	
++ <i><b>PPI A RD</i></b>
+
+  Reads byte from RC2014 PIO card with 8255A port A
+	
+	<table style="width:100%">
+  <tr>
+    <th></th>
+    <th>Definition</th>
+    <th>BASIC</th>
+    <th>UNAPI</th>		
+  </tr>
+  <tr>
+    <td>Syntax</td>
+    <td>PPI A RD</td>
+    <td>_PPI A RD(ADDR,VALUE)</td>
+		<td>24</td>
+  </tr>
+	<tr>
+    <td>PARA 1</td>
+    <td>IO addr 0...255</td>
+    <td>byte or variable</td>
+		<td>C</td>
+  </tr>
+  <tr>
+    <td>PARA 2</td>
+    <td>Byte to read</td>
+    <td>variable</td>
+		<td>DE as varptr</td>
+  </tr>	
+  <tr>
+    <td>PARA 3</td>
+    <td>UNAPI ID Level 2</td>
+    <td>-/-</td>
+		<td>B = 0</td>
+  </tr>		
+	</table>	
+	
++ <i><b>PPI A WR</i></b>
+
+  Writes byte to RC2014 PIO card with 8255A port A
+	
+	<table style="width:100%">
+  <tr>
+    <th></th>
+    <th>Definition</th>
+    <th>BASIC</th>
+    <th>UNAPI</th>		
+  </tr>
+  <tr>
+    <td>Syntax</td>
+    <td>PPI A WR</td>
+    <td>_PPI A WR(ADDR,VALUE)</td>
+		<td>25</td>
+  </tr>
+	<tr>
+    <td>PARA 1</td>
+    <td>IO addr 0...255</td>
+    <td>byte or variable</td>
+		<td>C</td>
+  </tr>
+  <tr>
+    <td>PARA 2</td>
+    <td>Byte to write</td>
+    <td>byte or variable</td>
+		<td>D</td>
+  </tr>	
+  <tr>
+    <td>PARA 3</td>
+    <td>UNAPI ID Level 2</td>
+    <td>-/-</td>
+		<td>B = 1</td>
+  </tr>		
+	</table>	
+	
++ <i><b>PPI B RD</i></b>
+
+  Reads byte from RC2014 PIO card with 8255A port B
+	
+	<table style="width:100%">
+  <tr>
+    <th></th>
+    <th>Definition</th>
+    <th>BASIC</th>
+    <th>UNAPI</th>		
+  </tr>
+  <tr>
+    <td>Syntax</td>
+    <td>PPI B RD</td>
+    <td>_PPI B RD(ADDR,VALUE)</td>
+		<td>26</td>
+  </tr>
+	<tr>
+    <td>PARA 1</td>
+    <td>IO addr 0...255</td>
+    <td>byte or variable</td>
+		<td>C</td>
+  </tr>
+  <tr>
+    <td>PARA 2</td>
+    <td>Byte to read</td>
+    <td>variable</td>
+		<td>DE as varptr</td>
+  </tr>	
+  <tr>
+    <td>PARA 3</td>
+    <td>UNAPI ID Level 2</td>
+    <td>-/-</td>
+		<td>B = 2</td>
+  </tr>		
+	</table>	
+	
++ <i><b>PPI B WR</i></b>
+
+  Writes byte to RC2014 PIO card with 8255A port B
+	
+	<table style="width:100%">
+  <tr>
+    <th></th>
+    <th>Definition</th>
+    <th>BASIC</th>
+    <th>UNAPI</th>		
+  </tr>
+  <tr>
+    <td>Syntax</td>
+    <td>PPI B WR</td>
+    <td>_PPI B WR(ADDR,VALUE)</td>
+		<td>27</td>
+  </tr>
+	<tr>
+    <td>PARA 1</td>
+    <td>IO addr 0...255</td>
+    <td>byte or variable</td>
+		<td>C</td>
+  </tr>
+  <tr>
+    <td>PARA 2</td>
+    <td>Byte to write</td>
+    <td>byte or variable</td>
+		<td>D</td>
+  </tr>	
+  <tr>
+    <td>PARA 3</td>
+    <td>UNAPI ID Level 2</td>
+    <td>-/-</td>
+		<td>B = 3</td>
+  </tr>		
+	</table>
+	
++ <i><b>PPI C RD</i></b>
+
+  Reads byte from RC2014 PIO card with 8255A port C
+	
+	<table style="width:100%">
+  <tr>
+    <th></th>
+    <th>Definition</th>
+    <th>BASIC</th>
+    <th>UNAPI</th>		
+  </tr>
+  <tr>
+    <td>Syntax</td>
+    <td>PPI C RD</td>
+    <td>_PPI C RD(ADDR,VALUE)</td>
+		<td>28</td>
+  </tr>
+	<tr>
+    <td>PARA 1</td>
+    <td>IO addr 0...255</td>
+    <td>byte or variable</td>
+		<td>C</td>
+  </tr>
+  <tr>
+    <td>PARA 2</td>
+    <td>Byte to read</td>
+    <td>variable</td>
+		<td>DE as varptr</td>
+  </tr>	
+  <tr>
+    <td>PARA 3</td>
+    <td>UNAPI ID Level 2</td>
+    <td>-/-</td>
+		<td>B = 4</td>
+  </tr>		
+	</table>	
+	
++ <i><b>PPI C WR</i></b>
+
+  Writes byte to RC2014 PIO card with 8255A port C
+	
+	<table style="width:100%">
+  <tr>
+    <th></th>
+    <th>Definition</th>
+    <th>BASIC</th>
+    <th>UNAPI</th>		
+  </tr>
+  <tr>
+    <td>Syntax</td>
+    <td>PPI C WR</td>
+    <td>_PPI C WR(ADDR,VALUE)</td>
+		<td>29</td>
+  </tr>
+	<tr>
+    <td>PARA 1</td>
+    <td>IO addr 0...255</td>
+    <td>byte or variable</td>
+		<td>C</td>
+  </tr>
+  <tr>
+    <td>PARA 2</td>
+    <td>Byte to write</td>
+    <td>byte or variable</td>
+		<td>D</td>
+  </tr>	
+  <tr>
+    <td>PARA 3</td>
+    <td>UNAPI ID Level 2</td>
+    <td>-/-</td>
+		<td>B = 5</td>
+  </tr>		
+	</table>	
+
++ <i><b>PIO CTRL</i></b>
+
+  Writes byte to RC2014 PIO card with 8255A ctrl register
+	
+	<table style="width:100%">
+  <tr>
+    <th></th>
+    <th>Definition</th>
+    <th>BASIC</th>
+    <th>UNAPI</th>		
+  </tr>
+  <tr>
+    <td>Syntax</td>
+    <td>PPI CTRL</td>
+    <td>_PPI CTRL(ADDR,VALUE)</td>
+		<td>30</td>
+  </tr>
+	<tr>
+    <td>PARA 1</td>
+    <td>IO addr 0...255</td>
+    <td>byte or variable</td>
+		<td>C</td>
+  </tr>
+  <tr>
+    <td>PARA 2</td>
+    <td>Byte to write</td>
+    <td>byte or variable</td>
+		<td>D</td>
+  </tr>	
+  <tr>
+    <td>PARA 3</td>
+    <td>UNAPI ID Level 2</td>
+    <td>-/-</td>
+		<td>B = 6</td>
+  </tr>		
+	</table>	
+	
++ <i><b>PPI SET</i></b>
+
+  Sets bit on RC2014 PIO card with 8255A port C
+	
+	<table style="width:100%">
+  <tr>
+    <th></th>
+    <th>Definition</th>
+    <th>BASIC</th>
+    <th>UNAPI</th>		
+  </tr>
+  <tr>
+    <td>Syntax</td>
+    <td>PPI CTRL</td>
+    <td>_PPI CTRL(ADDR,VALUE)</td>
+		<td>31</td>
+  </tr>
+	<tr>
+    <td>PARA 1</td>
+    <td>IO addr 0...255</td>
+    <td>byte or variable</td>
+		<td>C</td>
+  </tr>
+  <tr>
+    <td>PARA 2</td>
+    <td>Bit to set</td>
+    <td>byte or variable</td>
+		<td>D</td>
+  </tr>	
+  <tr>
+    <td>PARA 3</td>
+    <td>UNAPI ID Level 2</td>
+    <td>-/-</td>
+		<td>B = 7</td>
+  </tr>		
+	</table>	
+
++ <i><b>PPI RESET</i></b>
+
+  Resets bit on RC2014 PIO card with 8255A port C
+	
+	<table style="width:100%">
+  <tr>
+    <th></th>
+    <th>Definition</th>
+    <th>BASIC</th>
+    <th>UNAPI</th>		
+  </tr>
+  <tr>
+    <td>Syntax</td>
+    <td>PPI RESET</td>
+    <td>_PPI RESET(ADDR,VALUE)</td>
+		<td>31</td>
+  </tr>
+	<tr>
+    <td>PARA 1</td>
+    <td>IO addr 0...255</td>
+    <td>byte or variable</td>
+		<td>C</td>
+  </tr>
+  <tr>
+    <td>PARA 2</td>
+    <td>Bit to reset</td>
+    <td>byte or variable</td>
+		<td>D</td>
+  </tr>	
+  <tr>
+    <td>PARA 3</td>
+    <td>UNAPI ID Level 2</td>
+    <td>-/-</td>
+		<td>B = 8</td>
+  </tr>		
+	</table>
 
 ## D) RC2014 card with 8254A CTR
 

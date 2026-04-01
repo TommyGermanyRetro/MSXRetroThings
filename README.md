@@ -18,14 +18,14 @@ Thomas
 
 ## 1. MSXRetroThings - The XIO cartridge
 
-#### <b>The XIO cartridge contains these functions:</b>
+#### <b>1.1 The XIO cartridge contains these functions:</b>
 
 + Switched IO based on the idea of ASCII to achive 256 additional IO locations
 + 8 channel programable interrupt controller 8259 with fallen edge sensitive inputs
 + 8 channel daisy chain IM2 emulator
 + BASIC and UNAPI commands to controll the functionallities of the cartridge in on board BIOS ROM
 
-#### <b>Impressions:</b>
+#### <b>1.2 Impressions:</b>
 
 XIO cartridge used in a SX-E MSX2+ with adapter to RC2014 backplane
 
@@ -39,7 +39,7 @@ Boot message from BIOS ROM
 
 ![XIO boot](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/xio/pcb/msx_io_expander_boot.png)
 
-#### <b>Hardware:</b>
+#### <b>1.3 Hardware:</b>
 
 The schematics of XIO is strictly build up in non smd method to enable people without special tools to rebuild the pcb. But it uses GAL chips for the switched IO decoder, the glue decoder for controll signals and the address decoder.
 
@@ -49,7 +49,7 @@ The schematics of XIO is strictly build up in non smd method to enable people wi
 
 The XIO OUT/IN functions work without installing the XIO card. If the XIO card is installed correctly, the green LED shows that alle 16 interrupt channels are ready to use. A blinking yellow LED shows activities to the switched IO addresses. It signals, that the switched IO is selected via &H40 of the original MSX IO bus. The red LED shows a working supply.
 
-#### <b>Software:</b>
+#### <b>1.4 Software:</b>
 
 The BIOS for the card functions is provided in the on board ROM (EEPROM). It contains the additional BASIC commands and an instance of UNAPI base on the approach of KONAMIMAN. Please have a look at his page to get a deeper impression on how it works.
 
@@ -338,7 +338,7 @@ Commands implemented in ROM:
 	
 ## 2. MSXRetroThings - The RCX ROM cartridge and RC2014 cards
 
-<b>The RCX ROM cartridge contains these functions:</b>
+#### <b>2.1 The RCX ROM cartridge contains these functions:</b>
 
 + Up to 16 RC2014 cards installable with used IO address control and 16 bytes of free RAM each card
 
@@ -364,7 +364,7 @@ Commands implemented in ROM:
 
 The schematics of RC2014 cards are strictly build up in non smd method to enable people without special tools to rebuild the pcb.
 
-<b>Impressions:</b>
+#### <b>2.2 Impressions:</b>
 
 Slot ROM
 
@@ -374,11 +374,11 @@ Boot message from BIOS ROM
 
 ![RCX boot](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_rom/pcb/rcx_boot.png)
 
-<b>Hardware:</b>
+#### <b>2.3 Hardware:</b>
 
 ![RCX schematics](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_rom/pcb/msx_rom.png)
 
-<b>Software:</b>
+#### <b>2.4 Software:</b>
 
 The BIOS for the card functions is provided in the on board ROM (EEPROM). It contains the additional BASIC commands and an instance of UNAPI base on the approach of KONAMIMAN. Please have a look at his page to get a deeper impression on how it works.
 
@@ -502,7 +502,7 @@ Commands implemented in ROM for steering and controlling of the cards functions:
 This RC2014 card contains an I2C bus controller PCF8584 and a PCF8583 RTC buffered by battery. The interrupt pins of both chips can be assigned to one of the XIO PIC interrupt channels.
 Up to 16 cards of this type are possible.
 
-<b>Impressions:</b>
+#### <b>A.1 Impressions:</b>
 
 RC2014 card on backplane
 
@@ -516,11 +516,11 @@ RC2014 card on backplane contacted via BASIC to get TIME and DATE
 
 ![RCX system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_i2c_base/pcb/msx_rc2014_i2c_rtc_prompt.png)
 
-<b>Hardware:</b>
+#### <b>A.2 Hardware:</b>
 
 ![RCX schematics](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_i2c_base/pcb/rc2014_i2c_base.png)
 
-<b>Software:</b>
+#### <b>A.3 Software:</b>
 
 The BIOS for the card functions is provided in the RCX slot ROM. It contains the additional BASIC commands and an instance of UNAPI base on the approach of KONAMIMAN. Please have a look at his page to get a deeper impression on how it works.
 
@@ -866,13 +866,13 @@ RC2014 card with SJA1000 CAN controller and RJ45 sockets with automatic terminat
 
 Only one card is possible due to RAM allocation and interrupt handling. The interrupt pin of the SJA1000 can be assigned to one of the XIO PIC interrupt channels.
 
-<b>Impressions:</b>
+#### <b>B.1 Impressions:</b>
 
 RC2014 card on backplane
 
 ![RCX system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_sja1000/pcb/rc2014_sja1000_board.png)
 
-<b>Hardware:</b>
+#### <b>B.2 Hardware:</b>
 
 ![RCX schematics](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_sja1000/pcb/rc2014_sja1000.png)
 
@@ -882,13 +882,13 @@ Details coming soon
 
 RC2014 card with a 8255 PIO. Up to 16 cards are possible. The interrupt pins of PORT C can be assigned to one of the XIO PIC interrupt channels. 
 
-<b>Impressions:</b>
+#### <b>C.1 Impressions:</b>
 
 RC2014 card on backplane
 
 ![RCX system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_8255/pcb/rc2014_8255_board.png)
 
-<b>Hardware:</b>
+#### <b>C.2 Hardware:</b>
 
 ![RCX schematics](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_8255/pcb/rc2014_8255.png)
 
@@ -898,13 +898,13 @@ Details coming soon
 
 RC2014 card with a 8254 CTR. Up to 16 cards are possible. The interrupt pins of TIMER 0 and 1 can be assigned to one of the XIO PIC interrupt channels. 
 
-<b>Impressions:</b>
+#### <b>D.1 Impressions:</b>
 
 RC2014 card on backplane
 
 ![RCX system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_8254/pcb/rc2014_8254_board.png)
 
-<b>Hardware:</b>
+#### <b>D.2 Hardware:</b>
 
 ![RCX schematics](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_8254/pcb/rc2014_8254.png)
 
@@ -914,13 +914,13 @@ Details coming soon
 
 RC2014 card with 4 SPI busses selectable via software with baudrate up to 2 MHz. Up to 16 SPI cards are possible. The interrupt pin of the ATMEGA8 can be assigned to one of the XIO PIC interrupt channels. 
 
-<b>Impressions:</b>
+#### <b>E.1 Impressions:</b>
 
 RC2014 card on backplane
 
 ![RCX system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_spi/pcb/rc2014_spi_board.png)
 
-<b>Hardware:</b>
+#### <b>E.2 Hardware:</b>
 
 ![RCX schematics](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_spi/pcb/rc2014_spi.png)
 
@@ -930,13 +930,13 @@ Details coming soon
 
 RC2014 card with ADS1220 module. Up to 16 cards are possible. The interrupt pin of ATMEGA8 can be assigned to one of the XIO PIC interrupt channels. 
 
-<b>Impressions:</b>
+#### <b>F.1 Impressions:</b>
 
 RC2014 card on backplane
 
 ![RCX system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_ads1220/pcb/rc2014_ads1220_board.png)
 
-<b>Hardware:</b>
+#### <b>F.2 Hardware:</b>
 
 ![RCX schematics](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_ads1220/pcb/rc2014_ads1220.png)
 
@@ -946,7 +946,7 @@ Details coming soon
 
 RC2014 card with 2x MCP4822. Up to 16 cards are possible. The interrupt pin of ATMEGA8 can be assigned to one of the XIO PIC interrupt channels. 
 
-<b>Hardware:</b>
+#### <b>G.1 Hardware:</b>
 
 ![RCX schematics](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_mcp4822/pcb/rc2014_mcp4822.png)
 
@@ -956,7 +956,7 @@ Details coming soon
 
 The ROM of RCX contains BASIC and UNAPI commands to steer SC103 from original RC2014 manufactor.
 
-<b>Impressions:</b>
+#### <b>H.1 Impressions:</b>
 
 RC2014 card on backplane
 
@@ -968,7 +968,7 @@ Details coming soon
 
 The ROM of RCX contains BASIC and UNAPI commands to steer SC725 from original RC2014 manufactor.
 
-<b>Impressions:</b>
+#### <b>I.1 Impressions:</b>
 
 RC2014 card on backplane
 

@@ -860,23 +860,272 @@ Commands implemented in ROM:
   </tr>
 	</table>	
 
-## B) RC2014 card with SJA1000 CAN controller (single use only)
+## B) RC2014 card SC103 with Z80 PIO
 
-RC2014 card with SJA1000 CAN controller and RJ45 sockets with automatic termination function. The software provides PELICAN Mode and 250 kBit/s.
-
-Only one card is possible due to RAM allocation and interrupt handling. The interrupt pin of the SJA1000 can be assigned to one of the XIO PIC interrupt channels.
+The ROM of RCX contains BASIC and UNAPI commands to steer SC103 from original RC2014 manufactor.
 
 #### <b>B.1 Impressions:</b>
 
 RC2014 card on backplane
 
-![RCX system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_sja1000/pcb/rc2014_sja1000_board.png)
+![RCX system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_sc103/rc2014_sc103_board.png)
 
 #### <b>B.2 Hardware:</b>
 
-![RCX schematics](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_sja1000/pcb/rc2014_sja1000.png)
+Please visit RC2014 homepage for further information
 
-Details coming soon
+#### <b>B.3 Software:</b>
+
+The BIOS for the card functions is provided in the RCX slot ROM. It contains the additional BASIC commands and an instance of UNAPI base on the approach of KONAMIMAN. Please have a look at his page to get a deeper impression on how it works.
+
+Commands implemented in ROM:
+
++ <i><b>PIO INIT</i></b>
+
+  Initialises RC2014 PIO card SC103 at IO address 0..255
+	
+	<table style="width:100%">
+  <tr>
+    <th></th>
+    <th>Definition</th>
+    <th>BASIC</th>
+    <th>UNAPI</th>		
+  </tr>
+  <tr>
+    <td>Syntax</td>
+    <td>PIO INIT</td>
+    <td>_PIO INIT(ADDR)</td>
+		<td>16</td>
+  </tr>
+	<tr>
+    <td>PARA 1</td>
+    <td>IO addr 0...255</td>
+    <td>byte or variable</td>
+		<td>C</td>
+  </tr>
+	</table>
+	
++ <i><b>PIO A RD</i></b>
+
+  Reads byte from RC2014 PIO card SC103 port A
+	
+	<table style="width:100%">
+  <tr>
+    <th></th>
+    <th>Definition</th>
+    <th>BASIC</th>
+    <th>UNAPI</th>		
+  </tr>
+  <tr>
+    <td>Syntax</td>
+    <td>PIO A RD</td>
+    <td>_PIO A RD(ADDR,VALUE)</td>
+		<td>17</td>
+  </tr>
+	<tr>
+    <td>PARA 1</td>
+    <td>IO addr 0...255</td>
+    <td>byte or variable</td>
+		<td>C</td>
+  </tr>
+  <tr>
+    <td>PARA 2</td>
+    <td>Byte to read</td>
+    <td>variable</td>
+		<td>DE as varptr</td>
+  </tr>	
+  <tr>
+    <td>PARA 3</td>
+    <td>UNAPI ID Level 2</td>
+    <td>-/-</td>
+		<td>B = 0</td>
+  </tr>		
+	</table>	
+	
++ <i><b>PIO A WR</i></b>
+
+  Writes byte to RC2014 PIO card SC103 port A
+	
+	<table style="width:100%">
+  <tr>
+    <th></th>
+    <th>Definition</th>
+    <th>BASIC</th>
+    <th>UNAPI</th>		
+  </tr>
+  <tr>
+    <td>Syntax</td>
+    <td>PIO A WR</td>
+    <td>_PIO A WR(ADDR,VALUE)</td>
+		<td>18</td>
+  </tr>
+	<tr>
+    <td>PARA 1</td>
+    <td>IO addr 0...255</td>
+    <td>byte or variable</td>
+		<td>C</td>
+  </tr>
+  <tr>
+    <td>PARA 2</td>
+    <td>Byte to write</td>
+    <td>byte or variable</td>
+		<td>D</td>
+  </tr>	
+  <tr>
+    <td>PARA 3</td>
+    <td>UNAPI ID Level 2</td>
+    <td>-/-</td>
+		<td>B = 1</td>
+  </tr>		
+	</table>	
+	
++ <i><b>PIO B RD</i></b>
+
+  Reads byte from RC2014 PIO card SC103 port B
+	
+	<table style="width:100%">
+  <tr>
+    <th></th>
+    <th>Definition</th>
+    <th>BASIC</th>
+    <th>UNAPI</th>		
+  </tr>
+  <tr>
+    <td>Syntax</td>
+    <td>PIO B RD</td>
+    <td>_PIO B RD(ADDR,VALUE)</td>
+		<td>19</td>
+  </tr>
+	<tr>
+    <td>PARA 1</td>
+    <td>IO addr 0...255</td>
+    <td>byte or variable</td>
+		<td>C</td>
+  </tr>
+  <tr>
+    <td>PARA 2</td>
+    <td>Byte to read</td>
+    <td>variable</td>
+		<td>DE as varptr</td>
+  </tr>	
+  <tr>
+    <td>PARA 3</td>
+    <td>UNAPI ID Level 2</td>
+    <td>-/-</td>
+		<td>B = 2</td>
+  </tr>		
+	</table>	
+	
++ <i><b>PIO B WR</i></b>
+
+  Writes byte to RC2014 PIO card SC103 port B
+	
+	<table style="width:100%">
+  <tr>
+    <th></th>
+    <th>Definition</th>
+    <th>BASIC</th>
+    <th>UNAPI</th>		
+  </tr>
+  <tr>
+    <td>Syntax</td>
+    <td>PIO B WR</td>
+    <td>_PIO B WR(ADDR,VALUE)</td>
+		<td>20</td>
+  </tr>
+	<tr>
+    <td>PARA 1</td>
+    <td>IO addr 0...255</td>
+    <td>byte or variable</td>
+		<td>C</td>
+  </tr>
+  <tr>
+    <td>PARA 2</td>
+    <td>Byte to write</td>
+    <td>byte or variable</td>
+		<td>D</td>
+  </tr>	
+  <tr>
+    <td>PARA 3</td>
+    <td>UNAPI ID Level 2</td>
+    <td>-/-</td>
+		<td>B = 3</td>
+  </tr>		
+	</table>
+
++ <i><b>PIO A CTRL</i></b>
+
+  Writes byte to RC2014 PIO card SC103 port A ctrl register
+	
+	<table style="width:100%">
+  <tr>
+    <th></th>
+    <th>Definition</th>
+    <th>BASIC</th>
+    <th>UNAPI</th>		
+  </tr>
+  <tr>
+    <td>Syntax</td>
+    <td>PIO A CTRL</td>
+    <td>_PIO A CTRL(ADDR,VALUE)</td>
+		<td>21</td>
+  </tr>
+	<tr>
+    <td>PARA 1</td>
+    <td>IO addr 0...255</td>
+    <td>byte or variable</td>
+		<td>C</td>
+  </tr>
+  <tr>
+    <td>PARA 2</td>
+    <td>Byte to write</td>
+    <td>byte or variable</td>
+		<td>D</td>
+  </tr>	
+  <tr>
+    <td>PARA 3</td>
+    <td>UNAPI ID Level 2</td>
+    <td>-/-</td>
+		<td>B = 4</td>
+  </tr>		
+	</table>
+	
++ <i><b>PIO B CTRL</i></b>
+
+  Writes byte to RC2014 PIO card SC103 port B ctrl register
+	
+	<table style="width:100%">
+  <tr>
+    <th></th>
+    <th>Definition</th>
+    <th>BASIC</th>
+    <th>UNAPI</th>		
+  </tr>
+  <tr>
+    <td>Syntax</td>
+    <td>PIO B CTRL</td>
+    <td>_PIO B CTRL(ADDR,VALUE)</td>
+		<td>21</td>
+  </tr>
+	<tr>
+    <td>PARA 1</td>
+    <td>IO addr 0...255</td>
+    <td>byte or variable</td>
+		<td>C</td>
+  </tr>
+  <tr>
+    <td>PARA 2</td>
+    <td>Byte to write</td>
+    <td>byte or variable</td>
+		<td>D</td>
+  </tr>	
+  <tr>
+    <td>PARA 3</td>
+    <td>UNAPI ID Level 2</td>
+    <td>-/-</td>
+		<td>B = 5</td>
+  </tr>		
+	</table>	
 
 ## C) RC2014 card with 8255A PIO
 
@@ -910,57 +1159,92 @@ RC2014 card on backplane
 
 Details coming soon
 
-## E) RC2014 card with 4x SPI bus up to 2 MHz via ATMEGA8
+## E) RC2014 card with SJA1000 CAN controller (single use only)
 
-RC2014 card with 4 SPI busses selectable via software with baudrate up to 2 MHz. Up to 16 SPI cards are possible. The interrupt pin of the ATMEGA8 can be assigned to one of the XIO PIC interrupt channels. 
+RC2014 card with SJA1000 CAN controller and RJ45 sockets with automatic termination function. The software provides PELICAN Mode and 250 kBit/s.
+
+Only one card is possible due to RAM allocation and interrupt handling. The interrupt pin of the SJA1000 can be assigned to one of the XIO PIC interrupt channels.
 
 #### <b>E.1 Impressions:</b>
 
 RC2014 card on backplane
 
-![RCX system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_spi/pcb/rc2014_spi_board.png)
+![RCX system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_sja1000/pcb/rc2014_sja1000_board.png)
 
 #### <b>E.2 Hardware:</b>
 
-![RCX schematics](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_spi/pcb/rc2014_spi.png)
+![RCX schematics](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_sja1000/pcb/rc2014_sja1000.png)
 
-Details coming soon
+#### <b>E.3 Software:</b>
 
-## F) RC2014 card with ADS1220 4 channel 24 bit A/D converter via ATMEGA8
+The BIOS for the card functions is provided in the RCX slot ROM. It contains the additional BASIC commands and an instance of UNAPI base on the approach of KONAMIMAN. Please have a look at his page to get a deeper impression on how it works.
 
-RC2014 card with ADS1220 module. Up to 16 cards are possible. The interrupt pin of ATMEGA8 can be assigned to one of the XIO PIC interrupt channels. 
+Commands implemented in ROM:
+
++ <i><b>I2C INIT</i></b>
+
+  Initialises RC2014 I2C base card at IO address 0..255
+	
+	<table style="width:100%">
+  <tr>
+    <th></th>
+    <th>Definition</th>
+    <th>BASIC</th>
+    <th>UNAPI</th>		
+  </tr>
+  <tr>
+    <td>Syntax</td>
+    <td>I2C INIT</td>
+    <td>_I2C INIT(ADDR)</td>
+		<td>6</td>
+  </tr>
+	<tr>
+    <td>PARA 1</td>
+    <td>IO addr 0...255</td>
+    <td>byte or variable</td>
+		<td>C</td>
+  </tr>
+	</table>
+
+## F) RC2014 card with 4x SPI bus up to 2 MHz via ATMEGA8
+
+RC2014 card with 4 SPI busses selectable via software with baudrate up to 2 MHz. Up to 16 SPI cards are possible. The interrupt pin of the ATMEGA8 can be assigned to one of the XIO PIC interrupt channels. 
 
 #### <b>F.1 Impressions:</b>
 
 RC2014 card on backplane
 
-![RCX system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_ads1220/pcb/rc2014_ads1220_board.png)
+![RCX system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_spi/pcb/rc2014_spi_board.png)
 
 #### <b>F.2 Hardware:</b>
+
+![RCX schematics](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_spi/pcb/rc2014_spi.png)
+
+Details coming soon
+
+## G) RC2014 card with ADS1220 4 channel 24 bit A/D converter via ATMEGA8
+
+RC2014 card with ADS1220 module. Up to 16 cards are possible. The interrupt pin of ATMEGA8 can be assigned to one of the XIO PIC interrupt channels. 
+
+#### <b>G.1 Impressions:</b>
+
+RC2014 card on backplane
+
+![RCX system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_ads1220/pcb/rc2014_ads1220_board.png)
+
+#### <b>G.2 Hardware:</b>
 
 ![RCX schematics](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_ads1220/pcb/rc2014_ads1220.png)
 
 Details coming soon
 
-## G) RC2014 card with MCP4822 4 channel 12 bit D/A converter via ATMEGA8
+## H) RC2014 card with MCP4822 4 channel 12 bit D/A converter via ATMEGA8
 
 RC2014 card with 2x MCP4822. Up to 16 cards are possible. The interrupt pin of ATMEGA8 can be assigned to one of the XIO PIC interrupt channels. 
 
-#### <b>G.1 Hardware:</b>
+#### <b>H.1 Hardware:</b>
 
 ![RCX schematics](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_mcp4822/pcb/rc2014_mcp4822.png)
-
-Details coming soon
-
-## H) RC2014 card SC103 with Z80 PIO
-
-The ROM of RCX contains BASIC and UNAPI commands to steer SC103 from original RC2014 manufactor.
-
-#### <b>H.1 Impressions:</b>
-
-RC2014 card on backplane
-
-![RCX system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_sc103/rc2014_sc103_board.png)
 
 Details coming soon
 

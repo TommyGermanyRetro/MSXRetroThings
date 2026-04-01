@@ -1438,8 +1438,8 @@ Commands implemented in ROM:
   </tr>
   <tr>
     <td>Syntax</td>
-    <td>PPI CTRL</td>
-    <td>_PPI CTRL(ADDR,VALUE)</td>
+    <td>PPI SET</td>
+    <td>_PPI SET(ADDR,VALUE)</td>
 		<td>31</td>
   </tr>
 	<tr>

@@ -626,7 +626,7 @@ Commands implemented in ROM:
 	<tr>
     <td>PARA 4</td>
     <td>Data</td>
-    <td>variable</td>
+    <td>array index 0</td>
 		<td>DE as varptr</td>
   </tr>	
 	</table>	
@@ -706,7 +706,7 @@ Commands implemented in ROM:
 	<tr>
     <td>PARA 4</td>
     <td>Data</td>
-    <td>variable</td>
+    <td>array index 0</td>
 		<td>DE as varptr</td>
   </tr>	
 	</table>	
@@ -762,7 +762,7 @@ Commands implemented in ROM:
 	<tr>
     <td>PARA 2</td>
     <td>TIME</td>
-    <td>String variable</td>
+    <td>String variable len = 8</td>
 		<td>DE as varptr</td>
   </tr>
 	</table>	
@@ -793,7 +793,7 @@ Commands implemented in ROM:
 	<tr>
     <td>PARA 2</td>
     <td>TIME</td>
-    <td>String variable</td>
+    <td>String variable len = 8</td>
 		<td>DE as varptr</td>
   </tr>
 	</table>	
@@ -824,7 +824,7 @@ Commands implemented in ROM:
 	<tr>
     <td>PARA 2</td>
     <td>DATE</td>
-    <td>String variable</td>
+    <td>String variable len = 8</td>
 		<td>DE as varptr</td>
   </tr>
 	</table>	
@@ -855,7 +855,7 @@ Commands implemented in ROM:
 	<tr>
     <td>PARA 2</td>
     <td>DATE</td>
-    <td>String variable</td>
+    <td>String variable len = 8</td>
 		<td>DE as varptr</td>
   </tr>
 	</table>	
@@ -1501,7 +1501,7 @@ Commands implemented in ROM:
 
 ## D) RC2014 card with 8254A CTR
 
-RC2014 card with a 8254 CTR. Up to 16 cards are possible. The interrupt pins of TIMER 0 and 1 can be assigned to one of the XIO PIC interrupt channels. 
+RC2014 card with a 8254 CTR. Up to 16 cards are possible. The interrupt pins of TIMER 0 and 1 can be assigned to one of the XIO PIC interrupt channels. This module does not work with internal clock if 8253 (max. 1 MHz) is used.
 
 #### <b>D.1 Impressions:</b>
 
@@ -1513,8 +1513,368 @@ RC2014 card on backplane
 
 ![RCX schematics](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_8254/pcb/rc2014_8254.png)
 
-Details coming soon
+#### <b>C.3 Software:</b>
 
+The BIOS for the card functions is provided in the RCX slot ROM. It contains the additional BASIC commands and an instance of UNAPI base on the approach of KONAMIMAN. Please have a look at his page to get a deeper impression on how it works.
+
+Commands implemented in ROM:
+
++ <i><b>TIMER INIT</i></b>
+
+  Initialises RC2014 TIMER card with 8254A at IO address 0..255
+	
+	<table style="width:100%">
+  <tr>
+    <th></th>
+    <th>Definition</th>
+    <th>BASIC</th>
+    <th>UNAPI</th>		
+  </tr>
+  <tr>
+    <td>Syntax</td>
+    <td>TIMER INIT</td>
+    <td>_TIMER INIT(ADDR)</td>
+		<td>33</td>
+  </tr>
+	</table>
+	
++ <i><b>TIMER 0 RD</i></b>
+
+  Reads word from RC2014 TIMER card with 8254A TIMER 0
+	
+	<table style="width:100%">
+  <tr>
+    <th></th>
+    <th>Definition</th>
+    <th>BASIC</th>
+    <th>UNAPI</th>		
+  </tr>
+  <tr>
+    <td>Syntax</td>
+    <td>TIMER 0 RD</td>
+    <td>_TIMER 0 RD(ADDR,VALUE)</td>
+		<td>34</td>
+  </tr>
+	<tr>
+    <td>PARA 1</td>
+    <td>IO addr 0...255</td>
+    <td>byte or variable</td>
+		<td>C</td>
+  </tr>
+  <tr>
+    <td>PARA 2</td>
+    <td>Word to read</td>
+    <td>variable</td>
+		<td>DE as varptr</td>
+  </tr>	
+  <tr>
+    <td>PARA 3</td>
+    <td>UNAPI ID Level 2</td>
+    <td>-/-</td>
+		<td>B = 0</td>
+  </tr>		
+	</table>	
+	
++ <i><b>TIMER 0 WR</i></b>
+
+  Writes word to RC2014 TIMER card with 8254A TIMER 0
+	
+	<table style="width:100%">
+  <tr>
+    <th></th>
+    <th>Definition</th>
+    <th>BASIC</th>
+    <th>UNAPI</th>		
+  </tr>
+  <tr>
+    <td>Syntax</td>
+    <td>TIMER 0 WR</td>
+    <td>_TIMER 0 WR(ADDR,VALUE)</td>
+		<td>35</td>
+  </tr>
+	<tr>
+    <td>PARA 1</td>
+    <td>IO addr 0...255</td>
+    <td>word or variable</td>
+		<td>C</td>
+  </tr>
+  <tr>
+    <td>PARA 2</td>
+    <td>Word to write</td>
+    <td>Word or variable</td>
+		<td>D</td>
+  </tr>	
+  <tr>
+    <td>PARA 3</td>
+    <td>UNAPI ID Level 2</td>
+    <td>-/-</td>
+		<td>B = 1</td>
+  </tr>		
+	</table>	
+
++ <i><b>TIMER 1 RD</i></b>
+
+  Reads word from RC2014 TIMER card with 8254A TIMER 1
+	
+	<table style="width:100%">
+  <tr>
+    <th></th>
+    <th>Definition</th>
+    <th>BASIC</th>
+    <th>UNAPI</th>		
+  </tr>
+  <tr>
+    <td>Syntax</td>
+    <td>TIMER 1 RD</td>
+    <td>_TIMER 1 RD(ADDR,VALUE)</td>
+		<td>36</td>
+  </tr>
+	<tr>
+    <td>PARA 1</td>
+    <td>IO addr 0...255</td>
+    <td>byte or variable</td>
+		<td>C</td>
+  </tr>
+  <tr>
+    <td>PARA 2</td>
+    <td>Word to read</td>
+    <td>variable</td>
+		<td>DE as varptr</td>
+  </tr>	
+  <tr>
+    <td>PARA 3</td>
+    <td>UNAPI ID Level 2</td>
+    <td>-/-</td>
+		<td>B = 2</td>
+  </tr>		
+	</table>	
+	
++ <i><b>TIMER 1 WR</i></b>
+
+  Writes word to RC2014 TIMER card with 8254A TIMER 1
+	
+	<table style="width:100%">
+  <tr>
+    <th></th>
+    <th>Definition</th>
+    <th>BASIC</th>
+    <th>UNAPI</th>		
+  </tr>
+  <tr>
+    <td>Syntax</td>
+    <td>TIMER 1 WR</td>
+    <td>_TIMER 1 WR(ADDR,VALUE)</td>
+		<td>37</td>
+  </tr>
+	<tr>
+    <td>PARA 1</td>
+    <td>IO addr 0...255</td>
+    <td>word or variable</td>
+		<td>C</td>
+  </tr>
+  <tr>
+    <td>PARA 2</td>
+    <td>Word to write</td>
+    <td>Word or variable</td>
+		<td>D</td>
+  </tr>	
+  <tr>
+    <td>PARA 3</td>
+    <td>UNAPI ID Level 2</td>
+    <td>-/-</td>
+		<td>B = 3</td>
+  </tr>		
+	</table>	
+	
++ <i><b>TIMER 2 RD</i></b>
+
+  Reads word from RC2014 TIMER card with 8254A TIMER 2
+	
+	<table style="width:100%">
+  <tr>
+    <th></th>
+    <th>Definition</th>
+    <th>BASIC</th>
+    <th>UNAPI</th>		
+  </tr>
+  <tr>
+    <td>Syntax</td>
+    <td>TIMER 2 RD</td>
+    <td>_TIMER 2 RD(ADDR,VALUE)</td>
+		<td>38</td>
+  </tr>
+	<tr>
+    <td>PARA 1</td>
+    <td>IO addr 0...255</td>
+    <td>byte or variable</td>
+		<td>C</td>
+  </tr>
+  <tr>
+    <td>PARA 2</td>
+    <td>Word to read</td>
+    <td>variable</td>
+		<td>DE as varptr</td>
+  </tr>	
+  <tr>
+    <td>PARA 3</td>
+    <td>UNAPI ID Level 2</td>
+    <td>-/-</td>
+		<td>B = 4</td>
+  </tr>		
+	</table>	
+	
++ <i><b>TIMER 2 WR</i></b>
+
+  Writes word to RC2014 TIMER card with 8254A TIMER 2
+	
+	<table style="width:100%">
+  <tr>
+    <th></th>
+    <th>Definition</th>
+    <th>BASIC</th>
+    <th>UNAPI</th>		
+  </tr>
+  <tr>
+    <td>Syntax</td>
+    <td>TIMER 2 WR</td>
+    <td>_TIMER 2 WR(ADDR,VALUE)</td>
+		<td>39</td>
+  </tr>
+	<tr>
+    <td>PARA 1</td>
+    <td>IO addr 0...255</td>
+    <td>word or variable</td>
+		<td>C</td>
+  </tr>
+  <tr>
+    <td>PARA 2</td>
+    <td>Word to write</td>
+    <td>Word or variable</td>
+		<td>D</td>
+  </tr>	
+  <tr>
+    <td>PARA 3</td>
+    <td>UNAPI ID Level 2</td>
+    <td>-/-</td>
+		<td>B = 5</td>
+  </tr>		
+	</table>
+
++ <i><b>TIMER CTRL</i></b>
+
+  Writes word to RC2014 TIMER card with 8254A CTRL register
+	
+	<table style="width:100%">
+  <tr>
+    <th></th>
+    <th>Definition</th>
+    <th>BASIC</th>
+    <th>UNAPI</th>		
+  </tr>
+  <tr>
+    <td>Syntax</td>
+    <td>TIMER CTRL</td>
+    <td>_TIMER CTRL(ADDR,VALUE)</td>
+		<td>40</td>
+  </tr>
+	<tr>
+    <td>PARA 1</td>
+    <td>IO addr 0...255</td>
+    <td>word or variable</td>
+		<td>C</td>
+  </tr>
+  <tr>
+    <td>PARA 2</td>
+    <td>Word to write</td>
+    <td>Word or variable</td>
+		<td>D</td>
+  </tr>	
+  <tr>
+    <td>PARA 3</td>
+    <td>UNAPI ID Level 2</td>
+    <td>-/-</td>
+		<td>B = 6</td>
+  </tr>		
+	</table>	
+	
++ <i><b>TIMER SET GATE</i></b>
+
+  Sets internal gate for TIMER 0..2 if jumper is set
+	
+	Value 0..7 is allowed
+	
+	<table style="width:100%">
+  <tr>
+    <th></th>
+    <th>Definition</th>
+    <th>BASIC</th>
+    <th>UNAPI</th>		
+  </tr>
+  <tr>
+    <td>Syntax</td>
+    <td>TIMER SET GATE</td>
+    <td>_TIMER SET GATE(ADDR,VALUE)</td>
+		<td>41</td>
+  </tr>
+	<tr>
+    <td>PARA 1</td>
+    <td>IO addr 0...255</td>
+    <td>word or variable</td>
+		<td>C</td>
+  </tr>
+  <tr>
+    <td>PARA 2</td>
+    <td>byte to write</td>
+    <td>byte or variable</td>
+		<td>D</td>
+  </tr>	
+  <tr>
+    <td>PARA 3</td>
+    <td>UNAPI ID Level 2</td>
+    <td>-/-</td>
+		<td>B = 7</td>
+  </tr>		
+	</table>
+
+	+ <i><b>TIMER RESET GATE</i></b>
+
+  Resets internal gate for TIMER 0..2 if jumper is set
+	
+	Value 0..7 is allowed
+	
+	<table style="width:100%">
+  <tr>
+    <th></th>
+    <th>Definition</th>
+    <th>BASIC</th>
+    <th>UNAPI</th>		
+  </tr>
+  <tr>
+    <td>Syntax</td>
+    <td>TIMER RESET GATE</td>
+    <td>_TIMER RESET GATE(ADDR,VALUE)</td>
+		<td>42</td>
+  </tr>
+	<tr>
+    <td>PARA 1</td>
+    <td>IO addr 0...255</td>
+    <td>word or variable</td>
+		<td>C</td>
+  </tr>
+  <tr>
+    <td>PARA 2</td>
+    <td>byte to write</td>
+    <td>byte or variable</td>
+		<td>D</td>
+  </tr>	
+  <tr>
+    <td>PARA 3</td>
+    <td>UNAPI ID Level 2</td>
+    <td>-/-</td>
+		<td>B = 8</td>
+  </tr>		
+	</table>
+	
 ## E) RC2014 card with SJA1000 CAN controller (single use only)
 
 RC2014 card with SJA1000 CAN controller and RJ45 sockets with automatic termination function. The software provides PELICAN Mode and 250 kBit/s.
@@ -1537,9 +1897,30 @@ The BIOS for the card functions is provided in the RCX slot ROM. It contains the
 
 Commands implemented in ROM:
 
-+ <i><b>I2C INIT</i></b>
++ <i><b>CAN INIT</i></b>
 
-  Initialises RC2014 I2C base card at IO address 0..255
+  Initialises RC2014 SJA1000 CAN card at IO address 0..255
+	
+	ACC is the acceptance code and mask
+	
+	Array of INT is needed, len = 8 (see datasheet for further information)
+	
+	Index 0 ACR.0
+	
+	Index 1 ACR.1
+	
+	Index 2 ACR.2
+
+	Index 3 ACR.3
+	
+	Index 4 AMR.0
+	
+	Index 5 AMR.1
+	
+	Index 6 AMR.2
+
+	Index 7 AMR.3
+	
 	
 	<table style="width:100%">
   <tr>
@@ -1550,9 +1931,9 @@ Commands implemented in ROM:
   </tr>
   <tr>
     <td>Syntax</td>
-    <td>I2C INIT</td>
-    <td>_I2C INIT(ADDR)</td>
-		<td>6</td>
+    <td>CAN INIT</td>
+    <td>_CAN INIT(ADDR,ACC)</td>
+		<td>43</td>
   </tr>
 	<tr>
     <td>PARA 1</td>
@@ -1560,6 +1941,12 @@ Commands implemented in ROM:
     <td>byte or variable</td>
 		<td>C</td>
   </tr>
+	<tr>
+    <td>PARA 2</td>
+    <td>ACC code&mask</td>
+    <td>array index 0</td>
+		<td>C</td>
+  </tr>	
 	</table>
 
 ## F) RC2014 card with 4x SPI bus up to 2 MHz via ATMEGA8

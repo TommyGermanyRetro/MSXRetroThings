@@ -1830,7 +1830,7 @@ Commands implemented in ROM:
   </tr>
   <tr>
     <td>PARA 2</td>
-    <td>byte to write</td>
+    <td>GATE 0..3 (0..7)</td>
     <td>byte or variable</td>
 		<td>D</td>
   </tr>	
@@ -1869,7 +1869,7 @@ Commands implemented in ROM:
   </tr>
   <tr>
     <td>PARA 2</td>
-    <td>byte to write</td>
+    <td>GATE 0..3 (0..7)</td>
     <td>byte or variable</td>
 		<td>D</td>
   </tr>	
@@ -1909,25 +1909,12 @@ Commands implemented in ROM:
 	
 	ACC is the acceptance code and mask
 	
-	Array of INT is needed, len = 8 (see datasheet for further information)
+	Array of INT is needed, only low byte is used, len = 8 (see datasheet for further information)
 	
-	Index 0 ACR.0
+	Index 0 ACR.0, Index 1 ACR.1, Index 2 ACR.2, Index 3 ACR.3
 	
-	Index 1 ACR.1
-	
-	Index 2 ACR.2
-
-	Index 3 ACR.3
-	
-	Index 4 AMR.0
-	
-	Index 5 AMR.1
-	
-	Index 6 AMR.2
-
-	Index 7 AMR.3
-	
-	
+	Index 4 AMR.0, Index 5 AMR.1, Index 6 AMR.2, Index 7 AMR.3
+		
 	<table style="width:100%">
   <tr>
     <th></th>
@@ -1980,13 +1967,13 @@ Commands implemented in ROM:
   </tr>
   <tr>
     <td>PARA 2</td>
-    <td>register</td>
+    <td>Register</td>
     <td>byte or variable</td>
 		<td>D</td>
   </tr>	
   <tr>
     <td>PARA 3</td>
-    <td>byte to write</td>
+    <td>Byte to write</td>
     <td>byte or variable</td>
 		<td>E</td>
   </tr>		
@@ -2017,13 +2004,13 @@ Commands implemented in ROM:
   </tr>
   <tr>
     <td>PARA 2</td>
-    <td>register</td>
+    <td>Register</td>
     <td>byte or variable</td>
 		<td>D</td>
   </tr>	
   <tr>
     <td>PARA 3</td>
-    <td>byte to write</td>
+    <td>Byte to read</td>
     <td>variable</td>
 		<td>A contains result</td>
   </tr>		

@@ -1536,6 +1536,12 @@ Commands implemented in ROM:
     <td>_TIMER INIT(ADDR)</td>
 		<td>33</td>
   </tr>
+	<tr>
+    <td>PARA 1</td>
+    <td>IO addr 0...255</td>
+    <td>byte or variable</td>
+		<td>C</td>
+  </tr>	
 	</table>
 	
 + <i><b>TIMER 0 RD</i></b>
@@ -1595,13 +1601,13 @@ Commands implemented in ROM:
 	<tr>
     <td>PARA 1</td>
     <td>IO addr 0...255</td>
-    <td>word or variable</td>
+    <td>byte or variable</td>
 		<td>C</td>
   </tr>
   <tr>
     <td>PARA 2</td>
     <td>Word to write</td>
-    <td>Word or variable</td>
+    <td>word or variable</td>
 		<td>D</td>
   </tr>	
   <tr>
@@ -1669,13 +1675,13 @@ Commands implemented in ROM:
 	<tr>
     <td>PARA 1</td>
     <td>IO addr 0...255</td>
-    <td>word or variable</td>
+    <td>byte or variable</td>
 		<td>C</td>
   </tr>
   <tr>
     <td>PARA 2</td>
     <td>Word to write</td>
-    <td>Word or variable</td>
+    <td>word or variable</td>
 		<td>D</td>
   </tr>	
   <tr>
@@ -1743,13 +1749,13 @@ Commands implemented in ROM:
 	<tr>
     <td>PARA 1</td>
     <td>IO addr 0...255</td>
-    <td>word or variable</td>
+    <td>byte or variable</td>
 		<td>C</td>
   </tr>
   <tr>
     <td>PARA 2</td>
     <td>Word to write</td>
-    <td>Word or variable</td>
+    <td>word or variable</td>
 		<td>D</td>
   </tr>	
   <tr>
@@ -1780,13 +1786,13 @@ Commands implemented in ROM:
 	<tr>
     <td>PARA 1</td>
     <td>IO addr 0...255</td>
-    <td>word or variable</td>
+    <td>byte or variable</td>
 		<td>C</td>
   </tr>
   <tr>
     <td>PARA 2</td>
     <td>Word to write</td>
-    <td>Word or variable</td>
+    <td>word or variable</td>
 		<td>D</td>
   </tr>	
   <tr>
@@ -1819,7 +1825,7 @@ Commands implemented in ROM:
 	<tr>
     <td>PARA 1</td>
     <td>IO addr 0...255</td>
-    <td>word or variable</td>
+    <td>byte or variable</td>
 		<td>C</td>
   </tr>
   <tr>
@@ -1858,7 +1864,7 @@ Commands implemented in ROM:
 	<tr>
     <td>PARA 1</td>
     <td>IO addr 0...255</td>
-    <td>word or variable</td>
+    <td>byte or variable</td>
 		<td>C</td>
   </tr>
   <tr>
@@ -1899,7 +1905,7 @@ Commands implemented in ROM:
 
 + <i><b>CAN INIT</i></b>
 
-  Initialises RC2014 SJA1000 CAN card at IO address 0..255
+  Initialises RC2014 SJA1000 CAN card at IO address 0..255. The firmware has a ring buffer of 16 messages.
 	
 	ACC is the acceptance code and mask
 	
@@ -1945,9 +1951,207 @@ Commands implemented in ROM:
     <td>PARA 2</td>
     <td>ACC code&mask</td>
     <td>array index 0</td>
-		<td>C</td>
+		<td>DE as varptr</td>
   </tr>	
 	</table>
+	
++ <i><b>CAN WR</i></b>
+
+  Writes byte to SJA1000 register
+	
+	<table style="width:100%">
+  <tr>
+    <th></th>
+    <th>Definition</th>
+    <th>BASIC</th>
+    <th>UNAPI</th>		
+  </tr>
+  <tr>
+    <td>Syntax</td>
+    <td>CAN WR</td>
+    <td>_CAN WR GATE(ADDR,REG,DATA)</td>
+		<td>44</td>
+  </tr>
+	<tr>
+    <td>PARA 1</td>
+    <td>IO addr 0...255</td>
+    <td>byte or variable</td>
+		<td>C</td>
+  </tr>
+  <tr>
+    <td>PARA 2</td>
+    <td>register</td>
+    <td>byte or variable</td>
+		<td>D</td>
+  </tr>	
+  <tr>
+    <td>PARA 3</td>
+    <td>byte to write</td>
+    <td>byte or variable</td>
+		<td>E</td>
+  </tr>		
+	</table>	
+	
++ <i><b>CAN RD</i></b>
+
+  Reads byte from SJA1000 register
+	
+	<table style="width:100%">
+  <tr>
+    <th></th>
+    <th>Definition</th>
+    <th>BASIC</th>
+    <th>UNAPI</th>		
+  </tr>
+  <tr>
+    <td>Syntax</td>
+    <td>CAN RD</td>
+    <td>_CAN RD GATE(ADDR,REG,DATA)</td>
+		<td>45/td>
+  </tr>
+	<tr>
+    <td>PARA 1</td>
+    <td>IO addr 0...255</td>
+    <td>byte or variable</td>
+		<td>C</td>
+  </tr>
+  <tr>
+    <td>PARA 2</td>
+    <td>register</td>
+    <td>byte or variable</td>
+		<td>D</td>
+  </tr>	
+  <tr>
+    <td>PARA 3</td>
+    <td>byte to write</td>
+    <td>variable</td>
+		<td>A contains result</td>
+  </tr>		
+	</table>	
+	
++ <i><b>CAN CHECK</i></b>
+
+  Checks for new message in ring buffer (boolean)
+	
+	<table style="width:100%">
+  <tr>
+    <th></th>
+    <th>Definition</th>
+    <th>BASIC</th>
+    <th>UNAPI</th>		
+  </tr>
+  <tr>
+    <td>Syntax</td>
+    <td>CAN CHECK</td>
+    <td>_CAN CHECK(ADDR,RMC)</td>
+		<td>46/td>
+  </tr>
+	<tr>
+    <td>PARA 1</td>
+    <td>IO addr 0...255</td>
+    <td>byte or variable</td>
+		<td>C</td>
+  </tr>
+  <tr>
+    <td>PARA 2</td>
+    <td>1 = new msg</td>
+    <td>variable</td>
+		<td>A contains result</td>
+  </tr>	
+	</table>	
+
++ <i><b>CAN RX</i></b>
+
+  Reads next message from ring buffer
+	
+	<table style="width:100%">
+  <tr>
+    <th></th>
+    <th>Definition</th>
+    <th>BASIC</th>
+    <th>UNAPI</th>		
+  </tr>
+  <tr>
+    <td>Syntax</td>
+    <td>CAN RX</td>
+    <td>_CAN RX(ADDR,DATA)</td>
+		<td>47/td>
+  </tr>
+	<tr>
+    <td>PARA 1</td>
+    <td>IO addr 0...255</td>
+    <td>byte or variable</td>
+		<td>C</td>
+  </tr>
+  <tr>
+    <td>PARA 2</td>
+    <td>New msg (PELICAN 2.0)</td>
+    <td>array len = 13</td>
+		<td>DE as varptr</td>
+  </tr>	
+	</table>
+	
++ <i><b>CAN GET ADDR</i></b>
+
+  Gets interrupt handling address in RAM for XIO function XIO SET ADDR
+	
+	<table style="width:100%">
+  <tr>
+    <th></th>
+    <th>Definition</th>
+    <th>BASIC</th>
+    <th>UNAPI</th>		
+  </tr>
+  <tr>
+    <td>Syntax</td>
+    <td>CAN RX</td>
+    <td>_CAN GET ADDR(ADDR,INTDATA)</td>
+		<td>48/td>
+  </tr>
+	<tr>
+    <td>PARA 1</td>
+    <td>IO addr 0...255</td>
+    <td>byte or variable</td>
+		<td>C</td>
+  </tr>
+  <tr>
+    <td>PARA 2</td>
+    <td>RAM address pointer</td>
+    <td>variable</td>
+		<td>DE as varptr</td>
+  </tr>	
+	</table>	
+	
++ <i><b>CAN TX</i></b>
+
+  Writes message to CAN bus
+	
+	<table style="width:100%">
+  <tr>
+    <th></th>
+    <th>Definition</th>
+    <th>BASIC</th>
+    <th>UNAPI</th>		
+  </tr>
+  <tr>
+    <td>Syntax</td>
+    <td>CAN TX</td>
+    <td>_CAN TX(ADDR,DATA)</td>
+		<td>49/td>
+  </tr>
+	<tr>
+    <td>PARA 1</td>
+    <td>IO addr 0...255</td>
+    <td>byte or variable</td>
+		<td>C</td>
+  </tr>
+  <tr>
+    <td>PARA 2</td>
+    <td>Message (PELICAN 2.0)</td>
+    <td>array len = 13</td>
+		<td>DE as varptr</td>
+  </tr>	
+	</table>	
 
 ## F) RC2014 card with 4x SPI bus up to 2 MHz via ATMEGA8
 

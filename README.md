@@ -1513,7 +1513,7 @@ RC2014 card on backplane
 
 ![RCX schematics](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_8254/pcb/rc2014_8254.png)
 
-#### <b>C.3 Software:</b>
+#### <b>D.3 Software:</b>
 
 The BIOS for the card functions is provided in the RCX slot ROM. It contains the additional BASIC commands and an instance of UNAPI base on the approach of KONAMIMAN. Please have a look at his page to get a deeper impression on how it works.
 
@@ -2007,7 +2007,7 @@ Commands implemented in ROM:
     <td>Syntax</td>
     <td>CAN RD</td>
     <td>_CAN RD GATE(ADDR,REG,DATA)</td>
-		<td>45/td>
+		<td>45</td>
   </tr>
 	<tr>
     <td>PARA 1</td>
@@ -2044,7 +2044,7 @@ Commands implemented in ROM:
     <td>Syntax</td>
     <td>CAN CHECK</td>
     <td>_CAN CHECK(ADDR,RMC)</td>
-		<td>46/td>
+		<td>46</td>
   </tr>
 	<tr>
     <td>PARA 1</td>
@@ -2075,7 +2075,7 @@ Commands implemented in ROM:
     <td>Syntax</td>
     <td>CAN RX</td>
     <td>_CAN RX(ADDR,DATA)</td>
-		<td>47/td>
+		<td>47</td>
   </tr>
 	<tr>
     <td>PARA 1</td>
@@ -2106,7 +2106,7 @@ Commands implemented in ROM:
     <td>Syntax</td>
     <td>CAN RX</td>
     <td>_CAN GET ADDR(ADDR,INTDATA)</td>
-		<td>48/td>
+		<td>48</td>
   </tr>
 	<tr>
     <td>PARA 1</td>
@@ -2137,7 +2137,7 @@ Commands implemented in ROM:
     <td>Syntax</td>
     <td>CAN TX</td>
     <td>_CAN TX(ADDR,DATA)</td>
-		<td>49/td>
+		<td>49</td>
   </tr>
 	<tr>
     <td>PARA 1</td>
@@ -2167,7 +2167,298 @@ RC2014 card on backplane
 
 ![RCX schematics](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_spi/pcb/rc2014_spi.png)
 
-Details coming soon
+#### <b>F.3 Software:</b>
+
+The BIOS for the card functions is provided in the RCX slot ROM. It contains the additional BASIC commands and an instance of UNAPI base on the approach of KONAMIMAN. Please have a look at his page to get a deeper impression on how it works.
+
+Commands implemented in ROM:
+
++ <i><b>SPI INIT</i></b>
+
+  Initialises RC2014 SPI card at IO address 0..255
+
+	<table style="width:100%">
+  <tr>
+    <th></th>
+    <th>Definition</th>
+    <th>BASIC</th>
+    <th>UNAPI</th>		
+  </tr>
+  <tr>
+    <td>Syntax</td>
+    <td>SPI INIT</td>
+    <td>_SPI INIT(ADDR)</td>
+		<td>50</td>
+  </tr>
+	<tr>
+    <td>PARA 1</td>
+    <td>IO addr 0...255</td>
+    <td>byte or variable</td>
+		<td>C</td>
+  </tr>
+	</table>
+	
++ <i><b>SPI WR</i></b>
+
+  Writes byte to RC2014 SPI card
+
+	<table style="width:100%">
+  <tr>
+    <th></th>
+    <th>Definition</th>
+    <th>BASIC</th>
+    <th>UNAPI</th>		
+  </tr>
+  <tr>
+    <td>Syntax</td>
+    <td>SPI WR</td>
+    <td>_SPI WR(ADDR,BUS,DATA)</td>
+		<td>51</td>
+  </tr>
+	<tr>
+    <td>PARA 1</td>
+    <td>IO addr 0...255</td>
+    <td>byte or variable</td>
+		<td>E</td>
+  </tr>
+	<tr>
+    <td>PARA 2</td>
+    <td>SPI BUS 0..3</td>
+    <td>byte or variable</td>
+		<td>C</td>
+  </tr>	
+	<tr>
+    <td>PARA 3</td>
+    <td>Byte to write</td>
+    <td>byte or variable</td>
+		<td>B</td>
+  </tr>		
+	</table>	
+	
++ <i><b>SPI WRB</i></b>
+
+  Writes an array of bytes to RC2014 SPI card
+
+	<table style="width:100%">
+  <tr>
+    <th></th>
+    <th>Definition</th>
+    <th>BASIC</th>
+    <th>UNAPI</th>		
+  </tr>
+  <tr>
+    <td>Syntax</td>
+    <td>SPI WRB</td>
+    <td>_SPI WRB(ADDR,BUS,LEN,DATA)</td>
+		<td>52</td>
+  </tr>
+	<tr>
+    <td>PARA 1</td>
+    <td>IO addr 0...255</td>
+    <td>byte or variable</td>
+		<td>H</td>
+  </tr>
+	<tr>
+    <td>PARA 2</td>
+    <td>SPI BUS 0..3</td>
+    <td>byte or variable</td>
+		<td>C</td>
+  </tr>	
+	<tr>
+    <td>PARA 3</td>
+    <td>Length of array</td>
+    <td>byte or variable</td>
+		<td>B</td>
+  </tr>		
+	<tr>
+    <td>PARA 4</td>
+    <td>Data to write</td>
+    <td>array index 0</td>
+		<td>DE as varptr</td>
+  </tr>		
+	</table>		
+	
++ <i><b>SPI RD</i></b>
+
+  Reads byte from RC2014 SPI card
+
+	<table style="width:100%">
+  <tr>
+    <th></th>
+    <th>Definition</th>
+    <th>BASIC</th>
+    <th>UNAPI</th>		
+  </tr>
+  <tr>
+    <td>Syntax</td>
+    <td>SPI RD</td>
+    <td>_SPI RD(ADDR,BUS,DATA)</td>
+		<td>53</td>
+  </tr>
+	<tr>
+    <td>PARA 1</td>
+    <td>IO addr 0...255</td>
+    <td>byte or variable</td>
+		<td>C</td>
+  </tr>
+	<tr>
+    <td>PARA 2</td>
+    <td>SPI BUS 0..3</td>
+    <td>byte or variable</td>
+		<td>B</td>
+  </tr>	
+	<tr>
+    <td>PARA 3</td>
+    <td>Byte to read</td>
+    <td>variable</td>
+		<td>DE as varptr</td>
+  </tr>		
+	</table>	
+	
++ <i><b>SPI RDB</i></b>
+
+  Reads an array of bytes to RC2014 SPI card
+
+	<table style="width:100%">
+  <tr>
+    <th></th>
+    <th>Definition</th>
+    <th>BASIC</th>
+    <th>UNAPI</th>		
+  </tr>
+  <tr>
+    <td>Syntax</td>
+    <td>SPI WRB</td>
+    <td>_SPI WRB(ADDR,BUS,LEN,DATA)</td>
+		<td>54</td>
+  </tr>
+	<tr>
+    <td>PARA 1</td>
+    <td>IO addr 0...255</td>
+    <td>byte or variable</td>
+		<td>H</td>
+  </tr>
+	<tr>
+    <td>PARA 2</td>
+    <td>SPI BUS 0..3</td>
+    <td>byte or variable</td>
+		<td>C</td>
+  </tr>	
+	<tr>
+    <td>PARA 3</td>
+    <td>Length of array</td>
+    <td>byte or variable</td>
+		<td>B</td>
+  </tr>		
+	<tr>
+    <td>PARA 4</td>
+    <td>Data to read</td>
+    <td>array index 0</td>
+		<td>DE as varptr</td>
+  </tr>		
+	</table>	
+	
++ <i><b>SPI RDH</i></b>
+
+  Reads an array of bytes to RC2014 SPI card after sending a header for register selection.
+	
+	Both data is handled by one arry. LEN_WR signals length of header beginning with index 0 of the array. LEN_RD starts at index LEN_WR for data to read. Be sure to have a suitable definition for the array.
+
+	<table style="width:100%">
+  <tr>
+    <th></th>
+    <th>Definition</th>
+    <th>BASIC</th>
+    <th>UNAPI</th>		
+  </tr>
+  <tr>
+    <td>Syntax</td>
+    <td>SPI RDH</td>
+    <td>_SPI RDH(ADDR,BUS,LEN_WR,LEN_RD,DATA)</td>
+		<td>55</td>
+  </tr>
+	<tr>
+    <td>PARA 1</td>
+    <td>IO addr 0...255</td>
+    <td>byte or variable</td>
+		<td>C</td>
+  </tr>
+	<tr>
+    <td>PARA 2</td>
+    <td>SPI BUS 0..3</td>
+    <td>byte or variable</td>
+		<td>B</td>
+  </tr>	
+	<tr>
+    <td>PARA 3</td>
+    <td>Length of array to write</td>
+    <td>byte or variable</td>
+		<td>H</td>
+  </tr>		
+	<tr>
+    <td>PARA 4</td>
+    <td>Length of array to read</td>
+    <td>byte or variable</td>
+		<td>L</td>
+  </tr>		
+	<tr>
+    <td>PARA 5</td>
+    <td>Data to read</td>
+    <td>array index 0</td>
+		<td>DE as varptr</td>
+  </tr>		
+	</table>	
+
++ <i><b>SPI MODE</i></b>
+
+  Sets MODE of the SPI BUS for each channel. See datasheet of ATMEGA8 for further information
+	
+	MOD:
+	
+	0 = SPI_MODE_0, 1 = SPI_MODE_1, 2 = SPI_MODE_2, 3 = SPI_MODE_3
+	
+	FQZ:
+	
+	0 = 2 MHz, 1 = 1 MHz, 2 = 500 kHz, 3 = 250 kHz	
+	
+	<table style="width:100%">
+  <tr>
+    <th></th>
+    <th>Definition</th>
+    <th>BASIC</th>
+    <th>UNAPI</th>		
+  </tr>
+  <tr>
+    <td>Syntax</td>
+    <td>SPI MODE</td>
+    <td>_SPI MODE(ADDR,BUS,MOD,FQZ)</td>
+		<td>56</td>
+  </tr>
+	<tr>
+    <td>PARA 1</td>
+    <td>IO addr 0...255</td>
+    <td>byte or variable</td>
+		<td>C</td>
+  </tr>
+	<tr>
+    <td>PARA 2</td>
+    <td>SPI BUS 0..3</td>
+    <td>byte or variable</td>
+		<td>B</td>
+  </tr>	
+	<tr>
+    <td>PARA 3</td>
+    <td>Mode</td>
+    <td>byte or variable</td>
+		<td>D</td>
+  </tr>		
+	<tr>
+    <td>PARA 4</td>
+    <td>Bus frequency</td>
+    <td>byte or variable</td>
+		<td>E</td>
+  </tr>		
+	</table>
 
 ## G) RC2014 card with ADS1220 4 channel 24 bit A/D converter via ATMEGA8
 

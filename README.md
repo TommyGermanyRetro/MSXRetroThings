@@ -716,7 +716,7 @@ Commands implemented in ROM:
 | PARA 2 | GATE 0..3 (0..7) | byte or variable | E (D must be 0) |
 | PARA 3 | UNAPI ID Level 2 | -/- | B = 7 |
 
-	+ <i><b>TIMER RESET GATE</i></b>
++ <i><b>TIMER RESET GATE</i></b>
 
   Resets internal gate for TIMER 0..2 if jumper is set
 

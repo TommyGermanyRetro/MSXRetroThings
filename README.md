@@ -5,7 +5,7 @@ When I was a child, my first computer was a <a href="https://www.msx.org/wiki/Ca
 
 Unfortunatelly, I had no real clou to connect the signals to my Z80 PIO in a way that it works so I lost the fun on playing around with the hardware.
 
-Now, 40 years later, I got a <a href="https://www.msx.org/wiki/Spectravideo_SVI-728">SVI 728</a> and a  <a href="https://www.ebay.de/sch/i.html?item=332817640567&rt=nc&_trksid=p4429486.m145687.l2562&_ssn=fractal2000">memory mapper / sd card cartridge</a> from the bay and also a <a href="https://www.8bits4ever.net/product-page/sxe-msx2-fpga-computer">SX-E MSX2+</a> and started over. 
+Now, 40 years later, I got a <a href="https://www.msx.org/wiki/Spectravideo_SVI-728">SVI 728</a> and a  <a href="https://www.ebay.de/sch/i.html?item=332817640567&rt=nc&_trksid=p4429486.m145687.l2562&_ssn=fractal2000">memory mapper / sd card cartridge</a> from the bay and also a <a href="https://www.8bits4ever.net/product-page/sxe-msx2-fpga-computer">SX-E MSX2+</a> and started over.
 
 I had a lot of chips in my basket like Z80 PIO, 8255, 8254, SJA1000, PCF8584 etc. The results are several MSX cartridges, ROM code and <a href="https://rc2014.co.uk/">RC2014 cards</a> which I would like to show you here as retro and nerdy stuff for own developments or just for gambling.
 
@@ -29,23 +29,23 @@ Thomas
 
 XIO cartridge used in a SX-E MSX2+ with adapter to RC2014 backplane
 
-![XIO system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/xio/pcb/msx_io_expander_system.png)
+![XIO system](xio/pcb/msx_io_expander_system.png)
 
-XIO cartridge 
+XIO cartridge
 
-![XIO cartridge](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/xio/pcb/msx_io_expander_card.png)
+![XIO cartridge](xio/pcb/msx_io_expander_card.png)
 
 Boot message from BIOS ROM
 
-![XIO boot](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/xio/pcb/msx_io_expander_boot.png)
+![XIO boot](xio/pcb/msx_io_expander_boot.png)
 
 #### <b>1.3 Hardware:</b>
 
 The schematics of XIO is strictly build up in non smd method to enable people without special tools to rebuild the pcb. But it uses GAL chips for the switched IO decoder, the glue decoder for controll signals and the address decoder.
 
-![XIO schematics](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/xio/pcb/msx_io_expander.png)
+![XIO schematics](xio/pcb/msx_io_expander.png)
 
-![XIO system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_adapter/rc2014_adapter.png)
+![XIO system](rcx/rc2014_adapter/pcb/rc2014_adapter.png)
 
 The XIO OUT/IN functions work without installing the XIO card. If the XIO card is installed correctly, the green LED shows that alle 16 interrupt channels are ready to use. A blinking yellow LED shows activities to the switched IO addresses. It signals, that the switched IO is selected via &H40 of the original MSX IO bus. The red LED shows a working supply.
 
@@ -58,284 +58,99 @@ Commands implemented in ROM:
 + <i><b>XIO ?</i></b>
 
   Open the help information. It works independently from XIO INIT
-	
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>XIO ?</td>
-    <td>_XIO ?</td>
-		<td>1</td>
-  </tr>
-	</table>
-  
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | XIO ? | _XIO ? | 1 |
+
 + <i><b>XIO OUT</i></b>
 
   Send byte to swithched IO port. It works independently from XIO INIT
-	
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>XIO OUT</td>
-    <td>_XIO OUT(ADDR,DATA)</td>
-		<td>2</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>IO addr 0...255</td>
-    <td>byte or variable</td>
-		<td>C</td>
-  </tr>
-	<tr>
-    <td>PARA 2</td>
-    <td>IO data 0...255</td>
-    <td>byte or variable</td>
-		<td>B</td>
-  </tr>
-	</table>
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | XIO OUT | _XIO OUT(ADDR,DATA) | 2 |
+| PARA 1 | IO addr 0...255 | byte or variable | C |
+| PARA 2 | IO data 0...255 | byte or variable | B |
 
 + <i><b>XIO INP</i></b>
 
   Get byte from switched IO port. It works independently from XIO INIT
-	
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>XIO INP</td>
-    <td>_XIO INP(ADDR,DATA)</td>
-		<td>3</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>IO addr 0...255</td>
-    <td>byte or variable</td>
-		<td>C</td>
-  </tr>
-	<tr>
-    <td>PARA 2</td>
-    <td>IO data 0...255</td>
-    <td>variable</td>
-		<td>DE as varptr</td>
-  </tr>
-	</table>
-  
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | XIO INP | _XIO INP(ADDR,DATA) | 3 |
+| PARA 1 | IO addr 0...255 | byte or variable | C |
+| PARA 2 | IO data 0...255 | variable | DE as varptr |
+
 + <i><b>XIO INIT</i></b>
 
   Install XIO card. The variable handed over as parameter contains the status of all 16 interrupt channels.
-	
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>XIO INIT</td>
-    <td>_XIO INIT(CHANNEL)</td>
-		<td>4</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>status</td>
-    <td>variable</td>
-		<td>DE as varptr</td>
-  </tr>
-	<tr>
-    <td>PARA 2</td>
-    <td>Working area in RAM</td>
-    <td>automatic by BIOS</td>
-		<td>HL</td>
-  </tr>
-	</table>	
- 
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | XIO INIT | _XIO INIT(CHANNEL) | 4 |
+| PARA 1 | status | variable | DE as varptr |
+| PARA 2 | Working area in RAM | automatic by BIOS | HL |
+
 + <i><b>XIO ISINIT</i></b>
 
   Check if XIO is installed
-	
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>XIO ISINIT</td>
-    <td>_XIO ISINIT(ISI)</td>
-		<td>5</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>0 = not installed, 1 = installed</td>
-    <td>variable</td>
-		<td>DE as varptr</td>
-  </tr>
-	</table>	
-  
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | XIO ISINIT | _XIO ISINIT(ISI) | 5 |
+| PARA 1 | 0 = not installed, 1 = installed | variable | DE as varptr |
+
 + <i><b>XIO DEINIT</i></b>
 
   Uninstall XIO card
-	
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>XIO DEINIT</td>
-    <td>_XIO DEINIT</td>
-		<td>6</td>
-  </tr>
-	</table>	
-  
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | XIO DEINIT | _XIO DEINIT | 6 |
+
 + <i><b>XIO SET ADDR</i></b>
 
   Set address of interrupt routine per channel
-	
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>XIO SET ADDR</td>
-    <td>_XIO SET ADDR(CHANNEL,ADDR)</td>
-		<td>7</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>channel</td>
-    <td>byte or variable</td>
-		<td>B</td>
-  </tr>
-	<tr>
-    <td>PARA 2</td>
-    <td>addr</td>
-    <td>word or variable</td>
-		<td>DE</td>
-  </tr>
-	<tr>
-    <td>PARA 3</td>
-    <td>slot</td>
-    <td>automatic by BIOS</td>
-		<td>C</td>
-  </tr>	
-	</table>		
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | XIO SET ADDR | _XIO SET ADDR(CHANNEL,ADDR) | 7 |
+| PARA 1 | channel | byte or variable | B |
+| PARA 2 | addr | word or variable | DE |
+| PARA 3 | slot | automatic by BIOS | C |
 
 + <i><b>XIO SET MASK</i></b>
 
   Enable or disable interrupt channel. Ch0 = 1, Ch1 = 2, Ch3 = 4, ... Ch15 = 128.
-	
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>XIO SET MASK</td>
-    <td>_XIO SET MASK(MASK)</td>
-		<td>8</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>Bit Chx: 0 = disabled, 1 = enabled</td>
-    <td>word or variable</td>
-		<td>DE</td>
-  </tr>
-	</table>		
-  
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | XIO SET MASK | _XIO SET MASK(MASK) | 8 |
+| PARA 1 | Bit Chx: 0 = disabled, 1 = enabled | word or variable | DE |
+
 + <i><b>XIO GET ADDR</i></b>
 
   Get address of interrupt address of selected channel
-	
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>XIO GET ADDR</td>
-    <td>_XIO GET ADDR(CHANNEL,ADDR)</td>
-		<td>9</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>channel</td>
-    <td>byte or variable</td>
-		<td>B</td>
-  </tr>
-	<tr>
-    <td>PARA 2</td>
-    <td>addr</td>
-    <td>variable</td>
-		<td>DE as varptr</td>
-  </tr>
-	<tr>
-    <td>PARA 3</td>
-    <td>slot</td>
-    <td>automatic by BIOS</td>
-		<td>C</td>
-  </tr>	
-	</table>	
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | XIO GET ADDR | _XIO GET ADDR(CHANNEL,ADDR) | 9 |
+| PARA 1 | channel | byte or variable | B |
+| PARA 2 | addr | variable | DE as varptr |
+| PARA 3 | slot | automatic by BIOS | C |
 
 + <i><b>XIO GET MASK</i></b>
 
   Get current mask of enabled/disabled interrupt channels
-	
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>XIO GET MASK</td>
-    <td>_XIO GET MASK(MASK)</td>
-		<td>10</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>Bit Chx: 0 = disabled, 1 = enabled</td>
-    <td>variable</td>
-		<td>DE as varptr</td>
-  </tr>
-	</table>	
 
-	
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | XIO GET MASK | _XIO GET MASK(MASK) | 10 |
+| PARA 1 | Bit Chx: 0 = disabled, 1 = enabled | variable | DE as varptr |
+
+
 ## 2. MSXRetroThings - The RCX ROM cartridge and RC2014 cards
 
 #### <b>2.1 The RCX ROM cartridge contains these functions:</b>
@@ -368,15 +183,15 @@ The schematics of RC2014 cards are strictly build up in non smd method to enable
 
 Slot ROM
 
-![RCX system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_rom/pcb/msx_rom_slot.png)
+![RCX system](rcx/rc2014_rom+ram/pcb/msx_rom_slot.png)
 
 Boot message from BIOS ROM
 
-![RCX boot](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_rom/pcb/rcx_boot.png)
+![RCX boot](rcx/rc2014_rom+ram/pcb/rcx_boot.png)
 
 #### <b>2.3 Hardware:</b>
 
-![RCX schematics](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_rom/pcb/msx_rom.png)
+![RCX schematics](rcx/rc2014_rom+ram/pcb/msx_rom.png)
 
 #### <b>2.4 Software:</b>
 
@@ -387,115 +202,45 @@ Commands implemented in ROM for steering and controlling of the cards functions:
 + <i><b>RCX ?</i></b>
 
   Open the help information. It works independently from RCX INIT
-	
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>RCX ?</td>
-    <td>_RCX ?</td>
-		<td>1</td>
-  </tr>
-	</table>
- 
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | RCX ? | _RCX ? | 1 |
+
 + <i><b>RCX INIT</i></b>
 
   Install RCX card. Clears table for 16 RC2014 cards and allocates RAM
-	
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>RCX INIT</td>
-    <td>_RCX INIT</td>
-		<td>2</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>Working area in RAM</td>
-    <td>automatic by BIOS</td>
-		<td>HL</td>
-  </tr>
-	</table>	
- 
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | RCX INIT | _RCX INIT | 2 |
+| PARA 1 | Working area in RAM | automatic by BIOS | HL |
+
 + <i><b>RCX ISINIT</i></b>
 
   Check if RCX is installed
-	
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>RCX ISINIT</td>
-    <td>_RCX ISINIT(ISI)</td>
-		<td>3</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>0 = not installed, 1 = installed</td>
-    <td>variable</td>
-		<td>DE as varptr</td>
-  </tr>
-	</table>	
-  
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | RCX ISINIT | _RCX ISINIT(ISI) | 3 |
+| PARA 1 | 0 = not installed, 1 = installed | variable | DE as varptr |
+
 + <i><b>RCX DEINIT</i></b>
 
   Uninstall RCX card
-	
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>RCX DEINIT</td>
-    <td>_RCX DEINIT</td>
-		<td>4</td>
-  </tr>
-	</table>	
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | RCX DEINIT | _RCX DEINIT | 4 |
 
 + <i><b>RCX TABLE</i></b>
 
   Returns the beginning of the RCX table in RAM for card infos
-	
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>RCX TABLE</td>
-    <td>_RCX TABLE(ADDR)</td>
-		<td>5</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>ADDR of RCX table</td>
-    <td>variable</td>
-		<td>DE as varptr</td>
-  </tr>
-	</table>
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | RCX TABLE | _RCX TABLE(ADDR) | 5 |
+| PARA 1 | ADDR of RCX table | variable | DE as varptr |
 
 ## A) RC2014 card with PCF8584 I2C Controller (3 ports via Seeed) and PCF8583 battery buffered RTC:
 
@@ -506,359 +251,129 @@ Up to 16 cards of this type are possible.
 
 RC2014 card on backplane
 
-![RCX system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_i2c_base/pcb/msx_rc2014_i2c_base.png)
+![RCX system](rcx/rc2014_card_a/pcb/msx_rc2014_i2c_base.png)
 
 RC2014 card on backplane with I2C LCD from Seeed
 
-![RCX system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_i2c_base/pcb/msx_rc2014_base_seeed_lcd.png)
+![RCX system](rcx/rc2014_card_a/pcb/msx_rc2014_base_seeed_lcd.png)
 
 RC2014 card on backplane contacted via BASIC to get TIME and DATE
 
-![RCX system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_i2c_base/pcb/msx_rc2014_i2c_rtc_prompt.png)
+![RCX system](rcx/rc2014_card_a/pcb/msx_rc2014_i2c_rtc_prompt.png)
 
 #### <b>A.2 Hardware:</b>
 
-![RCX schematics](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_i2c_base/pcb/rc2014_i2c_base.png)
+![RCX schematics](rcx/rc2014_card_a/pcb/rc2014_i2c_base.png)
 
 #### <b>A.3 Software:</b>
 
-The BIOS for the card functions is provided in the RCX slot ROM. It contains the additional BASIC commands and an instance of UNAPI base on the approach of KONAMIMAN. Please have a look at his page to get a deeper impression on how it works.
+The BIOS for the card functions is provided in the RCX slot ROM. It contains the additional BASIC commands (`I2C INIT/WR/WRB/RD/RDB/RESET`, `SET/GET TIME/DATE`) and an instance of UNAPI based on the approach of KONAMIMAN, so the same functions are callable directly via UNAPI/EXTBIOS from a `.COM` program without the BASIC interpreter. Test software exists both as interactive BASIC programs and as `.COM` tools, including a variant that keeps the SEED I2C LCD updated on every PIC interrupt and one that stays resident in memory (MemMan TSR) to keep updating the display in the background. Please have a look at his page to get a deeper impression on how it works.
 
 Commands implemented in ROM:
 
 + <i><b>I2C INIT</i></b>
 
   Initialises RC2014 I2C base card at IO address 0..255
-	
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>I2C INIT</td>
-    <td>_I2C INIT(ADDR)</td>
-		<td>6</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>IO addr 0...255</td>
-    <td>byte or variable</td>
-		<td>C</td>
-  </tr>
-	</table>
-	
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | I2C INIT | _I2C INIT(ADDR) | 6 |
+| PARA 1 | IO addr 0...255 | byte or variable | C |
+
 + <i><b>I2C WR</i></b>
 
   Sends a byte via I2C bus to special chip
-	
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>I2C WR</td>
-    <td>_I2C WR(BUS,CHIP,DATA)</td>
-		<td>7</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>IO bus addr 0...255</td>
-    <td>byte or variable</td>
-		<td>E</td>
-  </tr>
-	<tr>
-    <td>PARA 2</td>
-    <td>I2C addr 0...254</td>
-    <td>byte or variable</td>
-		<td>C</td>
-  </tr>
-		<tr>
-    <td>PARA 3</td>
-    <td>Data</td>
-    <td>byte or variable</td>
-		<td>B</td>
-  </tr>
-	</table>	
-	
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | I2C WR | _I2C WR(BUS,CHIP,DATA) | 7 |
+| PARA 1 | IO bus addr 0...255 | byte or variable | E |
+| PARA 2 | I2C addr 0...254 | byte or variable | C |
+| PARA 3 | Data | byte or variable | B |
+
 + <i><b>I2C WRB</i></b>
 
   Sends a block of bytes via I2C bus to special chip
-	
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>I2C WRB</td>
-    <td>_I2C WRB(BUS,CHIP,LEN,DATA)</td>
-		<td>8</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>IO bus addr 0...255</td>
-    <td>byte or variable</td>
-		<td>H</td>
-  </tr>
-	<tr>
-    <td>PARA 2</td>
-    <td>I2C addr 0...254</td>
-    <td>byte or variable</td>
-		<td>C</td>
-  </tr>
-	<tr>
-    <td>PARA 3</td>
-    <td>Length</td>
-    <td>byte or variable</td>
-		<td>B</td>
-  </tr>
-	<tr>
-    <td>PARA 4</td>
-    <td>Data</td>
-    <td>array index 0</td>
-		<td>DE as varptr</td>
-  </tr>	
-	</table>	
-	
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | I2C WRB | _I2C WRB(BUS,CHIP,LEN,DATA) | 8 |
+| PARA 1 | IO bus addr 0...255 | byte or variable | H |
+| PARA 2 | I2C addr 0...254 | byte or variable | C |
+| PARA 3 | Length | byte or variable | B |
+| PARA 4 | Data | array index 0 | DE as varptr |
+
 + <i><b>I2C RD</i></b>
 
   Reads a bytes via I2C bus from special chip
-	
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>I2C RD</td>
-    <td>_I2C RD(BUS,CHIP,DATA)</td>
-		<td>9</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>IO bus addr 0...255</td>
-    <td>byte or variable</td>
-		<td>H</td>
-  </tr>
-	<tr>
-    <td>PARA 2</td>
-    <td>I2C addr 0...254</td>
-    <td>byte or variable</td>
-		<td>C</td>
-  </tr>
-	<tr>
-    <td>PARA 3</td>
-    <td>Data</td>
-    <td>variable</td>
-		<td>DE as varptr</td>
-  </tr>	
-	</table>	
-	
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | I2C RD | _I2C RD(BUS,CHIP,DATA) | 9 |
+| PARA 1 | IO bus addr 0...255 | byte or variable | C |
+| PARA 2 | I2C addr 0...254 | byte or variable | B |
+| PARA 3 | Data | variable | DE as varptr |
+
 + <i><b>I2C RDB</i></b>
 
   Reads a block of bytes via I2C bus from special chip
-	
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>I2C RDB</td>
-    <td>_I2C RDB(BUS,CHIP,LEN,DATA)</td>
-		<td>10</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>IO bus addr 0...255</td>
-    <td>byte or variable</td>
-		<td>H</td>
-  </tr>
-	<tr>
-    <td>PARA 2</td>
-    <td>I2C addr 0...254</td>
-    <td>byte or variable</td>
-		<td>C</td>
-  </tr>
-	<tr>
-    <td>PARA 3</td>
-    <td>Length</td>
-    <td>byte or variable</td>
-		<td>B</td>
-  </tr>
-	<tr>
-    <td>PARA 4</td>
-    <td>Data</td>
-    <td>array index 0</td>
-		<td>DE as varptr</td>
-  </tr>	
-	</table>	
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | I2C RDB | _I2C RDB(BUS,CHIP,LEN,DATA) | 10 |
+| PARA 1 | IO bus addr 0...255 | byte or variable | H |
+| PARA 2 | I2C addr 0...254 | byte or variable | C |
+| PARA 3 | Length | byte or variable | B |
+| PARA 4 | Data | array index 0 | DE as varptr |
 
 + <i><b>I2C RESET</i></b>
 
   Resets the I2C bus at IO address 0..255
-	
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>I2C RESET</td>
-    <td>_I2C RESET(ADDR)</td>
-		<td>11</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>IO addr 0...255</td>
-    <td>byte or variable</td>
-		<td>C</td>
-  </tr>
-	</table>	
-	
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | I2C RESET | _I2C RESET(ADDR) | 11 |
+| PARA 1 | IO addr 0...255 | byte or variable | C |
+
 + <i><b>SET TIME</i></b>
 
   Sets the TIME for on board PCF8583
-	
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>SET TIME</td>
-    <td>_SET TIME RD(BUS,TIME)</td>
-		<td>12</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>IO bus addr 0...255</td>
-    <td>byte or variable</td>
-		<td>C</td>
-  </tr>
-	<tr>
-    <td>PARA 2</td>
-    <td>TIME</td>
-    <td>String variable len = 8</td>
-		<td>DE as varptr</td>
-  </tr>
-	</table>	
-	
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | SET TIME | _SET TIME RD(BUS,TIME) | 12 |
+| PARA 1 | IO bus addr 0...255 | byte or variable | C |
+| PARA 2 | TIME | String variable len = 8 | DE as varptr |
+
 + <i><b>GET TIME</i></b>
 
   Gets the TIME from on board PCF8583
-	
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>GET TIME</td>
-    <td>_GET TIME RD(BUS,TIME)</td>
-		<td>13</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>IO bus addr 0...255</td>
-    <td>byte or variable</td>
-		<td>C</td>
-  </tr>
-	<tr>
-    <td>PARA 2</td>
-    <td>TIME</td>
-    <td>String variable len = 8</td>
-		<td>DE as varptr</td>
-  </tr>
-	</table>	
-	
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | GET TIME | _GET TIME RD(BUS,TIME) | 13 |
+| PARA 1 | IO bus addr 0...255 | byte or variable | C |
+| PARA 2 | TIME | String variable len = 8 | DE as varptr |
+
 + <i><b>SET DATE</i></b>
 
   Sets the DATE for on board PCF8583
-	
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>SET DATE</td>
-    <td>_SET DATE RD(BUS,DATE)</td>
-		<td>14</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>IO bus addr 0...255</td>
-    <td>byte or variable</td>
-		<td>C</td>
-  </tr>
-	<tr>
-    <td>PARA 2</td>
-    <td>DATE</td>
-    <td>String variable len = 8</td>
-		<td>DE as varptr</td>
-  </tr>
-	</table>	
-	
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | SET DATE | _SET DATE RD(BUS,DATE) | 14 |
+| PARA 1 | IO bus addr 0...255 | byte or variable | C |
+| PARA 2 | DATE | String variable len = 8 | DE as varptr |
+
 + <i><b>GET DATE</i></b>
 
   Gets the DATE from on board PCF8583
-	
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>GET DATE</td>
-    <td>_GET DATE RD(BUS,DATE)</td>
-		<td>15</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>IO bus addr 0...255</td>
-    <td>byte or variable</td>
-		<td>C</td>
-  </tr>
-	<tr>
-    <td>PARA 2</td>
-    <td>DATE</td>
-    <td>String variable len = 8</td>
-		<td>DE as varptr</td>
-  </tr>
-	</table>	
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | GET DATE | _GET DATE RD(BUS,DATE) | 15 |
+| PARA 1 | IO bus addr 0...255 | byte or variable | C |
+| PARA 2 | DATE | String variable len = 8 | DE as varptr |
 
 ## B) RC2014 card SC103 with Z80 PIO
 
@@ -868,7 +383,7 @@ The ROM of RCX contains BASIC and UNAPI commands to steer SC103 from original RC
 
 RC2014 card on backplane
 
-![RCX system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_sc103/rc2014_sc103_board.png)
+![RCX system](rcx/rc2014_card_b/pcb/rc2014_sc103_board.png)
 
 #### <b>B.2 Hardware:</b>
 
@@ -876,628 +391,211 @@ Please visit RC2014 homepage for further information
 
 #### <b>B.3 Software:</b>
 
-The BIOS for the card functions is provided in the RCX slot ROM. It contains the additional BASIC commands and an instance of UNAPI base on the approach of KONAMIMAN. Please have a look at his page to get a deeper impression on how it works.
+The BIOS for the card functions is provided in the RCX slot ROM. It contains the additional BASIC commands (`PIO INIT`, `PIO A/B RD/WR`, `PIO A/B CTRL`) and an instance of UNAPI based on the approach of KONAMIMAN, so the same functions are callable directly via UNAPI/EXTBIOS from a `.COM` program without the BASIC interpreter. A second test program drives Port B in the Z80 PIO's own IM2 interrupt mode, with a small Z80 machine code service routine registered through `XIO SET ADDR` that reports which channel fired. Please have a look at his page to get a deeper impression on how it works.
 
 Commands implemented in ROM:
 
 + <i><b>PIO INIT</i></b>
 
   Initialises RC2014 PIO card SC103 at IO address 0..255
-	
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>PIO INIT</td>
-    <td>_PIO INIT(ADDR)</td>
-		<td>16</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>IO addr 0...255</td>
-    <td>byte or variable</td>
-		<td>C</td>
-  </tr>
-	</table>
-	
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | PIO INIT | _PIO INIT(ADDR) | 16 |
+| PARA 1 | IO addr 0...255 | byte or variable | C |
+
 + <i><b>PIO A RD</i></b>
 
   Reads byte from RC2014 PIO card SC103 port A
-	
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>PIO A RD</td>
-    <td>_PIO A RD(ADDR,VALUE)</td>
-		<td>17</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>IO addr 0...255</td>
-    <td>byte or variable</td>
-		<td>C</td>
-  </tr>
-  <tr>
-    <td>PARA 2</td>
-    <td>Byte to read</td>
-    <td>variable</td>
-		<td>DE as varptr</td>
-  </tr>	
-  <tr>
-    <td>PARA 3</td>
-    <td>UNAPI ID Level 2</td>
-    <td>-/-</td>
-		<td>B = 0</td>
-  </tr>		
-	</table>	
-	
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | PIO A RD | _PIO A RD(ADDR,VALUE) | 17 |
+| PARA 1 | IO addr 0...255 | byte or variable | C |
+| PARA 2 | Byte to read | variable | DE as varptr |
+| PARA 3 | UNAPI ID Level 2 | -/- | B = 0 |
+
 + <i><b>PIO A WR</i></b>
 
   Writes byte to RC2014 PIO card SC103 port A
-	
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>PIO A WR</td>
-    <td>_PIO A WR(ADDR,VALUE)</td>
-		<td>18</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>IO addr 0...255</td>
-    <td>byte or variable</td>
-		<td>C</td>
-  </tr>
-  <tr>
-    <td>PARA 2</td>
-    <td>Byte to write</td>
-    <td>byte or variable</td>
-		<td>D</td>
-  </tr>	
-  <tr>
-    <td>PARA 3</td>
-    <td>UNAPI ID Level 2</td>
-    <td>-/-</td>
-		<td>B = 1</td>
-  </tr>		
-	</table>	
-	
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | PIO A WR | _PIO A WR(ADDR,VALUE) | 18 |
+| PARA 1 | IO addr 0...255 | byte or variable | C |
+| PARA 2 | Byte to write | byte or variable | D |
+| PARA 3 | UNAPI ID Level 2 | -/- | B = 1 |
+
 + <i><b>PIO B RD</i></b>
 
   Reads byte from RC2014 PIO card SC103 port B
-	
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>PIO B RD</td>
-    <td>_PIO B RD(ADDR,VALUE)</td>
-		<td>19</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>IO addr 0...255</td>
-    <td>byte or variable</td>
-		<td>C</td>
-  </tr>
-  <tr>
-    <td>PARA 2</td>
-    <td>Byte to read</td>
-    <td>variable</td>
-		<td>DE as varptr</td>
-  </tr>	
-  <tr>
-    <td>PARA 3</td>
-    <td>UNAPI ID Level 2</td>
-    <td>-/-</td>
-		<td>B = 2</td>
-  </tr>		
-	</table>	
-	
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | PIO B RD | _PIO B RD(ADDR,VALUE) | 19 |
+| PARA 1 | IO addr 0...255 | byte or variable | C |
+| PARA 2 | Byte to read | variable | DE as varptr |
+| PARA 3 | UNAPI ID Level 2 | -/- | B = 2 |
+
 + <i><b>PIO B WR</i></b>
 
   Writes byte to RC2014 PIO card SC103 port B
-	
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>PIO B WR</td>
-    <td>_PIO B WR(ADDR,VALUE)</td>
-		<td>20</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>IO addr 0...255</td>
-    <td>byte or variable</td>
-		<td>C</td>
-  </tr>
-  <tr>
-    <td>PARA 2</td>
-    <td>Byte to write</td>
-    <td>byte or variable</td>
-		<td>D</td>
-  </tr>	
-  <tr>
-    <td>PARA 3</td>
-    <td>UNAPI ID Level 2</td>
-    <td>-/-</td>
-		<td>B = 3</td>
-  </tr>		
-	</table>
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | PIO B WR | _PIO B WR(ADDR,VALUE) | 20 |
+| PARA 1 | IO addr 0...255 | byte or variable | C |
+| PARA 2 | Byte to write | byte or variable | D |
+| PARA 3 | UNAPI ID Level 2 | -/- | B = 3 |
 
 + <i><b>PIO A CTRL</i></b>
 
   Writes byte to RC2014 PIO card SC103 port A ctrl register
-	
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>PIO A CTRL</td>
-    <td>_PIO A CTRL(ADDR,VALUE)</td>
-		<td>21</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>IO addr 0...255</td>
-    <td>byte or variable</td>
-		<td>C</td>
-  </tr>
-  <tr>
-    <td>PARA 2</td>
-    <td>Byte to write</td>
-    <td>byte or variable</td>
-		<td>D</td>
-  </tr>	
-  <tr>
-    <td>PARA 3</td>
-    <td>UNAPI ID Level 2</td>
-    <td>-/-</td>
-		<td>B = 4</td>
-  </tr>		
-	</table>
-	
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | PIO A CTRL | _PIO A CTRL(ADDR,VALUE) | 21 |
+| PARA 1 | IO addr 0...255 | byte or variable | C |
+| PARA 2 | Byte to write | byte or variable | D |
+| PARA 3 | UNAPI ID Level 2 | -/- | B = 4 |
+
 + <i><b>PIO B CTRL</i></b>
 
   Writes byte to RC2014 PIO card SC103 port B ctrl register
-	
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>PIO B CTRL</td>
-    <td>_PIO B CTRL(ADDR,VALUE)</td>
-		<td>22</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>IO addr 0...255</td>
-    <td>byte or variable</td>
-		<td>C</td>
-  </tr>
-  <tr>
-    <td>PARA 2</td>
-    <td>Byte to write</td>
-    <td>byte or variable</td>
-		<td>D</td>
-  </tr>	
-  <tr>
-    <td>PARA 3</td>
-    <td>UNAPI ID Level 2</td>
-    <td>-/-</td>
-		<td>B = 5</td>
-  </tr>		
-	</table>	
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | PIO B CTRL | _PIO B CTRL(ADDR,VALUE) | 22 |
+| PARA 1 | IO addr 0...255 | byte or variable | C |
+| PARA 2 | Byte to write | byte or variable | D |
+| PARA 3 | UNAPI ID Level 2 | -/- | B = 5 |
 
 ## C) RC2014 card with 8255A PIO
 
-RC2014 card with a 8255 PIO. Up to 16 cards are possible. The interrupt pins of PORT C can be assigned to one of the XIO PIC interrupt channels. 
+RC2014 card with a 8255 PIO. Up to 16 cards are possible. The interrupt pins of PORT C can be assigned to one of the XIO PIC interrupt channels.
 
 #### <b>C.1 Impressions:</b>
 
 RC2014 card on backplane
 
-![RCX system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_8255/pcb/rc2014_8255_board.png)
+![RCX system](rcx/rc2014_card_c/pcb/rc2014_8255_board.png)
 
 #### <b>C.2 Hardware:</b>
 
-![RCX schematics](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_8255/pcb/rc2014_8255.png)
+![RCX schematics](rcx/rc2014_card_c/pcb/rc2014_8255.png)
 
 #### <b>C.3 Software:</b>
 
-The BIOS for the card functions is provided in the RCX slot ROM. It contains the additional BASIC commands and an instance of UNAPI base on the approach of KONAMIMAN. Please have a look at his page to get a deeper impression on how it works.
+The BIOS for the card functions is provided in the RCX slot ROM. It contains the additional BASIC commands (`PPI INIT`, `PPI A/B/C RD/WR`, `PPI CTRL`, `PPI SET/RESET`) and an instance of UNAPI based on the approach of KONAMIMAN, so the same functions are callable directly via UNAPI/EXTBIOS from a `.COM` program without the BASIC interpreter. A second test program runs Port B in Mode 1 (strobed input), where the 82C55 itself raises `INTR B` on PC0 - reported through XIO's standard interrupt handler, no custom service routine needed. Please have a look at his page to get a deeper impression on how it works.
 
 Commands implemented in ROM:
 
 + <i><b>PPI INIT</i></b>
 
   Initialises RC2014 PIO card with 8255A at IO address 0..255
-	
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>PPI INIT</td>
-    <td>_PPI INIT(ADDR)</td>
-		<td>23</td>
-  </tr>
-	</table>
-	
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | PPI INIT | _PPI INIT(ADDR) | 23 |
+
 + <i><b>PPI A RD</i></b>
 
   Reads byte from RC2014 PIO card with 8255A port A
-	
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>PPI A RD</td>
-    <td>_PPI A RD(ADDR,VALUE)</td>
-		<td>24</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>IO addr 0...255</td>
-    <td>byte or variable</td>
-		<td>C</td>
-  </tr>
-  <tr>
-    <td>PARA 2</td>
-    <td>Byte to read</td>
-    <td>variable</td>
-		<td>DE as varptr</td>
-  </tr>	
-  <tr>
-    <td>PARA 3</td>
-    <td>UNAPI ID Level 2</td>
-    <td>-/-</td>
-		<td>B = 0</td>
-  </tr>		
-	</table>	
-	
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | PPI A RD | _PPI A RD(ADDR,VALUE) | 24 |
+| PARA 1 | IO addr 0...255 | byte or variable | C |
+| PARA 2 | Byte to read | variable | DE as varptr |
+| PARA 3 | UNAPI ID Level 2 | -/- | B = 0 |
+
 + <i><b>PPI A WR</i></b>
 
   Writes byte to RC2014 PIO card with 8255A port A
-	
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>PPI A WR</td>
-    <td>_PPI A WR(ADDR,VALUE)</td>
-		<td>25</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>IO addr 0...255</td>
-    <td>byte or variable</td>
-		<td>C</td>
-  </tr>
-  <tr>
-    <td>PARA 2</td>
-    <td>Byte to write</td>
-    <td>byte or variable</td>
-		<td>D</td>
-  </tr>	
-  <tr>
-    <td>PARA 3</td>
-    <td>UNAPI ID Level 2</td>
-    <td>-/-</td>
-		<td>B = 1</td>
-  </tr>		
-	</table>	
-	
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | PPI A WR | _PPI A WR(ADDR,VALUE) | 25 |
+| PARA 1 | IO addr 0...255 | byte or variable | C |
+| PARA 2 | Byte to write | byte or variable | D |
+| PARA 3 | UNAPI ID Level 2 | -/- | B = 1 |
+
 + <i><b>PPI B RD</i></b>
 
   Reads byte from RC2014 PIO card with 8255A port B
-	
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>PPI B RD</td>
-    <td>_PPI B RD(ADDR,VALUE)</td>
-		<td>26</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>IO addr 0...255</td>
-    <td>byte or variable</td>
-		<td>C</td>
-  </tr>
-  <tr>
-    <td>PARA 2</td>
-    <td>Byte to read</td>
-    <td>variable</td>
-		<td>DE as varptr</td>
-  </tr>	
-  <tr>
-    <td>PARA 3</td>
-    <td>UNAPI ID Level 2</td>
-    <td>-/-</td>
-		<td>B = 2</td>
-  </tr>		
-	</table>	
-	
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | PPI B RD | _PPI B RD(ADDR,VALUE) | 26 |
+| PARA 1 | IO addr 0...255 | byte or variable | C |
+| PARA 2 | Byte to read | variable | DE as varptr |
+| PARA 3 | UNAPI ID Level 2 | -/- | B = 2 |
+
 + <i><b>PPI B WR</i></b>
 
   Writes byte to RC2014 PIO card with 8255A port B
-	
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>PPI B WR</td>
-    <td>_PPI B WR(ADDR,VALUE)</td>
-		<td>27</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>IO addr 0...255</td>
-    <td>byte or variable</td>
-		<td>C</td>
-  </tr>
-  <tr>
-    <td>PARA 2</td>
-    <td>Byte to write</td>
-    <td>byte or variable</td>
-		<td>D</td>
-  </tr>	
-  <tr>
-    <td>PARA 3</td>
-    <td>UNAPI ID Level 2</td>
-    <td>-/-</td>
-		<td>B = 3</td>
-  </tr>		
-	</table>
-	
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | PPI B WR | _PPI B WR(ADDR,VALUE) | 27 |
+| PARA 1 | IO addr 0...255 | byte or variable | C |
+| PARA 2 | Byte to write | byte or variable | D |
+| PARA 3 | UNAPI ID Level 2 | -/- | B = 3 |
+
 + <i><b>PPI C RD</i></b>
 
   Reads byte from RC2014 PIO card with 8255A port C
-	
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>PPI C RD</td>
-    <td>_PPI C RD(ADDR,VALUE)</td>
-		<td>28</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>IO addr 0...255</td>
-    <td>byte or variable</td>
-		<td>C</td>
-  </tr>
-  <tr>
-    <td>PARA 2</td>
-    <td>Byte to read</td>
-    <td>variable</td>
-		<td>DE as varptr</td>
-  </tr>	
-  <tr>
-    <td>PARA 3</td>
-    <td>UNAPI ID Level 2</td>
-    <td>-/-</td>
-		<td>B = 4</td>
-  </tr>		
-	</table>	
-	
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | PPI C RD | _PPI C RD(ADDR,VALUE) | 28 |
+| PARA 1 | IO addr 0...255 | byte or variable | C |
+| PARA 2 | Byte to read | variable | DE as varptr |
+| PARA 3 | UNAPI ID Level 2 | -/- | B = 4 |
+
 + <i><b>PPI C WR</i></b>
 
   Writes byte to RC2014 PIO card with 8255A port C
-	
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>PPI C WR</td>
-    <td>_PPI C WR(ADDR,VALUE)</td>
-		<td>29</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>IO addr 0...255</td>
-    <td>byte or variable</td>
-		<td>C</td>
-  </tr>
-  <tr>
-    <td>PARA 2</td>
-    <td>Byte to write</td>
-    <td>byte or variable</td>
-		<td>D</td>
-  </tr>	
-  <tr>
-    <td>PARA 3</td>
-    <td>UNAPI ID Level 2</td>
-    <td>-/-</td>
-		<td>B = 5</td>
-  </tr>		
-	</table>	
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | PPI C WR | _PPI C WR(ADDR,VALUE) | 29 |
+| PARA 1 | IO addr 0...255 | byte or variable | C |
+| PARA 2 | Byte to write | byte or variable | D |
+| PARA 3 | UNAPI ID Level 2 | -/- | B = 5 |
 
 + <i><b>PIO CTRL</i></b>
 
   Writes byte to RC2014 PIO card with 8255A ctrl register
-	
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>PPI CTRL</td>
-    <td>_PPI CTRL(ADDR,VALUE)</td>
-		<td>30</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>IO addr 0...255</td>
-    <td>byte or variable</td>
-		<td>C</td>
-  </tr>
-  <tr>
-    <td>PARA 2</td>
-    <td>Byte to write</td>
-    <td>byte or variable</td>
-		<td>D</td>
-  </tr>	
-  <tr>
-    <td>PARA 3</td>
-    <td>UNAPI ID Level 2</td>
-    <td>-/-</td>
-		<td>B = 6</td>
-  </tr>		
-	</table>	
-	
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | PPI CTRL | _PPI CTRL(ADDR,VALUE) | 30 |
+| PARA 1 | IO addr 0...255 | byte or variable | C |
+| PARA 2 | Byte to write | byte or variable | D |
+| PARA 3 | UNAPI ID Level 2 | -/- | B = 6 |
+
 + <i><b>PPI SET</i></b>
 
   Sets bit on RC2014 PIO card with 8255A port C
-	
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>PPI SET</td>
-    <td>_PPI SET(ADDR,VALUE)</td>
-		<td>31</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>IO addr 0...255</td>
-    <td>byte or variable</td>
-		<td>C</td>
-  </tr>
-  <tr>
-    <td>PARA 2</td>
-    <td>Bit to set</td>
-    <td>byte or variable</td>
-		<td>D</td>
-  </tr>	
-  <tr>
-    <td>PARA 3</td>
-    <td>UNAPI ID Level 2</td>
-    <td>-/-</td>
-		<td>B = 7</td>
-  </tr>		
-	</table>	
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | PPI SET | _PPI SET(ADDR,VALUE) | 31 |
+| PARA 1 | IO addr 0...255 | byte or variable | C |
+| PARA 2 | Bit to set | byte or variable | D |
+| PARA 3 | UNAPI ID Level 2 | -/- | B = 7 |
 
 + <i><b>PPI RESET</i></b>
 
   Resets bit on RC2014 PIO card with 8255A port C
-	
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>PPI RESET</td>
-    <td>_PPI RESET(ADDR,VALUE)</td>
-		<td>31</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>IO addr 0...255</td>
-    <td>byte or variable</td>
-		<td>C</td>
-  </tr>
-  <tr>
-    <td>PARA 2</td>
-    <td>Bit to reset</td>
-    <td>byte or variable</td>
-		<td>D</td>
-  </tr>	
-  <tr>
-    <td>PARA 3</td>
-    <td>UNAPI ID Level 2</td>
-    <td>-/-</td>
-		<td>B = 8</td>
-  </tr>		
-	</table>
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | PPI RESET | _PPI RESET(ADDR,VALUE) | 32 |
+| PARA 1 | IO addr 0...255 | byte or variable | C |
+| PARA 2 | Bit to reset | byte or variable | D |
+| PARA 3 | UNAPI ID Level 2 | -/- | B = 8 |
 
 ## D) RC2014 card with 8254A CTR
 
@@ -1507,380 +605,130 @@ RC2014 card with a 8254 CTR. Up to 16 cards are possible. The interrupt pins of 
 
 RC2014 card on backplane
 
-![RCX system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_8254/pcb/rc2014_8254_board.png)
+![RCX system](rcx/rc2014_card_d/pcb/rc2014_8254_board.png)
 
 #### <b>D.2 Hardware:</b>
 
-![RCX schematics](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_8254/pcb/rc2014_8254.png)
+![RCX schematics](rcx/rc2014_card_d/pcb/rc2014_8254.png)
 
 #### <b>D.3 Software:</b>
 
-The BIOS for the card functions is provided in the RCX slot ROM. It contains the additional BASIC commands and an instance of UNAPI base on the approach of KONAMIMAN. Please have a look at his page to get a deeper impression on how it works.
+The BIOS for the card functions is provided in the RCX slot ROM. It contains the additional BASIC commands (`TIMER INIT`, `TIMER 0/1/2 RD/WR`, `TIMER CTRL`, `TIMER SET/RESET GATE`) and an instance of UNAPI based on the approach of KONAMIMAN, so the same functions are callable directly via UNAPI/EXTBIOS from a `.COM` program without the BASIC interpreter. A second test program wires one of the counter outputs to a PIC interrupt channel and keeps a running interrupt count on screen. Please have a look at his page to get a deeper impression on how it works.
 
 Commands implemented in ROM:
 
 + <i><b>TIMER INIT</i></b>
 
   Initialises RC2014 TIMER card with 8254A at IO address 0..255
-	
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>TIMER INIT</td>
-    <td>_TIMER INIT(ADDR)</td>
-		<td>33</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>IO addr 0...255</td>
-    <td>byte or variable</td>
-		<td>C</td>
-  </tr>	
-	</table>
-	
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | TIMER INIT | _TIMER INIT(ADDR) | 33 |
+| PARA 1 | IO addr 0...255 | byte or variable | C |
+
 + <i><b>TIMER 0 RD</i></b>
 
   Reads word from RC2014 TIMER card with 8254A TIMER 0
-	
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>TIMER 0 RD</td>
-    <td>_TIMER 0 RD(ADDR,VALUE)</td>
-		<td>34</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>IO addr 0...255</td>
-    <td>byte or variable</td>
-		<td>C</td>
-  </tr>
-  <tr>
-    <td>PARA 2</td>
-    <td>Word to read</td>
-    <td>variable</td>
-		<td>DE as varptr</td>
-  </tr>	
-  <tr>
-    <td>PARA 3</td>
-    <td>UNAPI ID Level 2</td>
-    <td>-/-</td>
-		<td>B = 0</td>
-  </tr>		
-	</table>	
-	
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | TIMER 0 RD | _TIMER 0 RD(ADDR,VALUE) | 34 |
+| PARA 1 | IO addr 0...255 | byte or variable | C |
+| PARA 2 | Word to read | variable | DE as varptr |
+| PARA 3 | UNAPI ID Level 2 | -/- | B = 0 |
+
 + <i><b>TIMER 0 WR</i></b>
 
   Writes word to RC2014 TIMER card with 8254A TIMER 0
-	
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>TIMER 0 WR</td>
-    <td>_TIMER 0 WR(ADDR,VALUE)</td>
-		<td>35</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>IO addr 0...255</td>
-    <td>byte or variable</td>
-		<td>C</td>
-  </tr>
-  <tr>
-    <td>PARA 2</td>
-    <td>Word to write</td>
-    <td>word or variable</td>
-		<td>D</td>
-  </tr>	
-  <tr>
-    <td>PARA 3</td>
-    <td>UNAPI ID Level 2</td>
-    <td>-/-</td>
-		<td>B = 1</td>
-  </tr>		
-	</table>	
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | TIMER 0 WR | _TIMER 0 WR(ADDR,VALUE) | 35 |
+| PARA 1 | IO addr 0...255 | byte or variable | C |
+| PARA 2 | Word to write | word or variable | DE |
+| PARA 3 | UNAPI ID Level 2 | -/- | B = 1 |
 
 + <i><b>TIMER 1 RD</i></b>
 
   Reads word from RC2014 TIMER card with 8254A TIMER 1
-	
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>TIMER 1 RD</td>
-    <td>_TIMER 1 RD(ADDR,VALUE)</td>
-		<td>36</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>IO addr 0...255</td>
-    <td>byte or variable</td>
-		<td>C</td>
-  </tr>
-  <tr>
-    <td>PARA 2</td>
-    <td>Word to read</td>
-    <td>variable</td>
-		<td>DE as varptr</td>
-  </tr>	
-  <tr>
-    <td>PARA 3</td>
-    <td>UNAPI ID Level 2</td>
-    <td>-/-</td>
-		<td>B = 2</td>
-  </tr>		
-	</table>	
-	
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | TIMER 1 RD | _TIMER 1 RD(ADDR,VALUE) | 36 |
+| PARA 1 | IO addr 0...255 | byte or variable | C |
+| PARA 2 | Word to read | variable | DE as varptr |
+| PARA 3 | UNAPI ID Level 2 | -/- | B = 2 |
+
 + <i><b>TIMER 1 WR</i></b>
 
   Writes word to RC2014 TIMER card with 8254A TIMER 1
-	
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>TIMER 1 WR</td>
-    <td>_TIMER 1 WR(ADDR,VALUE)</td>
-		<td>37</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>IO addr 0...255</td>
-    <td>byte or variable</td>
-		<td>C</td>
-  </tr>
-  <tr>
-    <td>PARA 2</td>
-    <td>Word to write</td>
-    <td>word or variable</td>
-		<td>D</td>
-  </tr>	
-  <tr>
-    <td>PARA 3</td>
-    <td>UNAPI ID Level 2</td>
-    <td>-/-</td>
-		<td>B = 3</td>
-  </tr>		
-	</table>	
-	
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | TIMER 1 WR | _TIMER 1 WR(ADDR,VALUE) | 37 |
+| PARA 1 | IO addr 0...255 | byte or variable | C |
+| PARA 2 | Word to write | word or variable | DE |
+| PARA 3 | UNAPI ID Level 2 | -/- | B = 3 |
+
 + <i><b>TIMER 2 RD</i></b>
 
   Reads word from RC2014 TIMER card with 8254A TIMER 2
-	
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>TIMER 2 RD</td>
-    <td>_TIMER 2 RD(ADDR,VALUE)</td>
-		<td>38</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>IO addr 0...255</td>
-    <td>byte or variable</td>
-		<td>C</td>
-  </tr>
-  <tr>
-    <td>PARA 2</td>
-    <td>Word to read</td>
-    <td>variable</td>
-		<td>DE as varptr</td>
-  </tr>	
-  <tr>
-    <td>PARA 3</td>
-    <td>UNAPI ID Level 2</td>
-    <td>-/-</td>
-		<td>B = 4</td>
-  </tr>		
-	</table>	
-	
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | TIMER 2 RD | _TIMER 2 RD(ADDR,VALUE) | 38 |
+| PARA 1 | IO addr 0...255 | byte or variable | C |
+| PARA 2 | Word to read | variable | DE as varptr |
+| PARA 3 | UNAPI ID Level 2 | -/- | B = 4 |
+
 + <i><b>TIMER 2 WR</i></b>
 
   Writes word to RC2014 TIMER card with 8254A TIMER 2
-	
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>TIMER 2 WR</td>
-    <td>_TIMER 2 WR(ADDR,VALUE)</td>
-		<td>39</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>IO addr 0...255</td>
-    <td>byte or variable</td>
-		<td>C</td>
-  </tr>
-  <tr>
-    <td>PARA 2</td>
-    <td>Word to write</td>
-    <td>word or variable</td>
-		<td>D</td>
-  </tr>	
-  <tr>
-    <td>PARA 3</td>
-    <td>UNAPI ID Level 2</td>
-    <td>-/-</td>
-		<td>B = 5</td>
-  </tr>		
-	</table>
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | TIMER 2 WR | _TIMER 2 WR(ADDR,VALUE) | 39 |
+| PARA 1 | IO addr 0...255 | byte or variable | C |
+| PARA 2 | Word to write | word or variable | DE |
+| PARA 3 | UNAPI ID Level 2 | -/- | B = 5 |
 
 + <i><b>TIMER CTRL</i></b>
 
   Writes word to RC2014 TIMER card with 8254A CTRL register
-	
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>TIMER CTRL</td>
-    <td>_TIMER CTRL(ADDR,VALUE)</td>
-		<td>40</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>IO addr 0...255</td>
-    <td>byte or variable</td>
-		<td>C</td>
-  </tr>
-  <tr>
-    <td>PARA 2</td>
-    <td>Word to write</td>
-    <td>word or variable</td>
-		<td>D</td>
-  </tr>	
-  <tr>
-    <td>PARA 3</td>
-    <td>UNAPI ID Level 2</td>
-    <td>-/-</td>
-		<td>B = 6</td>
-  </tr>		
-	</table>	
-	
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | TIMER CTRL | _TIMER CTRL(ADDR,VALUE) | 40 |
+| PARA 1 | IO addr 0...255 | byte or variable | C |
+| PARA 2 | Word to write | word or variable | E (D must be 0) |
+| PARA 3 | UNAPI ID Level 2 | -/- | B = 6 |
+
 + <i><b>TIMER SET GATE</i></b>
 
   Sets internal gate for TIMER 0..2 if jumper is set
-	
+
 	Value 0..7 is allowed
-	
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>TIMER SET GATE</td>
-    <td>_TIMER SET GATE(ADDR,VALUE)</td>
-		<td>41</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>IO addr 0...255</td>
-    <td>byte or variable</td>
-		<td>C</td>
-  </tr>
-  <tr>
-    <td>PARA 2</td>
-    <td>GATE 0..3 (0..7)</td>
-    <td>byte or variable</td>
-		<td>D</td>
-  </tr>	
-  <tr>
-    <td>PARA 3</td>
-    <td>UNAPI ID Level 2</td>
-    <td>-/-</td>
-		<td>B = 7</td>
-  </tr>		
-	</table>
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | TIMER SET GATE | _TIMER SET GATE(ADDR,VALUE) | 41 |
+| PARA 1 | IO addr 0...255 | byte or variable | C |
+| PARA 2 | GATE 0..3 (0..7) | byte or variable | E (D must be 0) |
+| PARA 3 | UNAPI ID Level 2 | -/- | B = 7 |
 
 	+ <i><b>TIMER RESET GATE</i></b>
 
   Resets internal gate for TIMER 0..2 if jumper is set
-	
+
 	Value 0..7 is allowed
-	
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>TIMER RESET GATE</td>
-    <td>_TIMER RESET GATE(ADDR,VALUE)</td>
-		<td>42</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>IO addr 0...255</td>
-    <td>byte or variable</td>
-		<td>C</td>
-  </tr>
-  <tr>
-    <td>PARA 2</td>
-    <td>GATE 0..3 (0..7)</td>
-    <td>byte or variable</td>
-		<td>D</td>
-  </tr>	
-  <tr>
-    <td>PARA 3</td>
-    <td>UNAPI ID Level 2</td>
-    <td>-/-</td>
-		<td>B = 8</td>
-  </tr>		
-	</table>
-	
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | TIMER RESET GATE | _TIMER RESET GATE(ADDR,VALUE) | 42 |
+| PARA 1 | IO addr 0...255 | byte or variable | C |
+| PARA 2 | GATE 0..3 (0..7) | byte or variable | E (D must be 0) |
+| PARA 3 | UNAPI ID Level 2 | -/- | B = 8 |
+
 ## E) RC2014 card with SJA1000 CAN controller (single use only)
 
 RC2014 card with SJA1000 CAN controller and RJ45 sockets with automatic termination function. The software provides PELICAN Mode and 250 kBit/s.
@@ -1891,272 +739,115 @@ Only one card is possible due to RAM allocation and interrupt handling. The inte
 
 RC2014 card on backplane
 
-![RCX system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_sja1000/pcb/rc2014_sja1000_board.png)
+![RCX system](rcx/rc2014_card_e/pcb/rc2014_sja1000_board.png)
 
 #### <b>E.2 Hardware:</b>
 
-![RCX schematics](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_sja1000/pcb/rc2014_sja1000.png)
+![RCX schematics](rcx/rc2014_card_e/pcb/rc2014_sja1000.png)
 
 #### <b>E.3 Software:</b>
 
-The BIOS for the card functions is provided in the RCX slot ROM. It contains the additional BASIC commands and an instance of UNAPI base on the approach of KONAMIMAN. Please have a look at his page to get a deeper impression on how it works.
+The BIOS for the card functions is provided in the RCX slot ROM. It contains the additional BASIC commands (`CAN INIT`, `CAN WR/RD`, `CAN CHECK/RX/TX`, `CAN GET ADDR`) and an instance of UNAPI based on the approach of KONAMIMAN, so the same functions are callable directly via UNAPI/EXTBIOS from a `.COM` program without the BASIC interpreter. The test program receives and sends CAN messages interrupt-driven, e.g. for a Maerklin CS3 bus, by registering the ROM's own CAN service routine (returned by `CAN GET ADDR`) directly through `XIO SET ADDR` - no custom interrupt code needed. Please have a look at his page to get a deeper impression on how it works.
 
 Commands implemented in ROM:
 
 + <i><b>CAN INIT</i></b>
 
   Initialises RC2014 SJA1000 CAN card at IO address 0..255. The firmware has a ring buffer of 16 messages.
-	
+
 	ACC is the acceptance code and mask
-	
+
 	Array of INT is needed, only low byte is used, len = 8 (see datasheet for further information)
-	
+
 	Index 0 ACR.0, Index 1 ACR.1, Index 2 ACR.2, Index 3 ACR.3
-	
+
 	Index 4 AMR.0, Index 5 AMR.1, Index 6 AMR.2, Index 7 AMR.3
-		
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>CAN INIT</td>
-    <td>_CAN INIT(ADDR,ACC)</td>
-		<td>43</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>IO addr 0...255</td>
-    <td>byte or variable</td>
-		<td>C</td>
-  </tr>
-	<tr>
-    <td>PARA 2</td>
-    <td>ACC code&mask</td>
-    <td>array index 0</td>
-		<td>DE as varptr</td>
-  </tr>	
-	</table>
-	
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | CAN INIT | _CAN INIT(ADDR,ACC) | 43 |
+| PARA 1 | IO addr 0...255 | byte or variable | C |
+| PARA 2 | ACC code&mask | array index 0 | DE as varptr |
+
 + <i><b>CAN WR</i></b>
 
   Writes byte to SJA1000 register
-	
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>CAN WR</td>
-    <td>_CAN WR GATE(ADDR,REG,DATA)</td>
-		<td>44</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>IO addr 0...255</td>
-    <td>byte or variable</td>
-		<td>C</td>
-  </tr>
-  <tr>
-    <td>PARA 2</td>
-    <td>Register</td>
-    <td>byte or variable</td>
-		<td>D</td>
-  </tr>	
-  <tr>
-    <td>PARA 3</td>
-    <td>Byte to write</td>
-    <td>byte or variable</td>
-		<td>E</td>
-  </tr>		
-	</table>	
-	
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | CAN WR | _CAN WR GATE(ADDR,REG,DATA) | 44 |
+| PARA 1 | IO addr 0...255 | byte or variable | C |
+| PARA 2 | Register | byte or variable | D |
+| PARA 3 | Byte to write | byte or variable | E |
+
 + <i><b>CAN RD</i></b>
 
   Reads byte from SJA1000 register
-	
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>CAN RD</td>
-    <td>_CAN RD GATE(ADDR,REG,DATA)</td>
-		<td>45</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>IO addr 0...255</td>
-    <td>byte or variable</td>
-		<td>C</td>
-  </tr>
-  <tr>
-    <td>PARA 2</td>
-    <td>Register</td>
-    <td>byte or variable</td>
-		<td>D</td>
-  </tr>	
-  <tr>
-    <td>PARA 3</td>
-    <td>Byte to read</td>
-    <td>variable</td>
-		<td>A contains result</td>
-  </tr>		
-	</table>	
-	
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | CAN RD | _CAN RD GATE(ADDR,REG,DATA) | 45 |
+| PARA 1 | IO addr 0...255 | byte or variable | C |
+| PARA 2 | Register | byte or variable | D |
+| PARA 3 | Byte to read | variable | A contains result |
+
 + <i><b>CAN CHECK</i></b>
 
   Checks for new message in ring buffer (boolean)
-	
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>CAN CHECK</td>
-    <td>_CAN CHECK(ADDR,RMC)</td>
-		<td>46</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>IO addr 0...255</td>
-    <td>byte or variable</td>
-		<td>C</td>
-  </tr>
-  <tr>
-    <td>PARA 2</td>
-    <td>1 = new msg</td>
-    <td>variable</td>
-		<td>A contains result</td>
-  </tr>	
-	</table>	
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | CAN CHECK | _CAN CHECK(ADDR,RMC) | 46 |
+| PARA 1 | IO addr 0...255 | byte or variable | C |
+| PARA 2 | 1 = new msg | variable | A contains result |
 
 + <i><b>CAN RX</i></b>
 
   Reads next message from ring buffer
-	
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>CAN RX</td>
-    <td>_CAN RX(ADDR,DATA)</td>
-		<td>47</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>IO addr 0...255</td>
-    <td>byte or variable</td>
-		<td>C</td>
-  </tr>
-  <tr>
-    <td>PARA 2</td>
-    <td>New msg (PELICAN 2.0)</td>
-    <td>array len = 13</td>
-		<td>DE as varptr</td>
-  </tr>	
-	</table>
-	
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | CAN RX | _CAN RX(ADDR,DATA) | 47 |
+| PARA 1 | IO addr 0...255 | byte or variable | C |
+| PARA 2 | New msg (PELICAN 2.0) | array len = 13 | DE as varptr |
+
 + <i><b>CAN GET ADDR</i></b>
 
   Gets interrupt handling address in RAM for XIO function XIO SET ADDR
-	
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>CAN RX</td>
-    <td>_CAN GET ADDR(ADDR,INTDATA)</td>
-		<td>48</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>IO addr 0...255</td>
-    <td>byte or variable</td>
-		<td>C</td>
-  </tr>
-  <tr>
-    <td>PARA 2</td>
-    <td>RAM address pointer</td>
-    <td>variable</td>
-		<td>DE as varptr</td>
-  </tr>	
-	</table>	
-	
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | CAN RX | _CAN GET ADDR(ADDR,INTDATA) | 48 |
+| PARA 1 | IO addr 0...255 | byte or variable | C |
+| PARA 2 | RAM address pointer | variable | DE as varptr |
+
 + <i><b>CAN TX</i></b>
 
   Writes message to CAN bus
-	
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>CAN TX</td>
-    <td>_CAN TX(ADDR,DATA)</td>
-		<td>49</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>IO addr 0...255</td>
-    <td>byte or variable</td>
-		<td>C</td>
-  </tr>
-  <tr>
-    <td>PARA 2</td>
-    <td>Message (PELICAN 2.0)</td>
-    <td>array len = 13</td>
-		<td>DE as varptr</td>
-  </tr>	
-	</table>	
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | CAN TX | _CAN TX(ADDR,DATA) | 49 |
+| PARA 1 | IO addr 0...255 | byte or variable | C |
+| PARA 2 | Message (PELICAN 2.0) | array len = 13 | DE as varptr |
 
 ## F) RC2014 card with 4x SPI bus up to 2 MHz via ATMEGA8
 
-RC2014 card with 4 SPI busses selectable via software with baudrate up to 2 MHz. Up to 16 SPI cards are possible. The interrupt pin of the ATMEGA8 can be assigned to one of the XIO PIC interrupt channels. 
+RC2014 card with 4 SPI busses selectable via software with baudrate up to 2 MHz. Up to 16 SPI cards are possible. The interrupt pin of the ATMEGA8 can be assigned to one of the XIO PIC interrupt channels.
 
 #### <b>F.1 Impressions:</b>
 
 RC2014 card on backplane
 
-![RCX system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_spi/pcb/rc2014_spi_board.png)
+![RCX system](rcx/rc2014_card_f/pcb/rc2014_spi_board.png)
 
 #### <b>F.2 Hardware:</b>
 
-![RCX schematics](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_spi/pcb/rc2014_spi.png)
+![RCX schematics](rcx/rc2014_card_f/pcb/rc2014_spi.png)
 
 #### <b>F.3 Software:</b>
 
-The BIOS for the card functions is provided in the RCX slot ROM. It contains the additional BASIC commands and an instance of UNAPI base on the approach of KONAMIMAN. Please have a look at his page to get a deeper impression on how it works.
+The BIOS for the card functions is provided in the RCX slot ROM. It contains the additional BASIC commands (`SPI INIT/MODE`, `SPI WR/WRB/RD/RDB/RDH`) and an instance of UNAPI based on the approach of KONAMIMAN, so the same functions are callable directly via UNAPI/EXTBIOS from a `.COM` program without the BASIC interpreter. Up to 4 independent SPI busses are addressable per card; the test program exercises a MCP23S17 GPIO expander as a Port A/B loopback test. Please have a look at his page to get a deeper impression on how it works.
 
 Commands implemented in ROM:
 
@@ -2164,324 +855,191 @@ Commands implemented in ROM:
 
   Initialises RC2014 SPI card at IO address 0..255
 
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>SPI INIT</td>
-    <td>_SPI INIT(ADDR)</td>
-		<td>50</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>IO addr 0...255</td>
-    <td>byte or variable</td>
-		<td>C</td>
-  </tr>
-	</table>
-	
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | SPI INIT | _SPI INIT(ADDR) | 50 |
+| PARA 1 | IO addr 0...255 | byte or variable | C |
+
 + <i><b>SPI WR</i></b>
 
   Writes byte to RC2014 SPI card
 
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>SPI WR</td>
-    <td>_SPI WR(ADDR,BUS,DATA)</td>
-		<td>51</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>IO addr 0...255</td>
-    <td>byte or variable</td>
-		<td>E</td>
-  </tr>
-	<tr>
-    <td>PARA 2</td>
-    <td>SPI BUS 0..3</td>
-    <td>byte or variable</td>
-		<td>C</td>
-  </tr>	
-	<tr>
-    <td>PARA 3</td>
-    <td>Byte to write</td>
-    <td>byte or variable</td>
-		<td>B</td>
-  </tr>		
-	</table>	
-	
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | SPI WR | _SPI WR(ADDR,BUS,DATA) | 51 |
+| PARA 1 | IO addr 0...255 | byte or variable | E |
+| PARA 2 | SPI BUS 0..3 | byte or variable | C |
+| PARA 3 | Byte to write | byte or variable | B |
+
 + <i><b>SPI WRB</i></b>
 
   Writes an array of bytes to RC2014 SPI card
 
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>SPI WRB</td>
-    <td>_SPI WRB(ADDR,BUS,LEN,DATA)</td>
-		<td>52</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>IO addr 0...255</td>
-    <td>byte or variable</td>
-		<td>H</td>
-  </tr>
-	<tr>
-    <td>PARA 2</td>
-    <td>SPI BUS 0..3</td>
-    <td>byte or variable</td>
-		<td>C</td>
-  </tr>	
-	<tr>
-    <td>PARA 3</td>
-    <td>Length of array</td>
-    <td>byte or variable</td>
-		<td>B</td>
-  </tr>		
-	<tr>
-    <td>PARA 4</td>
-    <td>Data to write</td>
-    <td>array index 0</td>
-		<td>DE as varptr</td>
-  </tr>		
-	</table>		
-	
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | SPI WRB | _SPI WRB(ADDR,BUS,LEN,DATA) | 52 |
+| PARA 1 | IO addr 0...255 | byte or variable | H |
+| PARA 2 | SPI BUS 0..3 | byte or variable | C |
+| PARA 3 | Length of array | byte or variable | B |
+| PARA 4 | Data to write | array index 0 | DE as varptr |
+
 + <i><b>SPI RD</i></b>
 
   Reads byte from RC2014 SPI card
 
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>SPI RD</td>
-    <td>_SPI RD(ADDR,BUS,DATA)</td>
-		<td>53</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>IO addr 0...255</td>
-    <td>byte or variable</td>
-		<td>C</td>
-  </tr>
-	<tr>
-    <td>PARA 2</td>
-    <td>SPI BUS 0..3</td>
-    <td>byte or variable</td>
-		<td>B</td>
-  </tr>	
-	<tr>
-    <td>PARA 3</td>
-    <td>Byte to read</td>
-    <td>variable</td>
-		<td>DE as varptr</td>
-  </tr>		
-	</table>	
-	
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | SPI RD | _SPI RD(ADDR,BUS,DATA) | 53 |
+| PARA 1 | IO addr 0...255 | byte or variable | C |
+| PARA 2 | SPI BUS 0..3 | byte or variable | B |
+| PARA 3 | Byte to read | variable | DE as varptr |
+
 + <i><b>SPI RDB</i></b>
 
   Reads an array of bytes to RC2014 SPI card
 
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>SPI WRB</td>
-    <td>_SPI WRB(ADDR,BUS,LEN,DATA)</td>
-		<td>54</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>IO addr 0...255</td>
-    <td>byte or variable</td>
-		<td>H</td>
-  </tr>
-	<tr>
-    <td>PARA 2</td>
-    <td>SPI BUS 0..3</td>
-    <td>byte or variable</td>
-		<td>C</td>
-  </tr>	
-	<tr>
-    <td>PARA 3</td>
-    <td>Length of array</td>
-    <td>byte or variable</td>
-		<td>B</td>
-  </tr>		
-	<tr>
-    <td>PARA 4</td>
-    <td>Data to read</td>
-    <td>array index 0</td>
-		<td>DE as varptr</td>
-  </tr>		
-	</table>	
-	
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | SPI RDB | _SPI RDB(ADDR,BUS,LEN,DATA) | 54 |
+| PARA 1 | IO addr 0...255 | byte or variable | H |
+| PARA 2 | SPI BUS 0..3 | byte or variable | C |
+| PARA 3 | Length of array | byte or variable | B |
+| PARA 4 | Data to read | array index 0 | DE as varptr |
+
 + <i><b>SPI RDH</i></b>
 
   Reads an array of bytes to RC2014 SPI card after sending a header for register selection.
-	
+
 	Both data is handled by one arry. LEN_WR signals length of header beginning with index 0 of the array. LEN_RD starts at index LEN_WR for data to read. Be sure to have a suitable definition for the array.
 
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>SPI RDH</td>
-    <td>_SPI RDH(ADDR,BUS,LEN_WR,LEN_RD,DATA)</td>
-		<td>55</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>IO addr 0...255</td>
-    <td>byte or variable</td>
-		<td>C</td>
-  </tr>
-	<tr>
-    <td>PARA 2</td>
-    <td>SPI BUS 0..3</td>
-    <td>byte or variable</td>
-		<td>B</td>
-  </tr>	
-	<tr>
-    <td>PARA 3</td>
-    <td>Length of array to write</td>
-    <td>byte or variable</td>
-		<td>H</td>
-  </tr>		
-	<tr>
-    <td>PARA 4</td>
-    <td>Length of array to read</td>
-    <td>byte or variable</td>
-		<td>L</td>
-  </tr>		
-	<tr>
-    <td>PARA 5</td>
-    <td>Data to read</td>
-    <td>array index 0</td>
-		<td>DE as varptr</td>
-  </tr>		
-	</table>	
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | SPI RDH | _SPI RDH(ADDR,BUS,LEN_WR,LEN_RD,DATA) | 55 |
+| PARA 1 | IO addr 0...255 | byte or variable | C |
+| PARA 2 | SPI BUS 0..3 | byte or variable | B |
+| PARA 3 | Length of array to write | byte or variable | H |
+| PARA 4 | Length of array to read | byte or variable | L |
+| PARA 5 | Data to read | array index 0 | DE as varptr |
 
 + <i><b>SPI MODE</i></b>
 
   Sets MODE of the SPI BUS for each channel. See datasheet of ATMEGA8 for further information
-	
+
 	MOD:
-	
+
 	0 = SPI_MODE_0, 1 = SPI_MODE_1, 2 = SPI_MODE_2, 3 = SPI_MODE_3
-	
+
 	FQZ:
-	
-	0 = 2 MHz, 1 = 1 MHz, 2 = 500 kHz, 3 = 250 kHz	
-	
-	<table style="width:100%">
-  <tr>
-    <th></th>
-    <th>Definition</th>
-    <th>BASIC</th>
-    <th>UNAPI</th>		
-  </tr>
-  <tr>
-    <td>Syntax</td>
-    <td>SPI MODE</td>
-    <td>_SPI MODE(ADDR,BUS,MOD,FQZ)</td>
-		<td>56</td>
-  </tr>
-	<tr>
-    <td>PARA 1</td>
-    <td>IO addr 0...255</td>
-    <td>byte or variable</td>
-		<td>C</td>
-  </tr>
-	<tr>
-    <td>PARA 2</td>
-    <td>SPI BUS 0..3</td>
-    <td>byte or variable</td>
-		<td>B</td>
-  </tr>	
-	<tr>
-    <td>PARA 3</td>
-    <td>Mode</td>
-    <td>byte or variable</td>
-		<td>D</td>
-  </tr>		
-	<tr>
-    <td>PARA 4</td>
-    <td>Bus frequency</td>
-    <td>byte or variable</td>
-		<td>E</td>
-  </tr>		
-	</table>
+
+	0 = 2 MHz, 1 = 1 MHz, 2 = 500 kHz, 3 = 250 kHz
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | SPI MODE | _SPI MODE(ADDR,BUS,MOD,FQZ) | 56 |
+| PARA 1 | IO addr 0...255 | byte or variable | C |
+| PARA 2 | SPI BUS 0..3 | byte or variable | B |
+| PARA 3 | Mode | byte or variable | D |
+| PARA 4 | Bus frequency | byte or variable | E |
 
 ## G) RC2014 card with ADS1220 4 channel 24 bit A/D converter via ATMEGA8
 
-RC2014 card with ADS1220 module. Up to 16 cards are possible. The interrupt pin of ATMEGA8 can be assigned to one of the XIO PIC interrupt channels. 
+RC2014 card with ADS1220 module. Up to 16 cards are possible. The interrupt pin of ATMEGA8 can be assigned to one of the XIO PIC interrupt channels.
 
 #### <b>G.1 Impressions:</b>
 
 RC2014 card on backplane
 
-![RCX system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_ads1220/pcb/rc2014_ads1220_board.png)
+![RCX system](rcx/rc2014_card_g/pcb/rc2014_ads1220_board.png)
 
 #### <b>G.2 Hardware:</b>
 
-![RCX schematics](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_ads1220/pcb/rc2014_ads1220.png)
+![RCX schematics](rcx/rc2014_card_g/pcb/rc2014_ads1220.png)
 
-Details coming soon
+#### <b>G.3 Software:</b>
 
-## H) RC2014 card with MCP4822 4 channel 12 bit D/A converter via ATMEGA8
+The BIOS for the card functions is provided in the RCX slot ROM. It contains the additional BASIC commands (`ADS INIT/MODE/CMD/STATUS/READ/GET`) and an instance of UNAPI based on the approach of KONAMIMAN, so the same functions are callable directly via UNAPI/EXTBIOS from a `.COM` program without the BASIC interpreter. `ADS GET` automates the whole measurement sequence (set MODE, start conversion, select channel, read all 4 RESULT bytes) into a single native `SNG` float value. Please have a look at his page to get a deeper impression on how it works.
 
-RC2014 card with 2x MCP4822. Up to 16 cards are possible. The interrupt pin of ATMEGA8 can be assigned to one of the XIO PIC interrupt channels. 
+Commands implemented in ROM:
 
-#### <b>H.1 Hardware:</b>
++ <i><b>ADS INIT</i></b>
 
-![RCX schematics](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_mcp4822/pcb/rc2014_mcp4822.png)
+  Initialises RC2014 ADS1220 card at IO address 0..255
 
-Details coming soon
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | ADS INIT | _ADS INIT(BUS) | 57 |
+| PARA 1 | IO addr 0...255 | byte or variable | C |
 
-## I) RC2014 card SC725 with Z80 SIO and Z80 CTC
++ <i><b>ADS MODE</i></b>
+
+  Writes the measurement type to the ADS1220 MODE register
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | ADS MODE | _ADS MODE(BUS,TYPE) | 58 |
+| PARA 1 | IO addr 0...255 | byte or variable | C |
+| PARA 2 | Measurement type 0...11 | byte or variable | E |
+
++ <i><b>ADS CMD</i></b>
+
+  Writes a raw byte to the ADS1220 CMD register
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | ADS CMD | _ADS CMD(BUS,VAL) | 59 |
+| PARA 1 | IO addr 0...255 | byte or variable | C |
+| PARA 2 | Raw value 0...255 | byte or variable | E |
+
++ <i><b>ADS STATUS</i></b>
+
+  Reads the ADS1220 CMD register back (rChannel/mCount readback)
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | ADS STATUS | _ADS STATUS(BUS,VAL) | 60 |
+| PARA 1 | IO addr 0...255 | byte or variable | C |
+| PARA 2 | Byte to read | variable | DE as varptr |
+
++ <i><b>ADS READ</i></b>
+
+  Reads one raw RESULT byte; mCount auto-increments on the ATMEGA8 side (wraps 4 -> 0)
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | ADS READ | _ADS READ(BUS,VAL) | 61 |
+| PARA 1 | IO addr 0...255 | byte or variable | C |
+| PARA 2 | Byte to read | variable | DE as varptr |
+
++ <i><b>ADS GET</i></b>
+
+  Automates a full measurement: sets MODE, starts conversion, selects channel, reads all 4 RESULT bytes into a native SNG variable
+
+|  | Definition | BASIC | UNAPI |
+| --- | --- | --- | --- |
+| Syntax | ADS GET | _ADS GET(BUS,TYPE,VAL) | 62 |
+| PARA 1 | IO addr 0...255 | byte or variable | C |
+| PARA 2 | Measurement type 0...11 | byte or variable | B |
+| PARA 3 | Result | SNG variable | DE as varptr |
+
+## H) RC2014 card SC725 with Z80 SIO and Z80 CTC
 
 The ROM of RCX contains BASIC and UNAPI commands to steer SC725 from original RC2014 manufactor.
 
-#### <b>I.1 Impressions:</b>
+#### <b>H.1 Impressions:</b>
 
 RC2014 card on backplane
 
-![RCX system](https://github.com/TommyGermanyRetro/MSXRetroThings/blob/main/rcx/rc2014_sc725/rc2014_sc725_board.png)
+![RCX system](rcx/rc2014_card_h/pcb/rc2014_sc725_board.png)
+
+Details coming soon
+
+## I) RC2014 card with MCP4822 4 channel 12 bit D/A converter via ATMEGA8
+
+RC2014 card with 2x MCP4822. Up to 16 cards are possible. The interrupt pin of ATMEGA8 can be assigned to one of the XIO PIC interrupt channels.
+
+#### <b>I.1 Hardware:</b>
+
+![RCX schematics](rcx/rc2014_card_i/pcb/rc2014_mcp4822.png)
 
 Details coming soon
 

@@ -1,0 +1,20 @@
+[Eagle]
+Version="07 06 00"
+Platform="Windows"
+Serial="6C06815C48-LSR-WLM-1SM"
+Globals="Globals"
+Desktop="Desktop"
+
+[Globals]
+AutoSaveProject=1
+UsedLibrary="D:/OneDrive/Eisenbahn/20 - Elektronik/01 - Eagle/99 - LBR/mbc.lbr"
+
+[Win_1]
+Type="Control Panel"
+Loc="0 0 599 796"
+State=2
+Number=0
+
+[Desktop]
+Screen="3440 1440"
+Window="Win_1"

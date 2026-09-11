@@ -1,0 +1,207 @@
+{COMPONENT D:\ONEDRIVE\EISENBAHN\20 - ELEKTRONIK\01 - EAGLE\73 - MSX - IO-EXPANDER\FPGA\MSX_IO_EXPANDER_0X40_ID\MSX_IO_EXPANDER_0X40_ID.SYM
+
+ {ENVIRONMENT
+  {PDIFvrev 3.00}
+  {Program "CUPL(WM) Version 5.0a"}
+  {DBtype "Schematic"}
+  {DBvrev 1.01}
+  {DBtime "Sun Aug 24 16:22:41 2025 "}
+  {DBunit "MIL"}
+  {DBgrid 10}
+  {Lyrstr "WIRES" 1 "BUS" 1 "GATE" 2 "IEEE" 2 "PINFUN" 3 "PINNUM" 1 
+          "PINNAM" 6 "PINCON" 4 "REFDES" 2 "ATTR" 6 "SDOT" 1 
+          "DEVICE" 5 "OUTLIN" 5 "ATTR2" 6 "NOTES" 6 "NETNAM" 4 
+          "CMPNAM" 5 "BORDER" 5}
+ }
+
+ {USER
+  {VIEW
+   {Mode SYMB}
+   {Nlst OPEN}
+   {Vw 0 0 2}
+   {Lv 12 2 2 2 0 0 2 2 2 2 0 0 2 1 2 0 0 0 0}
+   {Gs 10 10}
+  }
+ }
+
+ {DISPLAY
+  [Ly "PINNUM"]
+  [Ls "SOLID"][Wd 0]
+  [Ts 15][Tj "LC"][Tr 0][Tm "N"]
+ }
+
+ {SYMBOL
+  {PIN_DEF
+   [Ly "PINCON"]
+   {P CLK {Pt "INPUT"}{Lq 0}{Ploc 100 240}}
+   {P D7 {Pt "INPUT"}{Lq 0}{Ploc 100 200}}
+   {P D6 {Pt "INPUT"}{Lq 0}{Ploc 100 180}}
+   {P D5 {Pt "INPUT"}{Lq 0}{Ploc 100 160}}
+   {P D4 {Pt "INPUT"}{Lq 0}{Ploc 100 140}}
+   {P D3 {Pt "INPUT"}{Lq 0}{Ploc 100 120}}
+   {P D2 {Pt "INPUT"}{Lq 0}{Ploc 100 100}}
+   {P D1 {Pt "INPUT"}{Lq 0}{Ploc 100 80}}
+   {P D0 {Pt "INPUT"}{Lq 0}{Ploc 100 60}}
+   {P OE {Pt "INPUT"}{Lq 0}{Ploc 100 40}}
+   {P RES {Pt "INPUT"}{Lq 0}{Ploc 100 20}}
+   {P IOEN {Pt "I/O"}{Lq 0}{Ploc 280 20}}
+   {P OD0 {Pt "OUTPUT"}{Lq 0}{Ploc 280 40}}
+   {P OD1 {Pt "OUTPUT"}{Lq 0}{Ploc 280 60}}
+   {P OD2 {Pt "OUTPUT"}{Lq 0}{Ploc 280 80}}
+   {P OD3 {Pt "OUTPUT"}{Lq 0}{Ploc 280 100}}
+   {P OD4 {Pt "OUTPUT"}{Lq 0}{Ploc 280 120}}
+   {P OD5 {Pt "OUTPUT"}{Lq 0}{Ploc 280 140}}
+   {P OD6 {Pt "OUTPUT"}{Lq 0}{Ploc 280 160}}
+   {P OD7 {Pt "OUTPUT"}{Lq 0}{Ploc 280 180}}
+  }
+
+  {PKG
+   [Ly "REFDES"]
+   [Ts 25][Tj "CB"][Tr 0][Tm "N"]
+   {Rdl 190 270}
+
+   [Ly "PINNUM"]
+   [Ts 15][Tj "RC"]
+   {Pnl 120 250}
+   [Ts 15][Tj "RC"]
+   {Pnl 120 210}
+   {Pnl 120 190}
+   {Pnl 120 170}
+   {Pnl 120 150}
+   {Pnl 120 130}
+   {Pnl 120 110}
+   {Pnl 120 90}
+   {Pnl 120 70}
+   {Pnl 120 50}
+   {Pnl 120 30}
+   [Ts 15][Tj "LC"]
+   {Pnl 260 30}
+   {Pnl 260 50}
+   {Pnl 260 70}
+   {Pnl 260 90}
+   {Pnl 260 110}
+   {Pnl 260 130}
+   {Pnl 260 150}
+   {Pnl 260 170}
+   {Pnl 260 190}
+
+   {Sd A 1 2 3 4 5 6 7 8 9 10 11 15 16 17 18 19 20 21 22 23}
+  }
+
+  {PIC
+   [Ly "GATE"]
+   [Ts 15][Tj "LC"][Tr 0][Tm "N"]
+   {R 130 260 250 0}
+   {L 130 240 100 240}
+   {L 130 250 140 240 130 230}
+   {L 130 200 100 200}
+   {L 130 180 100 180}
+   {L 130 160 100 160}
+   {L 130 140 100 140}
+   {L 130 120 100 120}
+   {L 130 100 100 100}
+   {L 130 80 100 80}
+   {L 130 60 100 60}
+   {L 130 40 100 40}
+   {L 130 20 100 20}
+   {L 250 20 280 20}
+   {L 250 40 280 40}
+   {L 250 60 280 60}
+   {L 250 80 280 80}
+   {L 250 100 280 100}
+   {L 250 120 280 120}
+   {L 250 140 280 140}
+   {L 250 160 280 160}
+   {L 250 180 280 180}
+   [Ly "PINNAM"]
+   [Tj "LC"]
+   {T "CLK" 140 240}
+   {T "D7" 140 200}
+   {T "D6" 140 180}
+   {T "D5" 140 160}
+   {T "D4" 140 140}
+   {T "D3" 140 120}
+   {T "D2" 140 100}
+   {T "D1" 140 80}
+   {T "D0" 140 60}
+   {T "OE" 140 40}
+   {T "RES" 140 20}
+   [Tj "RC"]
+   {T "IOEN" 240 20}
+   {T "OD0" 240 40}
+   {T "OD1" 240 60}
+   {T "OD2" 240 80}
+   {T "OD3" 240 100}
+   {T "OD4" 240 120}
+   {T "OD5" 240 140}
+   {T "OD6" 240 160}
+   {T "OD7" 240 180}
+   [Ly "DEVICE"]
+   [Tj "CT"]
+   {T "G22V10" 190 -10}
+  }
+
+  {ATR
+   {IN
+    {Org 100 20}
+    {Ty 255}
+   }
+   {EX
+    [Ly "ATTR2"]
+    [Ts 12][Tj "CT"][Tr 0][Tm "N"]
+    {At PLD D:\ONEDRIVE\EISENBAHN\20 - ELEKTRONIK\01 - EAGLE\73 - MSX - IO-EXPANDER\FPGA\MSX_IO_EXPANDER_0X40_ID\MSX_IO_EXPANDER_0X40_ID 190 260}
+   }
+  }
+ }
+
+ {DETAIL
+  {ANNOTATE
+  }
+
+  {NET_DEF
+   {N CLK
+   }
+   {N D7
+   }
+   {N D6
+   }
+   {N D5
+   }
+   {N D4
+   }
+   {N D3
+   }
+   {N D2
+   }
+   {N D1
+   }
+   {N D0
+   }
+   {N OE
+   }
+   {N RES
+   }
+   {N IOEN
+   }
+   {N OD0
+   }
+   {N OD1
+   }
+   {N OD2
+   }
+   {N OD3
+   }
+   {N OD4
+   }
+   {N OD5
+   }
+   {N OD6
+   }
+   {N OD7
+   }
+  }
+
+  {SUBCOMP
+  }
+ }
+}

@@ -1,0 +1,200 @@
+
+*******************************************************************************
+                            MSX_IO_EXPANDER_0X40_ID
+*******************************************************************************
+
+CUPL(WM)        5.0a Serial# 60008009
+Device          g22v10  Library DLIB-h-40-1
+Created         Sun Aug 24 16:22:41 2025
+Name            MSX_IO_EXPANDER_0X40_ID
+Partno          xxx
+Revision        01
+Date            01/09/23
+Designer        Wiesner
+Company         Wiesnertec
+Assembly        None
+Location        None
+
+===============================================================================
+                            Expanded Product Terms
+===============================================================================
+
+!IOEN =>
+    OD0 & OD1 & OD2 & OD3 & OD4 & OD5 & !OD6 & !OD7
+
+OD0.d  =>
+    !D0
+
+OD0.ar  =>
+    !RES
+
+OD0.oe  =>
+    oe
+
+OD0.sp  =>
+    0 
+
+OD1.d  =>
+    !D1
+
+OD1.ar  =>
+    !RES
+
+OD1.oe  =>
+    oe
+
+OD1.sp  =>
+    0 
+
+OD2.d  =>
+    !D2
+
+OD2.ar  =>
+    !RES
+
+OD2.oe  =>
+    oe
+
+OD2.sp  =>
+    0 
+
+OD3.d  =>
+    !D3
+
+OD3.ar  =>
+    !RES
+
+OD3.oe  =>
+    oe
+
+OD3.sp  =>
+    0 
+
+OD4.d  =>
+    !D4
+
+OD4.ar  =>
+    !RES
+
+OD4.oe  =>
+    oe
+
+OD4.sp  =>
+    0 
+
+OD5.d  =>
+    !D5
+
+OD5.ar  =>
+    !RES
+
+OD5.oe  =>
+    oe
+
+OD5.sp  =>
+    0 
+
+OD6.d  =>
+    !D6
+
+OD6.ar  =>
+    !RES
+
+OD6.oe  =>
+    oe
+
+OD6.sp  =>
+    0 
+
+OD7.d  =>
+    !D7
+
+OD7.ar  =>
+    !RES
+
+OD7.oe  =>
+    oe
+
+OD7.sp  =>
+    0 
+
+in =>
+    D7 , D6 , D5 , D4 , D3 , D2 , D1 , D0
+
+state =>
+    OD7 , OD6 , OD5 , OD4 , OD3 , OD2 , OD1 , OD0
+
+IOEN.oe  =>
+    1 
+
+
+===============================================================================
+                                 Symbol Table
+===============================================================================
+
+Pin Variable                                    Pterms   Max     Min    
+Pol   Name              Ext     Pin     Type     Used   Pterms  Level   
+--- --------            ---     ---     ----    ------  ------  -----   
+
+    D0                          9        V        -       -       -     
+    D1                          8        V        -       -       -     
+    D2                          7        V        -       -       -     
+    D3                          6        V        -       -       -     
+    D4                          5        V        -       -       -     
+    D5                          4        V        -       -       -     
+    D6                          3        V        -       -       -     
+    D7                          2        V        -       -       -     
+    IOEN                        15       V        1       10      2     
+    OD0                         16       V        -       -       -     
+    OD0                 d       16       X        1       12      2     
+    OD0                 ar      16       X        1       1       1     
+    OD0                 oe      16       X        1       1       1     
+    OD0                 sp      16       X        1       1       1     
+    OD1                         17       V        -       -       -     
+    OD1                 d       17       X        1       14      2     
+    OD1                 ar      17       X        1       1       1     
+    OD1                 oe      17       X        1       1       1     
+    OD1                 sp      17       X        1       1       1     
+    OD2                         18       V        -       -       -     
+    OD2                 d       18       X        1       16      2     
+    OD2                 ar      18       X        1       1       1     
+    OD2                 oe      18       X        1       1       1     
+    OD2                 sp      18       X        1       1       1     
+    OD3                         19       V        -       -       -     
+    OD3                 d       19       X        1       16      2     
+    OD3                 ar      19       X        1       1       1     
+    OD3                 oe      19       X        1       1       1     
+    OD3                 sp      19       X        1       1       1     
+    OD4                         20       V        -       -       -     
+    OD4                 d       20       X        1       14      2     
+    OD4                 ar      20       X        1       1       1     
+    OD4                 oe      20       X        1       1       1     
+    OD4                 sp      20       X        1       1       1     
+    OD5                         21       V        -       -       -     
+    OD5                 d       21       X        1       12      2     
+    OD5                 ar      21       X        1       1       1     
+    OD5                 oe      21       X        1       1       1     
+    OD5                 sp      21       X        1       1       1     
+    OD6                         22       V        -       -       -     
+    OD6                 d       22       X        1       10      2     
+    OD6                 ar      22       X        1       1       1     
+    OD6                 oe      22       X        1       1       1     
+    OD6                 sp      22       X        1       1       1     
+    OD7                         23       V        -       -       -     
+    OD7                 d       23       X        1       8       2     
+    OD7                 ar      23       X        1       1       1     
+    OD7                 oe      23       X        1       1       1     
+    OD7                 sp      23       X        1       1       1     
+    RES                         11       V        -       -       -     
+    clk                         1        V        -       -       -     
+    in                          0        F        -       -       -     
+    oe                          10       V        -       -       -     
+    state                       0        F        -       -       -     
+    IOEN                oe      15       D        1       1       0     
+
+
+LEGEND    D : default variable         F : field      G : group
+          I : intermediate variable    N : node       M : extended node
+          U : undefined                V : variable   X : extended variable
+          T : function
+

@@ -1,0 +1,74 @@
+Name      MSX_IO_EXPANDER_ADDR_DECODER;
+Partno    xxx;
+Date      01/09/23;
+Revision  01;
+Designer  Wiesner;
+Company   Wiesnertec;
+Assembly  None;
+Location  None;
+Device    g22V10;
+
+/**  Inputs  **/
+
+PIN 1           = IOEN;		/* Switched IO status		*/
+PIN 2           = WR;		/* Address signal A7 from MSX	*/
+PIN 3           = Ax;           	/* Address signal A7/A6 from MSX	*/
+PIN 4           = A5;           	/* Address signal A5 from MSX	*/
+PIN 5           = A4;           	/* Address signal A4 from MSX	*/
+PIN 6           = A3;           	/* Address signal A3 from MSX	*/
+PIN 7           = A2;           	/* Address signal A2 from MSX	*/
+PIN 8           = A1;           	/* Address signal A1 from MSX	*/
+PIN 9           = A0;           	/* Address signal A0 from MSX	*/
+PIN 10          = IORQ;         	/* /IORQ MSX				*/
+PIN 11          = M1;           	/* /M1 MSX				*/
+PIN 13          = RD;           	/* /RD MSX				*/
+
+/**  Outputs  **/
+
+PIN 14          = 0x40_WR;      	/* Switched IO write			*/
+PIN 15          = 0x40_RD;      	/* Switched IO read			*/
+PIN 16          = 0x4x;		/* Addr 0x4x called			*/
+PIN 17          = M1b;		/* /M1 for IM2-Read/normal /M1	*/
+PIN 18          = RDb;		/* /RD for RC2014 bus		*/
+PIN 19          = RC2014;		/* RC2014 IO addr range called	*/
+PIN 20          = PIC;		/* PIC 92C59A called			*/
+PIN 21          = INTA;		/* PIC 82C59A INTA called		*/
+PIN 22          = ALE;		/* ALE for RC2014 IO set		*/
+PIN 23          = GETINT;		/* INT sources read/FF-INT reset	*/
+
+
+/* 0x40 = Switched ID Manufactor - creates Switched-IO-signal write and read */
+0x40_WR = !IORQ & M1 & !WR & !Ax & !A5 & !A4 & !A3 & !A2 & !A1 & !A0;
+0x40_RD = !IORQ & M1 & !RD & !IOEN & !Ax & !A5 & !A4 & !A3 & !A2 & !A1 & !A0;
+
+/* 0x41 = Get Interruptchannel - Get int sources from Z80 or 8259 */
+!GETINT = !IORQ & M1 & !IOEN & !Ax & !A5 & !A4 & !A3 & !A2 & !A1 & A0;   
+
+/* 0x42 + 0x43 = PIC-calls - CS-signal for 82C59A */
+!PIC   = !IORQ & M1 & !IOEN & !Ax & !A5 & !A4 & !A3 & !A2 & A1;
+
+/* 0x44 = INTA-Read - Emulates INTA-Sequences for PIC 82C59A */
+!INTA = !IORQ & M1 & !RD & !IOEN & !Ax & !A5 & !A4 & !A3 & A2 & !A1 & !A0; 
+
+/* 0x45 = IM2-Read - Emulates IM2-Mode through IO-RD */
+IM2RD = !IORQ & M1 & !RD & !IOEN & !Ax & !A5 & !A4 & !A3 & A2 & !A1 & A0;   
+
+/* 0x46 = ALE - Sets IO-address for RC2014 bus */
+ALE = !IORQ & M1 & !WR & !IOEN & !Ax & !A5 & !A4 & !A3 & A2 & A1 & !A0;
+
+/* 0x47 = IO transfer with RC2014 bus */
+IO = !IORQ & M1 & !IOEN & !Ax & !A5 & !A4 & !A3 & A2 & A1 & A0;
+
+/* M1 control - To emulate INTA for IM2-Mode M1 must be low while read address 0x45 (IM2RD) */
+!M1b = (!RD & !M1) # IM2RD;
+
+/* RD control - RD shall be only been used for read operation at address 0x47 (IO) */
+/* RD must also be activated with M1 to avoid reset of Z80 peripherie */
+!RDb = (!RD & IO) # (!RD & !M1);
+
+/* 0x4x - Used external for creation of BUSDIR signal */
+0x4x = !IORQ & M1 & !IOEN & !Ax & !A5 & !A4;
+
+/* RC2014 - 	Used to create DIR signal for bus driver to RC2014 bus */
+/*		Must be active while RD at address 0x47 (IO) and for IM2-Mode emulation (0x45, IM2RD) */
+RC2014 = IO # IM2RD;

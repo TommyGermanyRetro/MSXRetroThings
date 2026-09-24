@@ -1,0 +1,1559 @@
+;************************************
+;* RTCLCDP.TSR                      *
+;************************************
+;* Resident (real MemMan TSR)       *
+;* RTC/SEED-LCD clock display for   *
+;* RCX card type A (I2C+RTC),       *
+;* driven via XIO_IO_EXPANDER's PIC *
+;* channel interrupt.               *
+;*                                  *
+;* Init discovers RCX_INTERFACE and *
+;* XIO_IO_EXPANDER (two separate    *
+;* UNAPI drivers), shows/optionally *
+;* sets the RTC, writes the initial *
+;* SEED I2C LCD display, registers  *
+;* a minimal custom PIC interrupt   *
+;* handler via XIO SET ADDR, then   *
+;* returns to MemMan/TsrLoad. From  *
+;* then on, every PIC interrupt     *
+;* only sets a resident flag; the   *
+;* MemMan H.TIMI hook (PROGRAM,     *
+;* outside the raw hardware         *
+;* interrupt) rewrites the time on  *
+;* every tick it finds the flag     *
+;* set, and additionally the date   *
+;* whenever the time reads          *
+;* 00:00:00.                        *
+;*                                  *
+;* Assembly:                        *
+;* N80 RTCLCDP.MAC RTCLCDP.REL      *
+;* python rel2tsr.py RTCLCDP.REL    *
+;* RTCLCDP.TSR                      *
+;* TL RTCLCDP.TSR                   *
+;* Usage:                           *
+;* RTCLCDP.TSR /IO:<0..254>         *
+;* /INT:<0..7>                      *
+;************************************
+;* VERSION: 13/09/26                *
+;************************************
+
+; Macro definitions
+
+TSRNAME  MACRO
+	DB	"RTCLCDP     "	; TSR ID-Name (12 bytes)
+	 ENDM
+
+MEMMAN	 MACRO	@FNC		; Macro for making MemMan
+	LD	E,@FNC		; function calls
+	CALL	MMENTRY
+	 ENDM
+
+;************************************
+;* MSX-DOS / UNAPI constants        *
+;************************************
+
+BDOS:		EQU	5
+EXTBIO:		EQU	0FFCAH
+CALSLT:		EQU	001CH
+ARG:		EQU	0F847H
+LINLEN:		EQU	0F3B0H		; current active screen text width
+CMDTAIL:	EQU	0080H		; MSX-DOS command tail (length byte,
+					; then raw text at CMDTAIL+1) - still
+					; the current program's (TL.COM's)
+					; command tail while Init runs, since
+					; Init is a called subroutine, not a
+					; separate EXEC - NOT hardware
+					; confirmed yet, see README
+
+GMENTRY:	EQU	6		; MemMan Info subfunction (via EXTBIO)
+INFO:		EQU	50		; MemMan Info function number
+GTSRID:		EQU	62		; MemMan GetTsrID function number
+HEAP_ALLOC:	EQU	70		; MemMan HeapAlloc function number
+
+RCX_FN_INIT:	EQU	2
+RCX_FN_ISINIT:	EQU	3
+RCX_FN_DEINIT:	EQU	4
+
+I2C_FN_INIT:	EQU	6
+I2C_FN_WRB:	EQU	8
+
+RTC_FN_SETTIME:	EQU	12
+RTC_FN_GETTIME:	EQU	13
+RTC_FN_SETDATE:	EQU	14
+RTC_FN_GETDATE:	EQU	15
+
+XIO_FN_INIT:	EQU	4
+XIO_FN_ISINIT:	EQU	5
+XIO_FN_DEINIT:	EQU	6
+XIO_FN_SETADDR:	EQU	7
+XIO_FN_SETMASK:	EQU	8
+
+UNAPI_DISC_COUNT: EQU	0
+UNAPI_DISC_ENTRY: EQU	1
+
+LCDCHIP:	EQU	07CH		; PCF8584 slave address of the LCD
+
+HOOK:		EQU	0FD9FH		; H.TIMI
+
+;************************************
+;* Header for the TSR file          *
+;************************************
+
+	DB	"MST TSR",13,10	; TSR identifier
+	TSRNAME			; ID-Name
+	DB	26		; ^Z
+	DW	0002		; Header file version, MemMan 2.2+
+	DW	BASE		; Code base address
+	DW	INIT		; Init address
+	DW	KILL		; Kill address
+	DW	TALK		; TsrCall entry
+	DW	TSRLEN		; Resident programcode length
+	DW	INILEN		; Init code length
+
+;************************************
+;* Start of TSR-program code        *
+;************************************
+
+BASE	EQU	$		; first byte of the resident body
+
+KILL:	RET			; no verified XIO SET MASK "clear/disable"
+				; semantics to build a safe channel-disable
+				; sequence on - the original (hardware-
+				; confirmed) code only ever activates a
+				; channel, never deactivates one, so this
+				; stays a no-op rather than guessing; MemMan
+				; still removes the H.TIMI hook regardless
+
+TALK:	RET			; no interactive TsrCall API
+
+;************************************
+;* R_CALLFN - calls RCX's FN_CORExx *
+;* via the resident R_SLOT/R_SEG/   *
+;* R_ENTRY/R_HELPERADD.             *
+;************************************
+;* INPUT: A=function number,        *
+;* B/C/D/E preset as documented by  *
+;* the target function              *
+;************************************
+
+R_CALLFN:
+	PUSH	AF
+	PUSH	HL
+
+	LD	HL,(R_ENTRY)
+	PUSH	HL
+	POP	IX
+
+	LD	A,(R_SEG)
+	CP	0FFH
+	JR	Z,R_CALLFN_ROM
+
+	LD	A,(R_SLOT)
+	LD	H,A
+	LD	A,(R_SEG)
+	LD	L,A
+	PUSH	HL
+	POP	IY
+
+	POP	HL
+	POP	AF
+
+	PUSH	HL
+	LD	HL,(R_HELPERADD)
+	EX	(SP),HL
+	RET
+
+R_CALLFN_ROM:
+	LD	A,(R_SLOT)
+	LD	H,A
+	LD	L,0
+	PUSH	HL
+	POP	IY
+
+	POP	HL
+	POP	AF
+
+	CALL	CALSLT
+	RET
+
+;************************************
+;* R_CALLFNXIO - calls XIO's        *
+;* FN_CORExx via the resident       *
+;* R_XSLOT/R_XSEG/                  *
+;* R_XENTRY/R_HELPERADD - same      *
+;* dispatch as R_CALLFN, separate   *
+;* driver.                          *
+;************************************
+
+R_CALLFNXIO:
+	PUSH	AF
+	PUSH	HL
+
+	LD	HL,(R_XENTRY)
+	PUSH	HL
+	POP	IX
+
+	LD	A,(R_XSEG)
+	CP	0FFH
+	JR	Z,R_CALLFNXIO_ROM
+
+	LD	A,(R_XSLOT)
+	LD	H,A
+	LD	A,(R_XSEG)
+	LD	L,A
+	PUSH	HL
+	POP	IY
+
+	POP	HL
+	POP	AF
+
+	PUSH	HL
+	LD	HL,(R_HELPERADD)
+	EX	(SP),HL
+	RET
+
+R_CALLFNXIO_ROM:
+	LD	A,(R_XSLOT)
+	LD	H,A
+	LD	L,0
+	PUSH	HL
+	POP	IY
+
+	POP	HL
+	POP	AF
+
+	CALL	CALSLT
+	RET
+
+;************************************
+;* R_DOWRB - I2C WRB(LCDCHIP,B,HL)  *
+;* at R_I2CADDR - caller presets    *
+;* B=length, HL=data pointer        *
+;************************************
+
+R_DOWRB:
+	EX	DE,HL
+	LD	A,(R_I2CADDR)
+	LD	H,A
+	LD	C,LCDCHIP
+	LD	A,I2C_FN_WRB
+	CALL	R_CALLFN
+	RET
+
+;************************************
+;* R_WIDEN8 - copies 8 raw bytes at *
+;* HL into 8 words at DE (low byte  *
+;* = the char, high byte = 0)       *
+;************************************
+
+R_WIDEN8:
+	LD	B,8
+R_WIDEN8LP:
+	LD	A,(HL)
+	LD	(DE),A
+	INC	HL
+	INC	DE
+	XOR	A
+	LD	(DE),A
+	INC	DE
+	DJNZ	R_WIDEN8LP
+	RET
+
+;************************************
+;* R_REFRESHTIME - rewrites line 2  *
+;* (time) from a fresh RTC GET TIME *
+;************************************
+
+R_REFRESHTIME:
+	LD	A,(R_I2CADDR)
+	LD	C,A
+	LD	DE,R_TIMEBUF_T-R_PAGE3BLOCK
+	CALL	R_HEAPPTR
+	EX	DE,HL
+	LD	A,RTC_FN_GETTIME
+	CALL	R_CALLFN
+
+	LD	DE,R_LINE2ADDR_T-R_PAGE3BLOCK
+	CALL	R_HEAPPTR
+	LD	B,2
+	CALL	R_DOWRB
+
+	LD	DE,R_TIMEBUF_T-R_PAGE3BLOCK
+	CALL	R_HEAPPTR
+	PUSH	HL			; source (R_TIMEBUF_T)
+	LD	DE,R_TIMEOUT_DATA_T-R_PAGE3BLOCK
+	CALL	R_HEAPPTR
+	EX	DE,HL			; DE = dest (R_TIMEOUT_DATA_T)
+	POP	HL			; HL = source
+	CALL	R_WIDEN8
+
+	LD	DE,R_TIMEOUT_T-R_PAGE3BLOCK
+	CALL	R_HEAPPTR
+	LD	B,9
+	CALL	R_DOWRB
+
+	RET
+
+;************************************
+;* R_REFRESHDATE - rewrites line 1  *
+;* (date) from a fresh RTC GET DATE *
+;************************************
+
+R_REFRESHDATE:
+	LD	A,(R_I2CADDR)
+	LD	C,A
+	LD	DE,R_DATEBUF_T-R_PAGE3BLOCK
+	CALL	R_HEAPPTR
+	EX	DE,HL
+	LD	A,RTC_FN_GETDATE
+	CALL	R_CALLFN
+
+	LD	DE,R_LINE1ADDR_T-R_PAGE3BLOCK
+	CALL	R_HEAPPTR
+	LD	B,2
+	CALL	R_DOWRB
+
+	LD	DE,R_DATEBUF_T-R_PAGE3BLOCK
+	CALL	R_HEAPPTR
+	PUSH	HL			; source (R_DATEBUF_T)
+	LD	DE,R_DATEOUT_DATA_T-R_PAGE3BLOCK
+	CALL	R_HEAPPTR
+	EX	DE,HL			; DE = dest (R_DATEOUT_DATA_T)
+	POP	HL			; HL = source
+	CALL	R_WIDEN8
+
+	LD	DE,R_DATEOUT_T-R_PAGE3BLOCK
+	CALL	R_HEAPPTR
+	LD	B,9
+	CALL	R_DOWRB
+
+	RET
+
+;************************************
+;* R_CHECKMIDNIGHT - Z if           *
+;* R_TIMEBUF_T equals R_MIDNIGHT    *
+;* ("00:00:00")                     *
+;************************************
+
+R_CHECKMIDNIGHT:
+	LD	DE,R_TIMEBUF_T-R_PAGE3BLOCK
+	CALL	R_HEAPPTR
+	LD	DE,R_MIDNIGHT
+	LD	B,8
+R_CHKMID_LP:
+	LD	A,(DE)
+	CP	(HL)
+	RET	NZ
+	INC	HL
+	INC	DE
+	DJNZ	R_CHKMID_LP
+	RET
+
+;************************************
+;* R_HEAPPTR - IN: DE=offset within *
+;* R_PAGE3BLOCK, OUT:               *
+;* HL=R_HEAPADDR+DE (the runtime    *
+;* address of that page-3 item)     *
+;************************************
+
+R_HEAPPTR:
+	LD	HL,(R_HEAPADDR)
+	ADD	HL,DE
+	RET
+
+;************************************
+;* PROGRAM - the MemMan H.TIMI hook *
+;* handler (registered via the      *
+;* Hooks: table below, fires every  *
+;* 50/60 Hz through MemMan's own    *
+;* shared dispatcher - no manual    *
+;* old-hook save/chain needed,      *
+;* MemMan handles that). Checks     *
+;* R_NEEDREFRESH_T (set by          *
+;* R_PICISR_T, in the page-3 heap   *
+;* block - see R_PAGE3BLOCK -       *
+;* reached here via R_HEAPADDR      *
+;* since its runtime address is     *
+;* only known after Init's          *
+;* HeapAlloc); if set, refreshes    *
+;* the time and, only exactly at    *
+;* 00:00:00, the date too.          *
+;************************************
+
+PROGRAM:
+	PUSH	AF
+	PUSH	BC
+	PUSH	DE
+	PUSH	HL
+
+	LD	HL,(R_HEAPADDR)
+	LD	A,(HL)
+	OR	A
+	JR	Z,PROGRAM_DONE
+
+	XOR	A
+	LD	(HL),A
+	CALL	R_REFRESHTIME
+	CALL	R_CHECKMIDNIGHT
+	JR	NZ,PROGRAM_DONE
+	CALL	R_REFRESHDATE
+
+PROGRAM_DONE:
+	POP	HL
+	POP	DE
+	POP	BC
+	POP	AF
+
+	EX	AF,AF'			;Save AF
+	LD	A,0			; Reset flags for TsrManager
+	EX	AF,AF'			;Restore AF, flags to A'
+	RET				; Return to TsrManager
+
+;************************************
+;* Resident data                    *
+;************************************
+
+R_I2CADDR:	DB	0		; 1 byte
+
+R_SLOT:		DB	0		; } RCX_INTERFACE dispatch
+R_SEG:		DB	0		; }
+R_ENTRY:	DW	0		; }
+R_HELPERADD:	DW	0		; } shared (RAM helper), generic
+
+R_XSLOT:	DB	0		; } XIO_IO_EXPANDER dispatch
+R_XSEG:		DB	0		; }
+R_XENTRY:	DW	0		; }
+
+R_MIDNIGHT:	DB	"00:00:00"	; compared against the (page-3) time
+					; buffer by R_CHECKMIDNIGHT - never
+					; passed to a CORE function itself,
+					; safe to keep TSR-resident
+
+R_HEAPADDR:	DW	0		; MemMan HeapAlloc result (page 3),
+					; filled in once by Init - see
+					; R_PAGE3BLOCK below
+
+;************************************
+;* R_PAGE3BLOCK - template for the  *
+;* one block of memory that MUST    *
+;* live in page 3, allocated via    *
+;* real MemMan HeapAlloc (function  *
+;* 70) at Init time and LDIR-copied *
+;* there from this template (see    *
+;* Init). Not optional:             *
+;* XIOROM.ASM's/RCXROM.ASM's own    *
+;* CORE functions (INIT/ISINIT's    *
+;* "already initialized" tracking   *
+;* via SETRAM/GETRAM/MODINIT, and   *
+;* any buffer a CORE function       *
+;* dereferences directly, e.g. RTC  *
+;* GET TIME/DATE's DE or I2C WRB's  *
+;* HL) access these addresses       *
+;* directly (no interslot call)     *
+;* from code that itself runs from  *
+;* page 1 - while that ROM's own    *
+;* code is what page 1 shows, a     *
+;* page-1 MemMan TSR segment        *
+;* address is NOT reachable there,  *
+;* silently reading/writing the     *
+;* wrong memory. Page 3 has none of *
+;* this problem: always mapped,     *
+;* regardless of what's currently   *
+;* in page 1. Confirmed             *
+;* hardware-side via XIO_FN_ISINIT  *
+;* reporting "not initialized" both *
+;* right after and right before     *
+;* use, with 0 Carry from           *
+;* XIO_FN_INIT itself - not a       *
+;* crash, a silent no-op on the     *
+;* wrong memory.                    *
+;************************************
+
+R_PAGE3BLOCK:
+
+R_NEEDREFRESH_T: DB	0		; set by R_PICISR_T, cleared by
+					; PROGRAM - both need it in page 3:
+					; R_PICISR_T because it's the actual
+					; interrupt handler (see below),
+					; PROGRAM because it's the only
+					; address R_PICISR_T can reach
+
+R_XBOUNDFLAG_T:	DS	2
+R_XWORKAREA_T:	DS	97
+R_RCXWORKAREA_T: DS	330H		; 816 bytes
+
+R_ISIBUF_T:	DW	0		; RCX_FN_ISINIT result buffer
+R_XISIBUF_T:	DW	0		; XIO_FN_ISINIT result buffer
+
+R_TIMEBUF_T:	DS	8
+R_DATEBUF_T:	DS	8
+
+					; HD44780 command buffers - each
+					; element is 1 WORD (only the low
+					; byte is ever sent) - FN_CORE8 steps
+					; its data pointer by 2 per element
+R_LINE1ADDR_T:	DW	080H,080H	; command reg, DDRAM address 0x00
+R_LINE2ADDR_T:	DW	080H,0C0H	; command reg, DDRAM address 0x40
+
+R_DATEOUT_T:	DW	040H		; data reg, followed by 8 widened
+R_DATEOUT_DATA_T: DS	16		; words filled from R_DATEBUF_T
+
+R_TIMEOUT_T:	DW	040H		; data reg, followed by 8 widened
+R_TIMEOUT_DATA_T: DS	16		; words filled from R_TIMEBUF_T
+
+					; LCD init-sequence command buffers -
+					; one-time use only (DOLCD), but still
+					; dereferenced directly by I2C_FN_WRB
+					; while ITS code runs from page 1, so
+					; still need to be page 3, same reason
+					; as everything else in this block
+R_FUNCSET_T:	DW	080H,028H	; command reg, function-set 8-bit
+R_CLRDISP_T:	DW	080H,001H	; command reg, clear display
+R_DISPON_T:	DW	080H,00FH	; command reg, display/cursor/blink on
+
+					; R_PICISR_T - registered via XIO SET
+					; ADDR (C=0FFH, real "page 3 call"
+					; now), runs inside the real PIC
+					; hardware interrupt - stays minimal
+					; (sets a flag), PROGRAM (in the TSR
+					; segment, safely reached via
+					; MemMan's own H.TIMI hook dispatch)
+					; does the actual work. The embedded
+					; operand below is a placeholder,
+					; patched by Init after the LDIR copy
+					; (see R_NEEDREFRESH_T-R_PAGE3BLOCK).
+R_PICISR_T:	LD	A,1
+		LD	(R_NEEDREFRESH_T),A
+		RET
+
+R_PAGE3BLOCK_END:
+
+R_PAGE3BLOCK_SIZE: EQU	R_PAGE3BLOCK_END-R_PAGE3BLOCK
+
+; memManEntry
+;
+; Entry address for MemMan function calls
+
+MMENTRY:	JP	0		; Address filled in by init routine
+
+TSRLEN	EQU	$-BASE			; Length of TSR programcode
+
+
+;************************************
+;* Init-code                        *
+;************************************
+
+INIT:	LD	B,GMENTRY		; Ask for MemMan entry
+	LD	DE,256*'M' + INFO	; Call the MemMan info function
+	CALL	EXTBIO			; Through the ExtBio hook
+	LD	(MMENTRY+1),HL		; Save the MemMan entry address
+
+	LD	HL,TTSRNM		; Pointer to TSR name-string
+	MEMMAN	GTSRID			; See if this TSR already exists
+	JP	NC,INTDBL		; Yes, => Double installed error
+
+;************************************
+;* Screen width: reads the          *
+;* currently active column count    *
+;* (LINLEN), never changes it -     *
+;* 40-column banner below the       *
+;* 41-column threshold, 80-column   *
+;* banner at or above it            *
+;************************************
+
+	LD	A,(LINLEN)
+	CP	41
+	LD	A,40
+	JR	C,SETWIDTH
+	LD	A,80
+
+SETWIDTH:
+	LD	(SCRCOLS),A
+
+	LD	A,(SCRCOLS)
+	CP	80
+	LD	DE,MSTART80
+	JR	Z,PRINTSTART
+	LD	DE,MSTART40
+PRINTSTART:
+	CALL	PRSTR
+
+	CALL	PARSEIO
+	JP	C,PARAMERR
+	CALL	PARSEINT
+	JP	C,PARAMERR
+
+;************************************
+;* Locate the RAM helper, if any -  *
+;* shared by both UNAPIs            *
+;************************************
+
+	LD	DE,02222H
+	LD	HL,0
+	LD	A,0FFH
+	CALL	EXTBIO
+	LD	(R_HELPERADD),HL
+
+;************************************
+;* Discover RCX_INTERFACE (A=0:     *
+;* count)                           *
+;************************************
+
+	LD	HL,IDSTR
+	LD	DE,ARG
+	LD	BC,IDSTRLEN
+	LDIR
+
+	LD	A,UNAPI_DISC_COUNT
+	LD	B,0
+	LD	DE,02222H
+	CALL	EXTBIO
+	LD	A,B
+	OR	A
+	JP	Z,NOTFOUND
+
+;************************************
+;* Discover RCX_INTERFACE (A=1:     *
+;* slot/segment/entry) - written    *
+;* straight into the resident       *
+;* dispatch variables, no separate  *
+;* transient copy                   *
+;************************************
+
+	LD	A,UNAPI_DISC_ENTRY
+	LD	DE,02222H
+	CALL	EXTBIO
+	LD	(R_SLOT),A
+	LD	A,B
+	LD	(R_SEG),A
+	LD	(R_ENTRY),HL
+
+	LD	DE,MFOUND
+	CALL	PRSTR
+	LD	A,(R_SLOT)
+	CALL	PRHEX2
+	LD	DE,MCRLF
+	CALL	PRSTR
+
+;************************************
+;* Discover XIO_IO_EXPANDER - a     *
+;* SEPARATE UNAPI, own              *
+;* slot/segment/entry               *
+;************************************
+
+	LD	HL,XIDSTR
+	LD	DE,ARG
+	LD	BC,XIDSTRLEN
+	LDIR
+
+	LD	A,UNAPI_DISC_COUNT
+	LD	B,0
+	LD	DE,02222H
+	CALL	EXTBIO
+	LD	A,B
+	OR	A
+	JP	Z,XNOTFOUND
+
+	LD	A,UNAPI_DISC_ENTRY
+	LD	DE,02222H
+	CALL	EXTBIO
+	LD	(R_XSLOT),A
+	LD	A,B
+	LD	(R_XSEG),A
+	LD	(R_XENTRY),HL
+
+	LD	DE,MXFOUND
+	CALL	PRSTR
+	LD	A,(R_XSLOT)
+	CALL	PRHEX2
+	LD	DE,MCRLF
+	CALL	PRSTR
+
+;************************************
+;* Allocate the page-3 heap block   *
+;* (real MemMan HeapAlloc, function *
+;* 70 - protected/reserved by       *
+;* MemMan, not a guessed fixed      *
+;* address) and copy the            *
+;* R_PAGE3BLOCK template into it,   *
+;* then patch R_PICISR_T's embedded *
+;* R_NEEDREFRESH_T reference (the   *
+;* only internal cross-reference in *
+;* the copied block - everything    *
+;* else is addressed via R_HEAPADDR *
+;* + a compile-time offset at the   *
+;* point of use, never baked into   *
+;* the copy).                       *
+;************************************
+
+	LD	HL,R_PAGE3BLOCK_SIZE
+	MEMMAN	HEAP_ALLOC
+	LD	A,H
+	OR	L
+	JP	Z,HEAPERR
+	LD	(R_HEAPADDR),HL
+
+	EX	DE,HL
+	LD	HL,R_PAGE3BLOCK
+	LD	BC,R_PAGE3BLOCK_SIZE
+	LDIR
+
+	LD	DE,R_PICISR_T-R_PAGE3BLOCK+3
+	CALL	R_HEAPPTR		; HL = addr of the operand to patch
+	PUSH	HL
+	LD	DE,R_NEEDREFRESH_T-R_PAGE3BLOCK
+	CALL	R_HEAPPTR		; HL = the corrected operand value
+	EX	DE,HL			; DE = corrected value
+	POP	HL			; HL = where to patch it
+	LD	(HL),E
+	INC	HL
+	LD	(HL),D
+
+;************************************
+;* Setup: XIO ISINIT/DEINIT/INIT -  *
+;* page-3                           *
+;* R_XWORKAREA_T/R_XBOUNDFLAG_T     *
+;************************************
+
+	LD	DE,R_XISIBUF_T-R_PAGE3BLOCK
+	CALL	R_HEAPPTR
+	EX	DE,HL
+	LD	A,XIO_FN_ISINIT
+	CALL	R_CALLFNXIO
+	LD	DE,R_XISIBUF_T-R_PAGE3BLOCK
+	CALL	R_HEAPPTR
+	INC	HL
+	LD	A,(HL)
+	OR	A
+	JR	Z,XSETUP_INIT
+
+	LD	A,XIO_FN_DEINIT
+	CALL	R_CALLFNXIO
+
+XSETUP_INIT:
+	LD	DE,R_XWORKAREA_T-R_PAGE3BLOCK
+	CALL	R_HEAPPTR
+	PUSH	HL
+	LD	DE,R_XBOUNDFLAG_T-R_PAGE3BLOCK
+	CALL	R_HEAPPTR
+	EX	DE,HL			; DE = R_XBOUNDFLAG_T
+	POP	HL			; HL = R_XWORKAREA_T
+	LD	A,XIO_FN_INIT
+	CALL	R_CALLFNXIO
+	JP	C,XINITERR
+
+;************************************
+;* Setup: RCX ISINIT/DEINIT/INIT -  *
+;* page-3 R_RCXWORKAREA_T, then I2C *
+;* INIT                             *
+;************************************
+
+	LD	DE,R_ISIBUF_T-R_PAGE3BLOCK
+	CALL	R_HEAPPTR
+	EX	DE,HL
+	LD	A,RCX_FN_ISINIT
+	CALL	R_CALLFN
+	LD	DE,R_ISIBUF_T-R_PAGE3BLOCK
+	CALL	R_HEAPPTR
+	LD	A,(HL)
+	CP	1
+	JR	NZ,SETUP_INIT
+
+	LD	A,RCX_FN_DEINIT
+	CALL	R_CALLFN
+
+SETUP_INIT:
+	LD	DE,R_RCXWORKAREA_T-R_PAGE3BLOCK
+	CALL	R_HEAPPTR
+	LD	A,RCX_FN_INIT
+	CALL	R_CALLFN
+	JP	C,INITERR
+
+	LD	A,(R_I2CADDR)
+	LD	C,A
+	LD	A,I2C_FN_INIT
+	CALL	R_CALLFN
+
+;************************************
+;* Read + show current date/time    *
+;************************************
+
+	LD	A,(R_I2CADDR)
+	LD	C,A
+	LD	DE,R_TIMEBUF_T-R_PAGE3BLOCK
+	CALL	R_HEAPPTR
+	EX	DE,HL
+	LD	A,RTC_FN_GETTIME
+	CALL	R_CALLFN
+
+	LD	A,(R_I2CADDR)
+	LD	C,A
+	LD	DE,R_DATEBUF_T-R_PAGE3BLOCK
+	CALL	R_HEAPPTR
+	EX	DE,HL
+	LD	A,RTC_FN_GETDATE
+	CALL	R_CALLFN
+
+	LD	DE,MDATE
+	CALL	PRSTR
+	LD	DE,R_DATEBUF_T-R_PAGE3BLOCK
+	CALL	R_HEAPPTR
+	LD	B,8
+	CALL	PRBUF
+	LD	DE,MCRLF
+	CALL	PRSTR
+
+	LD	DE,MTIME
+	CALL	PRSTR
+	LD	DE,R_TIMEBUF_T-R_PAGE3BLOCK
+	CALL	R_HEAPPTR
+	LD	B,8
+	CALL	PRBUF
+	LD	DE,MCRLF
+	CALL	PRSTR
+
+;************************************
+;* Optionally change date/time      *
+;************************************
+
+	LD	DE,MASKDATE
+	CALL	PRSTR
+	CALL	ASKYESNO
+	JR	NZ,ASKTIME
+
+	CALL	ASKNEWDATE
+	LD	HL,LINEBUF
+	LD	DE,R_DATEBUF_T-R_PAGE3BLOCK
+	CALL	R_HEAPPTR
+	EX	DE,HL
+	LD	HL,LINEBUF
+	LD	BC,8
+	LDIR
+
+	LD	A,(R_I2CADDR)
+	LD	C,A
+	LD	DE,R_DATEBUF_T-R_PAGE3BLOCK
+	CALL	R_HEAPPTR
+	EX	DE,HL
+	LD	A,RTC_FN_SETDATE
+	CALL	R_CALLFN
+
+ASKTIME:
+	LD	DE,MASKTIME
+	CALL	PRSTR
+	CALL	ASKYESNO
+	JR	NZ,DOLCD
+
+	CALL	ASKNEWTIME
+	LD	DE,R_TIMEBUF_T-R_PAGE3BLOCK
+	CALL	R_HEAPPTR
+	EX	DE,HL
+	LD	HL,LINEBUF
+	LD	BC,8
+	LDIR
+
+	LD	A,(R_I2CADDR)
+	LD	C,A
+	LD	DE,R_TIMEBUF_T-R_PAGE3BLOCK
+	CALL	R_HEAPPTR
+	EX	DE,HL
+	LD	A,RTC_FN_SETTIME
+	CALL	R_CALLFN
+
+;************************************
+;* SEED I2C LCD init sequence, then *
+;* date on line 1 / time on line 2  *
+;* - calls the RESIDENT             *
+;* R_DOWRB/R_WIDEN8 directly, no    *
+;* separate transient copies needed *
+;************************************
+
+DOLCD:	LD	B,4
+LCDINITLOOP:
+	PUSH	BC
+	LD	DE,R_FUNCSET_T-R_PAGE3BLOCK
+	CALL	R_HEAPPTR
+	LD	B,2
+	CALL	R_DOWRB
+	POP	BC
+	DJNZ	LCDINITLOOP
+
+	LD	DE,R_CLRDISP_T-R_PAGE3BLOCK
+	CALL	R_HEAPPTR
+	LD	B,2
+	CALL	R_DOWRB
+
+	LD	DE,R_DISPON_T-R_PAGE3BLOCK
+	CALL	R_HEAPPTR
+	LD	B,2
+	CALL	R_DOWRB
+
+	LD	DE,R_LINE1ADDR_T-R_PAGE3BLOCK
+	CALL	R_HEAPPTR
+	LD	B,2
+	CALL	R_DOWRB
+
+	LD	DE,R_DATEBUF_T-R_PAGE3BLOCK
+	CALL	R_HEAPPTR
+	PUSH	HL
+	LD	DE,R_DATEOUT_DATA_T-R_PAGE3BLOCK
+	CALL	R_HEAPPTR
+	EX	DE,HL
+	POP	HL
+	CALL	R_WIDEN8
+
+	LD	DE,R_DATEOUT_T-R_PAGE3BLOCK
+	CALL	R_HEAPPTR
+	LD	B,9
+	CALL	R_DOWRB
+
+	LD	DE,R_LINE2ADDR_T-R_PAGE3BLOCK
+	CALL	R_HEAPPTR
+	LD	B,2
+	CALL	R_DOWRB
+
+	LD	DE,R_TIMEBUF_T-R_PAGE3BLOCK
+	CALL	R_HEAPPTR
+	PUSH	HL
+	LD	DE,R_TIMEOUT_DATA_T-R_PAGE3BLOCK
+	CALL	R_HEAPPTR
+	EX	DE,HL
+	POP	HL
+	CALL	R_WIDEN8
+
+	LD	DE,R_TIMEOUT_T-R_PAGE3BLOCK
+	CALL	R_HEAPPTR
+	LD	B,9
+	CALL	R_DOWRB
+
+	LD	DE,MDONE
+	CALL	PRSTR
+
+	LD	DE,R_NEEDREFRESH_T-R_PAGE3BLOCK
+	CALL	R_HEAPPTR
+	XOR	A
+	LD	(HL),A
+
+;************************************
+;* Register the custom PIC ISR      *
+;* (runs inside the real hardware   *
+;* interrupt, see R_PICISR_T in     *
+;* R_PAGE3BLOCK - it only sets      *
+;* R_NEEDREFRESH_T, PROGRAM does    *
+;* the actual work), then activate  *
+;* the channel. C=0FFH is correct   *
+;* here: R_PICISR_T genuinely lives *
+;* in page 3 now (the "page 3 call" *
+;* shortcut, not an interslot       *
+;* call). The H.TIMI hook itself is *
+;* installed by MemMan/TsrLoad via  *
+;* the Hooks: table below - no      *
+;* manual save/chain needed here.   *
+;************************************
+
+	LD	A,(CHANNEL)
+	LD	B,A
+	LD	C,0FFH
+	LD	DE,R_PICISR_T-R_PAGE3BLOCK
+	CALL	R_HEAPPTR
+	EX	DE,HL
+	LD	A,XIO_FN_SETADDR
+	CALL	R_CALLFNXIO
+	JR	C,MSETADDRERR
+
+	LD	A,(MASKVAL)
+	LD	E,A
+	LD	D,0
+	LD	A,XIO_FN_SETMASK
+	CALL	R_CALLFNXIO
+	JR	C,MSETMASKERR
+
+	LD	DE,MRESIDENT
+	CALL	PRSTR
+
+	XOR	A			; Flags in A, no messages
+	RET				; Init ready, return to TsrLoad
+
+HEAPERR:
+	LD	DE,MHEAPERR
+	LD	A,3
+	RET
+
+MSETADDRERR:
+	LD	DE,MSETADDRERRMSG
+	LD	A,3
+	RET
+
+MSETMASKERR:
+	LD	DE,MMASKERR
+	LD	A,3
+	RET
+
+PARAMERR:
+	LD	DE,MUSAGE
+	LD	A,3
+	RET
+
+NOTFOUND:
+	LD	DE,MNOTFOUND
+	LD	A,3
+	RET
+
+INITERR:
+	LD	DE,MINITERR
+	LD	A,3
+	RET
+
+XNOTFOUND:
+	LD	DE,MXNOTFOUND
+	LD	A,3
+	RET
+
+XINITERR:
+	LD	DE,MXINITERR
+	LD	A,3
+	RET
+
+INTDBL:	LD	DE,TDOUBLE		; DE=Text pointer
+	LD	A,3			; Flags for TL: Print text & Abort
+	RET				; Return to TsrLoad
+
+;************************************
+;* PARSEIO - finds "/IO:" in the    *
+;* MSX-DOS command tail, parses the *
+;* decimal digits after it, checks  *
+;* 0..254, stores into R_I2CADDR    *
+;************************************
+;* OUTPUT: (R_I2CADDR) = 0..254,    *
+;* Carry=1 if missing/invalid       *
+;************************************
+
+PARSEIO:
+	LD	HL,PIOTOK
+	CALL	FINDTOK
+	RET	C
+
+	PUSH	HL
+	POP	IX
+	CALL	PARSEDEC
+	RET	C
+
+	LD	A,L
+	CP	255			; 0..254 valid
+	JR	C,PARSEIO_OK
+
+	SCF
+	RET
+
+PARSEIO_OK:
+	LD	(R_I2CADDR),A
+	OR	A
+	RET
+
+;************************************
+;* PARSEINT - finds "/INT:" in the  *
+;* MSX-DOS command tail, parses the *
+;* decimal digits after it, checks  *
+;* 0..7, stores CHANNEL and         *
+;* precomputes MASKVAL = 2^CHANNEL  *
+;************************************
+;* OUTPUT: (CHANNEL) = 0..7,        *
+;* (MASKVAL) = 1,2,4,...,128,       *
+;* Carry=1 if missing/invalid       *
+;************************************
+
+PARSEINT:
+	LD	HL,PINTTOK
+	CALL	FINDTOK
+	RET	C
+
+	PUSH	HL
+	POP	IX
+	CALL	PARSEDEC
+	RET	C
+
+	LD	A,L
+	CP	8
+	JR	C,PARSEINT_OK		; 0..7 valid
+
+	SCF
+	RET
+
+PARSEINT_OK:
+	LD	(CHANNEL),A
+
+	LD	HL,MASKTAB
+	LD	D,0
+	LD	E,A
+	ADD	HL,DE
+	LD	A,(HL)
+	LD	(MASKVAL),A
+	OR	A
+	RET
+
+;************************************
+;* FINDTOK - case-insensitive       *
+;* search (letters only - '/' and   *
+;* ':' match literally) for a       *
+;* 0-terminated needle inside the   *
+;* MSX-DOS command tail (CMDTAIL,   *
+;* length-prefixed)                 *
+;************************************
+;* INPUT: HL = needle               *
+;* (0-terminated) OUTPUT: HL = ptr  *
+;* just past the match in the       *
+;* command tail; Carry=1 if not     *
+;* found                            *
+;************************************
+
+FINDTOK:
+	LD	(FINDTOK_NDL),HL
+
+	LD	A,(CMDTAIL)
+	LD	C,A			; C = remaining length to scan
+	LD	DE,CMDTAIL+1		; DE = scan pointer
+
+FINDTOK_SCAN:
+	LD	A,C
+	OR	A
+	JR	Z,FINDTOK_FAIL
+
+	LD	HL,(FINDTOK_NDL)
+	PUSH	DE			; save this attempt's start position
+
+FINDTOK_TRY:
+	LD	A,(HL)
+	OR	A
+	JR	Z,FINDTOK_HIT		; whole needle matched (0 reached)
+
+	LD	B,A			; B = needle char (fixed case)
+	LD	A,(DE)
+	CP	'a'
+	JR	C,FINDTOK_NOFOLD
+	CP	'z'+1
+	JR	NC,FINDTOK_NOFOLD
+	AND	0DFH			; fold lowercase text char to upper
+FINDTOK_NOFOLD:
+	CP	B
+	JR	NZ,FINDTOK_MISS
+
+	INC	HL
+	INC	DE
+	JR	FINDTOK_TRY
+
+FINDTOK_HIT:
+	POP	HL			; discard saved attempt-start
+	EX	DE,HL			; HL = pointer just past the match
+	OR	A
+	RET
+
+FINDTOK_MISS:
+	POP	DE			; restore this attempt's start
+	INC	DE			; advance scan by one character
+	DEC	C
+	JR	FINDTOK_SCAN
+
+FINDTOK_FAIL:
+	SCF
+	RET
+
+;************************************
+;* PARSEDEC - parses a run of       *
+;* decimal digits at (IX), stopping *
+;* at the first non-digit           *
+;************************************
+;* OUTPUT: HL = value (0..255),     *
+;* Carry=1 if zero digits were      *
+;* found or the value exceeds 255   *
+;************************************
+
+PARSEDEC:
+	LD	HL,0
+	LD	B,0			; digit counter
+
+PARSEDEC_LP:
+	LD	A,(IX+0)
+	CP	'0'
+	JR	C,PARSEDEC_END
+	CP	'9'+1
+	JR	NC,PARSEDEC_END
+	SUB	'0'
+
+	LD	E,A
+	LD	D,0
+	PUSH	DE
+	LD	D,H
+	LD	E,L
+	ADD	HL,HL
+	ADD	HL,HL
+	ADD	HL,DE
+	ADD	HL,HL			; HL = HL*10
+	POP	DE
+	ADD	HL,DE			; HL = HL*10 + digit
+
+	LD	A,H
+	OR	A
+	JR	NZ,PARSEDEC_BAD		; exceeded 255
+
+	INC	B
+	INC	IX
+	JR	PARSEDEC_LP
+
+PARSEDEC_END:
+	LD	A,B
+	OR	A
+	JR	Z,PARSEDEC_BAD		; no digits at all
+
+	OR	A
+	RET
+
+PARSEDEC_BAD:
+	SCF
+	RET
+
+;************************************
+;* ASKYESNO - reads exactly 1 char, *
+;* sets Z for Y/y, NZ for N/n,      *
+;* re-prompts on anything else      *
+;************************************
+
+ASKYESNO:
+	LD	A,1
+	LD	(INBUF),A
+	LD	DE,INBUF
+	LD	C,0AH
+	CALL	BDOS
+
+	LD	DE,MCRLF
+	CALL	PRSTR
+
+	LD	A,(INBUF+1)
+	CP	1
+	JR	NZ,ASKYESNO_BAD
+
+	LD	A,(INBUF+2)
+	CP	'Y'
+	JR	Z,ASKYESNO_YES
+	CP	'y'
+	JR	Z,ASKYESNO_YES
+	CP	'N'
+	JR	Z,ASKYESNO_NO
+	CP	'n'
+	JR	Z,ASKYESNO_NO
+
+ASKYESNO_BAD:
+	LD	DE,MBADYESNO
+	CALL	PRSTR
+	JR	ASKYESNO
+
+ASKYESNO_NO:
+	OR	1			; clear Z (guaranteed non-zero)
+	RET
+
+ASKYESNO_YES:
+	XOR	A			; set Z
+	RET
+
+;************************************
+;* ASK8CHARS - reads a line into    *
+;* LINEBUF, re-prompts until at     *
+;* least 8 characters were typed    *
+;************************************
+
+ASK8CHARS:
+	LD	A,20
+	LD	(INBUF),A
+	LD	DE,INBUF
+	LD	C,0AH
+	CALL	BDOS
+
+	LD	DE,MCRLF
+	CALL	PRSTR
+
+	LD	A,(INBUF+1)
+	CP	8
+	JR	C,ASK8CHARS_BAD
+
+	LD	HL,INBUF+2
+	LD	DE,LINEBUF
+	LD	BC,8
+	LDIR
+	RET
+
+ASK8CHARS_BAD:
+	LD	DE,MBAD8
+	CALL	PRSTR
+	JR	ASK8CHARS
+
+;************************************
+;* ASKNEWDATE - reads into LINEBUF  *
+;* via ASK8CHARS, then validates    *
+;* format DD/MM/YY (DD=01..31,      *
+;* MM=01..12, YY=any 2 digits) -    *
+;* re-prompts on any violation      *
+;************************************
+
+ASKNEWDATE:
+	LD	DE,MNEWDATE
+	CALL	PRSTR
+
+ASKNEWDATE_RETRY:
+	CALL	ASK8CHARS
+
+	LD	A,(LINEBUF+2)
+	CP	'/'
+	JR	NZ,ASKNEWDATE_BAD
+	LD	A,(LINEBUF+5)
+	CP	'/'
+	JR	NZ,ASKNEWDATE_BAD
+
+	LD	HL,LINEBUF
+	CALL	DIGIT2
+	JR	C,ASKNEWDATE_BAD
+	CP	1
+	JR	C,ASKNEWDATE_BAD
+	CP	32
+	JR	NC,ASKNEWDATE_BAD
+
+	LD	HL,LINEBUF+3
+	CALL	DIGIT2
+	JR	C,ASKNEWDATE_BAD
+	CP	1
+	JR	C,ASKNEWDATE_BAD
+	CP	13
+	JR	NC,ASKNEWDATE_BAD
+
+	LD	HL,LINEBUF+6
+	CALL	DIGIT2
+	JR	C,ASKNEWDATE_BAD
+
+	RET
+
+ASKNEWDATE_BAD:
+	LD	DE,MBADDATEFMT
+	CALL	PRSTR
+	JR	ASKNEWDATE_RETRY
+
+;************************************
+;* ASKNEWTIME - reads into LINEBUF  *
+;* via ASK8CHARS, then validates    *
+;* format HH:MM:SS (HH=00..23,      *
+;* MM/SS=00..59) - re-prompts on    *
+;* any violation                    *
+;************************************
+
+ASKNEWTIME:
+	LD	DE,MNEWTIME
+	CALL	PRSTR
+
+ASKNEWTIME_RETRY:
+	CALL	ASK8CHARS
+
+	LD	A,(LINEBUF+2)
+	CP	':'
+	JR	NZ,ASKNEWTIME_BAD
+	LD	A,(LINEBUF+5)
+	CP	':'
+	JR	NZ,ASKNEWTIME_BAD
+
+	LD	HL,LINEBUF
+	CALL	DIGIT2
+	JR	C,ASKNEWTIME_BAD
+	CP	24
+	JR	NC,ASKNEWTIME_BAD
+
+	LD	HL,LINEBUF+3
+	CALL	DIGIT2
+	JR	C,ASKNEWTIME_BAD
+	CP	60
+	JR	NC,ASKNEWTIME_BAD
+
+	LD	HL,LINEBUF+6
+	CALL	DIGIT2
+	JR	C,ASKNEWTIME_BAD
+	CP	60
+	JR	NC,ASKNEWTIME_BAD
+
+	RET
+
+ASKNEWTIME_BAD:
+	LD	DE,MBADTIMEFMT
+	CALL	PRSTR
+	JR	ASKNEWTIME_RETRY
+
+;************************************
+;* DIGIT2 - HL points at 2 ASCII    *
+;* digit chars, returns A=value     *
+;* (0..99), Carry set if either     *
+;* char is not '0'..'9'             *
+;************************************
+
+DIGIT2:	LD	A,(HL)
+	CP	'0'
+	JR	C,DIGIT2_BAD
+	CP	'9'+1
+	JR	NC,DIGIT2_BAD
+	SUB	'0'
+	LD	B,A
+	INC	HL
+	LD	A,(HL)
+	CP	'0'
+	JR	C,DIGIT2_BAD
+	CP	'9'+1
+	JR	NC,DIGIT2_BAD
+	SUB	'0'
+	LD	C,A
+	LD	A,B
+	ADD	A,A
+	ADD	A,A
+	ADD	A,B
+	ADD	A,A
+	ADD	A,C
+	OR	A
+	RET
+
+DIGIT2_BAD:
+	SCF
+	RET
+
+;************************************
+;* Print helpers                    *
+;************************************
+
+PRSTR:	PUSH	BC
+	PUSH	AF
+	PUSH	HL
+	LD	C,9
+	CALL	BDOS
+	POP	HL
+	POP	AF
+	POP	BC
+	RET
+
+PRCHR:	PUSH	BC
+	PUSH	DE
+	PUSH	HL
+	LD	E,A
+	LD	C,2
+	CALL	BDOS
+	POP	HL
+	POP	DE
+	POP	BC
+	RET
+
+; PRBUF - prints B raw bytes from HL as characters (not $-terminated -
+; GET TIME/DATE fill a fixed-length ASCII buffer, no terminator)
+
+PRBUF:	PUSH	BC
+	PUSH	HL
+	LD	A,(HL)
+	CALL	PRCHR
+	POP	HL
+	POP	BC
+	INC	HL
+	DJNZ	PRBUF
+	RET
+
+PRHEX2:	PUSH	AF
+	RRCA
+	RRCA
+	RRCA
+	RRCA
+	CALL	PRNIB
+	POP	AF
+	CALL	PRNIB
+	RET
+
+PRNIB:	PUSH	AF
+	AND	0FH
+	CP	0AH
+	JR	C,PRNIBD
+	ADD	A,7
+PRNIBD:	ADD	A,'0'
+	CALL	PRCHR
+	POP	AF
+	RET
+
+;************************************
+;* Init-local data                  *
+;************************************
+
+TTSRNM:	TSRNAME			; Macro for tsr-name string
+TDOUBLE:
+	DB	'RTCLCDP is already installed',13,10,10,0
+
+IDSTR:		DB	"RCX_INTERFACE",0
+IDSTRLEN:	EQU	$-IDSTR
+
+XIDSTR:		DB	"XIO_IO_EXPANDER",0
+XIDSTRLEN:	EQU	$-XIDSTR
+
+MSTART40:
+	DB	12
+	DB	"RTCLCDP - MemMan TSR, RCX card type A (I2C+RTC),",13,10
+	DB	"resident PIC-interrupt LCD clock via",13,10
+	DB	"XIO_IO_EXPANDER.",13,10
+	DB	13,10,"$"
+
+MSTART80:
+	DB	12
+	DB	"RTCLCDP - MemMan TSR, RCX card type A (I2C+RTC). Reads/",13,10
+	DB	"shows the RTC, optionally sets it, writes the SEED LCD,",13,10
+	DB	"then registers a PIC interrupt handler and stays resident",13,10
+	DB	"(via MemMan) after returning to TsrLoad.",13,10
+	DB	13,10,"$"
+
+PIOTOK:		DB	"/IO:",0
+PINTTOK:	DB	"/INT:",0
+MUSAGE:		DB	"Usage: RTCLCDP.TSR /IO:<0..254> /INT:<0..7>",13,10,10,0
+MFOUND:		DB	"RCX_INTERFACE found, slot=","$"
+MXFOUND:	DB	"XIO_IO_EXPANDER found, slot=","$"
+MCRLF:		DB	13,10,"$"
+MDATE:		DB	"Current date: ","$"
+MTIME:		DB	"Current time: ","$"
+MASKDATE:	DB	"Change date (Y/N)? ","$"
+MASKTIME:	DB	"Change time (Y/N)? ","$"
+MNEWDATE:	DB	"New date (DD/MM/YY, 8 characters): ","$"
+MNEWTIME:	DB	"New time (HH:MM:SS, 8 characters): ","$"
+MBAD8:		DB	"Please enter exactly 8 characters.",13,10,"$"
+MBADYESNO:	DB	"Please enter Y or N.",13,10,"$"
+MBADDATEFMT:
+	DB	"Invalid date - format DD/MM/YY,",13,10
+	DB	"DD=01..31, MM=01..12.",13,10,"$"
+MBADTIMEFMT:
+	DB	"Invalid time - format HH:MM:SS,",13,10
+	DB	"HH=00..23, MM/SS=00..59.",13,10,"$"
+MDONE:		DB	"LCD sequence sent.",13,10,"$"
+MRESIDENT:	DB	"Installed, resident.",13,10,"$"
+MSETADDRERRMSG:	DB	"XIO SET ADDR failed (Carry).",13,10,10,0
+MMASKERR:	DB	"XIO SET MASK failed (Carry).",13,10,10,0
+MNOTFOUND:	DB	"RCX_INTERFACE not found.",13,10,10,0
+MINITERR:	DB	"RCX INIT failed (Carry).",13,10,10,0
+MXNOTFOUND:	DB	"XIO_IO_EXPANDER not found.",13,10,10,0
+MXINITERR:	DB	"XIO INIT failed (Carry).",13,10,10,0
+MHEAPERR:	DB	"MemMan HeapAlloc failed (out of page-3 heap).",13,10,10,0
+
+CHANNEL:	DB	0
+MASKVAL:	DB	0
+MASKTAB:	DB	1,2,4,8,16,32,64,128
+SCRCOLS:	DB	0		; 40 or 80
+FINDTOK_NDL:	DW	0
+INBUF:		DB	20,0
+		DS	20
+LINEBUF:	DS	8
+
+INILEN	EQU	$-INIT			; Length of init-code
+
+;************************************
+;* Hook Table                       *
+;************************************
+
+HOOKS:	DW	HTBLEN			; Length of HokTab
+	DW	HOOK
+	DW	PROGRAM
+
+HTBLEN	EQU	$-HOOKS			; Length of hook-table
+
+;---------------------------
+
+	END

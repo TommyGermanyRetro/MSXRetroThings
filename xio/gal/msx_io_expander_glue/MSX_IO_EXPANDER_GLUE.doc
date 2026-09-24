@@ -1,0 +1,126 @@
+
+*******************************************************************************
+                             MSX_IO_EXPANDER_GLUE
+*******************************************************************************
+
+CUPL(WM)        5.0a Serial# 60008009
+Device          g22v10  Library DLIB-h-40-1
+Created         Thu Jan 15 22:55:33 2026
+Name            MSX_IO_EXPANDER_GLUE
+Partno          xxx
+Revision        01
+Date            01/09/23
+Designer        Wiesner
+Company         Wiesnertec
+Assembly        None
+Location        None
+
+===============================================================================
+                            Expanded Product Terms
+===============================================================================
+
+!DIR =>
+    !CS1 & !RD & !SLTSL
+  # 0x4x & !IOEN & !IORQ & !RD
+
+!DISINT =>
+    !RST
+  # !GETINT & !WR
+
+!ENAINT =>
+    !GETINT & !RD
+
+!INT =>
+    INTEN & INTPIC
+  # INTEN & !INTZ80
+
+!RCDIR =>
+    RC2014 & !RD
+
+!RCIORQ =>
+    RC2014
+
+RCTAKT =>
+    TAKT
+
+!RCWR =>
+    RC2014 & !WR
+
+DIR.oe  =>
+    1 
+
+DISINT.oe  =>
+    1 
+
+ENAINT.oe  =>
+    1 
+
+GETINT.oe  =>
+    0 
+
+INT.oe  =>
+    1 
+
+RCDIR.oe  =>
+    1 
+
+RCIORQ.oe  =>
+    1 
+
+RCTAKT.oe  =>
+    1 
+
+RCWR.oe  =>
+    1 
+
+RST.oe  =>
+    0 
+
+
+===============================================================================
+                                 Symbol Table
+===============================================================================
+
+Pin Variable                                    Pterms   Max     Min    
+Pol   Name              Ext     Pin     Type     Used   Pterms  Level   
+--- --------            ---     ---     ----    ------  ------  -----   
+
+    0x4x                        3        V        -       -       -     
+    CS1                         10       V        -       -       -     
+    DIR                         18       V        2       16      2     
+    DISINT                      20       V        2       14      2     
+    ENAINT                      17       V        1       14      2     
+    GETINT                      16       V        -       -       -     
+    INT                         14       V        2       8       2     
+    INTEN                       1        V        -       -       -     
+    INTPIC                      13       V        -       -       -     
+    INTZ80                      11       V        -       -       -     
+    IOEN                        6        V        -       -       -     
+    IORQ                        5        V        -       -       -     
+    RC2014                      4        V        -       -       -     
+    RCDIR                       19       V        1       16      2     
+    RCIORQ                      22       V        1       10      2     
+    RCTAKT                      23       V        1       8       2     
+    RCWR                        21       V        1       12      2     
+    RD                          8        V        -       -       -     
+    RST                         15       V        -       -       -     
+    SLTSL                       9        V        -       -       -     
+    TAKT                        2        V        -       -       -     
+    WR                          7        V        -       -       -     
+    DIR                 oe      18       D        1       1       0     
+    DISINT              oe      20       D        1       1       0     
+    ENAINT              oe      17       D        1       1       0     
+    GETINT              oe      16       D        1       1       0     
+    INT                 oe      14       D        1       1       0     
+    RCDIR               oe      19       D        1       1       0     
+    RCIORQ              oe      22       D        1       1       0     
+    RCTAKT              oe      23       D        1       1       0     
+    RCWR                oe      21       D        1       1       0     
+    RST                 oe      15       D        1       1       0     
+
+
+LEGEND    D : default variable         F : field      G : group
+          I : intermediate variable    N : node       M : extended node
+          U : undefined                V : variable   X : extended variable
+          T : function
+

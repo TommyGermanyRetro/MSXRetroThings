@@ -15,6 +15,12 @@ Have fun and stay healthy,
 
 Thomas
 
+## Contents
+
++ [1. The XIO cartridge](#1-msxretrothings---the-xio-cartridge)
++ [2. The RCX ROM cartridge and RC2014 cards](#2-msxretrothings---the-rcx-rom-cartridge-and-rc2014-cards)
++ [3. mbc89, a Maerklin Connect6021 CAN accessory module](#3-msxretrothings---mbc89-a-maerklin-connect6021-can-accessory-module)
+
 
 ## 1. MSXRetroThings - The XIO cartridge
 
@@ -1186,11 +1192,13 @@ RC2014 card with 2x MCP4822. Up to 16 cards are possible. The interrupt pin of A
 Details coming soon
 
 
-## 3. MSXRetroThings - mbc89, a Maerklin Connect6021 CAN accessory module for MSX1
+## 3. MSXRetroThings - mbc89, a Maerklin Connect6021 CAN accessory module
 
 #### <b>3.1 mbc89 provides:</b>
 
-+ A full MSX1/MSX-DOS 1 port of `mbc89`, one of the MBCAN family of Maerklin CS2/CS3 CAN-bus accessory modules - runs as a normal `.COM` program instead of the original's ATmega firmware
++ A full MSX-DOS 2 port of `mbc89`, one of the MBCAN family of Maerklin CS2/CS3 CAN-bus accessory modules - runs as a normal `.COM` program instead of the original's ATmega firmware
+
++ Runs on MSX1, MSX2, and MSX2+ alike - graphics use only the TMS9918A-standard SCREEN0/SCREEN2 modes, backward-compatible on every later VDP (V9938/V9958); the only real requirement is an MSX-DOS 2 kernel (needed for the environment-variable-based startup configuration), not a particular machine generation
 
 + Registers itself on the CS2/CS3 CAN bus exactly like a real Connect6021 and answers the config-channel walk (SW version, central-station-type mapping, keyboard base address, I2C clock)
 
@@ -1212,15 +1220,15 @@ Boot info screen - startup configuration, persisted configuration, and discovery
 
 ![mbc89 boot info](mbc89/images/init.jpg)
 
-CU6021 panel
+CU6021 panel - locomotive control (speed knob, direction toggle, functions F0-F4), one instance
 
 ![mbc89 CU6021](mbc89/images/6021.jpg)
 
-Keyboard-6040 panel
+Keyboard-6040 panel - accessory control (a grid of red/green switch/signal button pairs for turnouts and signals), up to 16 independent instances
 
 ![mbc89 Keyboard-6040](mbc89/images/6040.jpg)
 
-Control80f panel
+Control80f panel - a second locomotive controller alongside CU6021, same speed/direction/function control, up to 8 independent instances
 
 ![mbc89 Control80f](mbc89/images/c80f.jpg)
 
@@ -1228,7 +1236,7 @@ A full startup-to-panel video is included: [`mbc89/images/startup.mp4`](mbc89/im
 
 #### <b>3.3 Hardware:</b>
 
-No dedicated hardware - runs on an MSX1 with `RC2014 card E` (SJA1000 CAN controller, see [`rcx/rc2014_card_e/`](rcx/rc2014_card_e/)) installed behind an XIO cartridge+RC2014 adapter, connected to a Maerklin CS2/CS3 CAN bus.
+No dedicated hardware - runs on any MSX1/MSX2/MSX2+ with `RC2014 card E` (SJA1000 CAN controller, see [`rcx/rc2014_card_e/`](rcx/rc2014_card_e/)) installed behind an XIO cartridge+RC2014 adapter, connected to a Maerklin CS2/CS3 CAN bus, and MSX-DOS 2 as the active kernel.
 
 #### <b>3.4 Software:</b>
 

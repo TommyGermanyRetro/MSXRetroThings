@@ -29,19 +29,22 @@ discovery/init results for the XIO/RCX/CAN chain
 
 ![mbc89 boot info](images/init.jpg)
 
-CU6021 panel - locomotive control (speed knob, direction toggle, functions F0-F4), one instance
+CU6021 panel - locomotive control (speed knob, direction toggle, functions F0-F4), one instance -
+original Maerklin device (left) vs. mbc89 emulation (right)
 
-![mbc89 CU6021](images/6021.jpg)
+![mbc89 CU6021](images/6021_combo.jpg)
 
 Keyboard-6040 panel - accessory control (a grid of red/green switch/signal button pairs for
-turnouts and signals), up to 16 independent instances
+turnouts and signals), up to 16 independent instances - original Maerklin device (left) vs.
+mbc89 emulation (right)
 
-![mbc89 Keyboard-6040](images/6040.jpg)
+![mbc89 Keyboard-6040](images/6040_combo.jpg)
 
 Control80f panel - a second locomotive controller alongside CU6021, same speed/direction/function
-control, up to 8 independent instances
+control, up to 8 independent instances - original Maerklin device (left) vs. mbc89 emulation
+(right)
 
-![mbc89 Control80f](images/c80f.jpg)
+![mbc89 Control80f](images/c80f_combo.jpg)
 
 A full startup-to-panel video is included: [`images/startup.mp4`](images/startup.mp4).
 

@@ -77,7 +77,7 @@ Commands implemented in ROM/LIB:
 
 |  | Definition | BASIC | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | XIO OUT | _XIO OUT(ADDR,DATA) | 2 | Xio_Out |
+| Syntax | XIO OUT | _XIO OUT() | 2 | Xio_Out() |
 | PARA 1 | IO addr 0...255 | byte or variable | C | byte or variable |
 | PARA 2 | IO data 0...255 | byte or variable | B | byte or variable |
 
@@ -87,7 +87,7 @@ Commands implemented in ROM/LIB:
 
 |  | Definition | BASIC | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | XIO INP | _XIO INP(ADDR,DATA) | 3 | Xio_Inp |
+| Syntax | XIO INP | _XIO INP() | 3 | Xio_Inp() |
 | PARA 1 | IO addr 0...255 | byte or variable | C | byte or variable |
 | PARA 2 | IO data 0...255 | variable | DE as varptr | return value (byte) |
 
@@ -97,7 +97,7 @@ Commands implemented in ROM/LIB:
 
 |  | Definition | BASIC | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | XIO INIT | _XIO INIT(CHANNEL) | 4 | Xio_Init |
+| Syntax | XIO INIT | _XIO INIT() | 4 | Xio_Init() |
 | PARA 1 | status | variable | DE as varptr | word (intflags) |
 | PARA 2 | Working area in RAM | automatic by BIOS | HL | word (workarea) |
 
@@ -107,7 +107,7 @@ Commands implemented in ROM/LIB:
 
 |  | Definition | BASIC | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | XIO ISINIT | _XIO ISINIT(ISI) | 5 | Xio_IsInit |
+| Syntax | XIO ISINIT | _XIO ISINIT() | 5 | Xio_IsInit() |
 | PARA 1 | 0 = not installed, 1 = installed | variable | DE as varptr | return value (byte) |
 
 + <i><b>XIO DEINIT</i></b>
@@ -116,7 +116,7 @@ Commands implemented in ROM/LIB:
 
 |  | Definition | BASIC | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | XIO DEINIT | _XIO DEINIT | 6 | Xio_Deinit |
+| Syntax | XIO DEINIT | _XIO DEINIT | 6 | Xio_Deinit() |
 
 + <i><b>XIO SET ADDR</i></b>
 
@@ -124,7 +124,7 @@ Commands implemented in ROM/LIB:
 
 |  | Definition | BASIC | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | XIO SET ADDR | _XIO SET ADDR(CHANNEL,ADDR) | 7 | Xio_SetAddr |
+| Syntax | XIO SET ADDR | _XIO SET ADDR() | 7 | Xio_SetAddr() |
 | PARA 1 | channel | byte or variable | B | byte or variable |
 | PARA 2 | addr | word or variable | DE | word or variable |
 | PARA 3 | slot | automatic by BIOS | C | - |
@@ -135,7 +135,7 @@ Commands implemented in ROM/LIB:
 
 |  | Definition | BASIC | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | XIO SET MASK | _XIO SET MASK(MASK) | 8 | Xio_SetMask |
+| Syntax | XIO SET MASK | _XIO SET MASK() | 8 | Xio_SetMask() |
 | PARA 1 | Bit Chx: 0 = disabled, 1 = enabled | word or variable | DE | word or variable |
 
 + <i><b>XIO GET ADDR</i></b>
@@ -144,7 +144,7 @@ Commands implemented in ROM/LIB:
 
 |  | Definition | BASIC | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | XIO GET ADDR | _XIO GET ADDR(CHANNEL,ADDR) | 9 | Xio_GetAddr |
+| Syntax | XIO GET ADDR | _XIO GET ADDR() | 9 | Xio_GetAddr() |
 | PARA 1 | channel | byte or variable | B | byte or variable |
 | PARA 2 | addr | variable | DE as varptr | pointer (word) |
 | PARA 3 | slot | automatic by BIOS | C | - |
@@ -155,7 +155,7 @@ Commands implemented in ROM/LIB:
 
 |  | Definition | BASIC | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | XIO GET MASK | _XIO GET MASK(MASK) | 10 | Xio_GetMask |
+| Syntax | XIO GET MASK | _XIO GET MASK() | 10 | Xio_GetMask() |
 | PARA 1 | Bit Chx: 0 = disabled, 1 = enabled | variable | DE as varptr | pointer (word) |
 
 
@@ -227,7 +227,7 @@ Commands implemented in ROM/DRV/LIB for steering and controlling of the cards fu
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | RCX INIT | _RCX INIT | 2 | Rcx_Init |
+| Syntax | RCX INIT | _RCX INIT | 2 | Rcx_Init() |
 | PARA 1 | Working area in RAM | automatic by BIOS | HL | word |
 
 *) ROM only
@@ -238,7 +238,7 @@ Commands implemented in ROM/DRV/LIB for steering and controlling of the cards fu
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | RCX ISINIT | _RCX ISINIT(ISI) | 3 | Rcx_IsInit |
+| Syntax | RCX ISINIT | _RCX ISINIT() | 3 | Rcx_IsInit() |
 | PARA 1 | 0 = not installed, 1 = installed | variable | DE as varptr | return value (byte) |
 
 *) ROM only
@@ -249,7 +249,7 @@ Commands implemented in ROM/DRV/LIB for steering and controlling of the cards fu
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | RCX DEINIT | _RCX DEINIT | 4 | Rcx_Deinit |
+| Syntax | RCX DEINIT | _RCX DEINIT | 4 | Rcx_Deinit() |
 
 *) ROM only
 
@@ -259,7 +259,7 @@ Commands implemented in ROM/DRV/LIB for steering and controlling of the cards fu
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | RCX TABLE | _RCX TABLE(ADDR) | 5 | Rcx_GetTable |
+| Syntax | RCX TABLE | _RCX TABLE() | 5 | Rcx_GetTable() |
 | PARA 1 | ADDR of RCX table | variable | DE as varptr | pointer (word) |
 
 *) ROM only
@@ -299,7 +299,7 @@ Commands implemented in ROM:
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | I2C INIT | _I2C INIT(ADDR) | 6 | I2c_Init |
+| Syntax | I2C INIT | _I2C INIT() | 6 | I2c_Init() |
 | PARA 1 | IO addr 0...254 | byte or variable | C | byte or variable |
 
 *) ROM only
@@ -310,7 +310,7 @@ Commands implemented in ROM:
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | I2C WR | _I2C WR(BUS,CHIP,DATA) | 7 | I2c_Write |
+| Syntax | I2C WR | _I2C WR() | 7 | I2c_Write() |
 | PARA 1 | IO bus addr 0...254 | byte or variable | E | byte or variable |
 | PARA 2 | I2C addr 0...254 | byte or variable | C | byte or variable |
 | PARA 3 | Data | byte or variable | B | byte or variable |
@@ -323,7 +323,7 @@ Commands implemented in ROM:
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | I2C WRB | _I2C WRB(BUS,CHIP,LEN,DATA) | 8 | I2c_Wrb |
+| Syntax | I2C WRB | _I2C WRB() | 8 | I2c_Wrb() |
 | PARA 1 | IO bus addr 0...254 | byte or variable | H | byte or variable |
 | PARA 2 | I2C addr 0...254 | byte or variable | C | byte or variable |
 | PARA 3 | Length | byte or variable | B | byte or variable |
@@ -337,7 +337,7 @@ Commands implemented in ROM:
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | I2C RD | _I2C RD(BUS,CHIP,DATA) | 9 | I2c_Read |
+| Syntax | I2C RD | _I2C RD() | 9 | I2c_Read() |
 | PARA 1 | IO bus addr 0...254 | byte or variable | C | byte or variable |
 | PARA 2 | I2C addr 0...254 | byte or variable | B | byte or variable |
 | PARA 3 | Data | variable | DE as varptr | return value (byte) |
@@ -350,7 +350,7 @@ Commands implemented in ROM:
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | I2C RDB | _I2C RDB(BUS,CHIP,LEN,DATA) | 10 | I2c_Rdb |
+| Syntax | I2C RDB | _I2C RDB() | 10 | I2c_Rdb() |
 | PARA 1 | IO bus addr 0...254 | byte or variable | H | byte or variable |
 | PARA 2 | I2C addr 0...254 | byte or variable | C | byte or variable |
 | PARA 3 | Length | byte or variable | B | byte or variable |
@@ -364,7 +364,7 @@ Commands implemented in ROM:
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | I2C RESET | _I2C RESET(ADDR) | 11 | I2c_Reset |
+| Syntax | I2C RESET | _I2C RESET() | 11 | I2c_Reset() |
 | PARA 1 | IO addr 0...254 | byte or variable | C | byte or variable |
 
 *) ROM only
@@ -375,7 +375,7 @@ Commands implemented in ROM:
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | SET TIME | _SET TIME RD(BUS,TIME) | 12 | Rtc_SetTime |
+| Syntax | SET TIME | _SET TIME RD() | 12 | Rtc_SetTime() |
 | PARA 1 | IO bus addr 0...254 | byte or variable | C | byte or variable |
 | PARA 2 | TIME | String variable len = 8 | DE as varptr | pointer (8 bytes) |
 
@@ -387,7 +387,7 @@ Commands implemented in ROM:
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | GET TIME | _GET TIME RD(BUS,TIME) | 13 | Rtc_GetTime |
+| Syntax | GET TIME | _GET TIME RD() | 13 | Rtc_GetTime() |
 | PARA 1 | IO bus addr 0...254 | byte or variable | C | byte or variable |
 | PARA 2 | TIME | String variable len = 8 | DE as varptr | pointer (8 bytes) |
 
@@ -399,7 +399,7 @@ Commands implemented in ROM:
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | SET DATE | _SET DATE RD(BUS,DATE) | 14 | Rtc_SetDate |
+| Syntax | SET DATE | _SET DATE RD() | 14 | Rtc_SetDate() |
 | PARA 1 | IO bus addr 0...254 | byte or variable | C | byte or variable |
 | PARA 2 | DATE | String variable len = 8 | DE as varptr | pointer (8 bytes) |
 
@@ -411,7 +411,7 @@ Commands implemented in ROM:
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | GET DATE | _GET DATE RD(BUS,DATE) | 15 | Rtc_GetDate |
+| Syntax | GET DATE | _GET DATE RD() | 15 | Rtc_GetDate() |
 | PARA 1 | IO bus addr 0...254 | byte or variable | C | byte or variable |
 | PARA 2 | DATE | String variable len = 8 | DE as varptr | pointer (8 bytes) |
 
@@ -443,7 +443,7 @@ Commands implemented in ROM:
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | PIO INIT | _PIO INIT(ADDR) | 16 | Pio_Init |
+| Syntax | PIO INIT | _PIO INIT() | 16 | Pio_Init() |
 | PARA 1 | IO addr 0...252 | byte or variable | C | byte or variable |
 
 *) ROM only
@@ -454,7 +454,7 @@ Commands implemented in ROM:
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | PIO A RD | _PIO A RD(ADDR,VALUE) | 17 | Pio_ReadA |
+| Syntax | PIO A RD | _PIO A RD() | 17 | Pio_ReadA() |
 | PARA 1 | IO addr 0...252 | byte or variable | C | byte or variable |
 | PARA 2 | Byte to read | variable | DE as varptr | return value (byte) |
 | PARA 3 | UNAPI ID Level 2 | -/- | B = 0 | - |
@@ -467,7 +467,7 @@ Commands implemented in ROM:
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | PIO A WR | _PIO A WR(ADDR,VALUE) | 18 | Pio_WriteA |
+| Syntax | PIO A WR | _PIO A WR() | 18 | Pio_WriteA() |
 | PARA 1 | IO addr 0...252 | byte or variable | C | byte or variable |
 | PARA 2 | Byte to write | byte or variable | D | byte or variable |
 | PARA 3 | UNAPI ID Level 2 | -/- | B = 1 | - |
@@ -480,7 +480,7 @@ Commands implemented in ROM:
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | PIO B RD | _PIO B RD(ADDR,VALUE) | 19 | Pio_ReadB |
+| Syntax | PIO B RD | _PIO B RD() | 19 | Pio_ReadB() |
 | PARA 1 | IO addr 0...252 | byte or variable | C | byte or variable |
 | PARA 2 | Byte to read | variable | DE as varptr | return value (byte) |
 | PARA 3 | UNAPI ID Level 2 | -/- | B = 2 | - |
@@ -493,7 +493,7 @@ Commands implemented in ROM:
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | PIO B WR | _PIO B WR(ADDR,VALUE) | 20 | Pio_WriteB |
+| Syntax | PIO B WR | _PIO B WR() | 20 | Pio_WriteB() |
 | PARA 1 | IO addr 0...252 | byte or variable | C | byte or variable |
 | PARA 2 | Byte to write | byte or variable | D | byte or variable |
 | PARA 3 | UNAPI ID Level 2 | -/- | B = 3 | - |
@@ -506,7 +506,7 @@ Commands implemented in ROM:
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | PIO A CTRL | _PIO A CTRL(ADDR,VALUE) | 21 | Pio_CtrlA |
+| Syntax | PIO A CTRL | _PIO A CTRL() | 21 | Pio_CtrlA() |
 | PARA 1 | IO addr 0...252 | byte or variable | C | byte or variable |
 | PARA 2 | Byte to write | byte or variable | D | byte or variable |
 | PARA 3 | UNAPI ID Level 2 | -/- | B = 4 | - |
@@ -519,7 +519,7 @@ Commands implemented in ROM:
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | PIO B CTRL | _PIO B CTRL(ADDR,VALUE) | 22 | Pio_CtrlB |
+| Syntax | PIO B CTRL | _PIO B CTRL() | 22 | Pio_CtrlB() |
 | PARA 1 | IO addr 0...252 | byte or variable | C | byte or variable |
 | PARA 2 | Byte to write | byte or variable | D | byte or variable |
 | PARA 3 | UNAPI ID Level 2 | -/- | B = 5 | - |
@@ -552,7 +552,7 @@ Commands implemented in ROM:
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | PPI INIT | _PPI INIT(ADDR) | 23 | Ppi_Init |
+| Syntax | PPI INIT | _PPI INIT() | 23 | Ppi_Init() |
 
 *) ROM only
 
@@ -562,7 +562,7 @@ Commands implemented in ROM:
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | PPI A RD | _PPI A RD(ADDR,VALUE) | 24 | Ppi_ReadA |
+| Syntax | PPI A RD | _PPI A RD() | 24 | Ppi_ReadA() |
 | PARA 1 | IO addr 0...252 | byte or variable | C | byte or variable |
 | PARA 2 | Byte to read | variable | DE as varptr | return value (byte) |
 | PARA 3 | UNAPI ID Level 2 | -/- | B = 0 | - |
@@ -575,7 +575,7 @@ Commands implemented in ROM:
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | PPI A WR | _PPI A WR(ADDR,VALUE) | 25 | Ppi_WriteA |
+| Syntax | PPI A WR | _PPI A WR() | 25 | Ppi_WriteA() |
 | PARA 1 | IO addr 0...252 | byte or variable | C | byte or variable |
 | PARA 2 | Byte to write | byte or variable | D | byte or variable |
 | PARA 3 | UNAPI ID Level 2 | -/- | B = 1 | - |
@@ -588,7 +588,7 @@ Commands implemented in ROM:
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | PPI B RD | _PPI B RD(ADDR,VALUE) | 26 | Ppi_ReadB |
+| Syntax | PPI B RD | _PPI B RD() | 26 | Ppi_ReadB() |
 | PARA 1 | IO addr 0...252 | byte or variable | C | byte or variable |
 | PARA 2 | Byte to read | variable | DE as varptr | return value (byte) |
 | PARA 3 | UNAPI ID Level 2 | -/- | B = 2 | - |
@@ -601,7 +601,7 @@ Commands implemented in ROM:
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | PPI B WR | _PPI B WR(ADDR,VALUE) | 27 | Ppi_WriteB |
+| Syntax | PPI B WR | _PPI B WR() | 27 | Ppi_WriteB() |
 | PARA 1 | IO addr 0...252 | byte or variable | C | byte or variable |
 | PARA 2 | Byte to write | byte or variable | D | byte or variable |
 | PARA 3 | UNAPI ID Level 2 | -/- | B = 3 | - |
@@ -614,7 +614,7 @@ Commands implemented in ROM:
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | PPI C RD | _PPI C RD(ADDR,VALUE) | 28 | Ppi_ReadC |
+| Syntax | PPI C RD | _PPI C RD() | 28 | Ppi_ReadC() |
 | PARA 1 | IO addr 0...252 | byte or variable | C | byte or variable |
 | PARA 2 | Byte to read | variable | DE as varptr | return value (byte) |
 | PARA 3 | UNAPI ID Level 2 | -/- | B = 4 | - |
@@ -627,7 +627,7 @@ Commands implemented in ROM:
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | PPI C WR | _PPI C WR(ADDR,VALUE) | 29 | Ppi_WriteC |
+| Syntax | PPI C WR | _PPI C WR() | 29 | Ppi_WriteC() |
 | PARA 1 | IO addr 0...252 | byte or variable | C | byte or variable |
 | PARA 2 | Byte to write | byte or variable | D | byte or variable |
 | PARA 3 | UNAPI ID Level 2 | -/- | B = 5 | - |
@@ -640,7 +640,7 @@ Commands implemented in ROM:
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | PPI CTRL | _PPI CTRL(ADDR,VALUE) | 30 | Ppi_Ctrl |
+| Syntax | PPI CTRL | _PPI CTRL() | 30 | Ppi_Ctrl() |
 | PARA 1 | IO addr 0...252 | byte or variable | C | byte or variable |
 | PARA 2 | Byte to write | byte or variable | D | byte or variable |
 | PARA 3 | UNAPI ID Level 2 | -/- | B = 6 | - |
@@ -653,7 +653,7 @@ Commands implemented in ROM:
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | PPI SET | _PPI SET(ADDR,VALUE) | 31 | Ppi_SetBit |
+| Syntax | PPI SET | _PPI SET() | 31 | Ppi_SetBit() |
 | PARA 1 | IO addr 0...252 | byte or variable | C | byte or variable |
 | PARA 2 | Bit to set | byte or variable | D | byte or variable |
 | PARA 3 | UNAPI ID Level 2 | -/- | B = 7 | - |
@@ -666,7 +666,7 @@ Commands implemented in ROM:
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | PPI RESET | _PPI RESET(ADDR,VALUE) | 32 | Ppi_ResetBit |
+| Syntax | PPI RESET | _PPI RESET() | 32 | Ppi_ResetBit() |
 | PARA 1 | IO addr 0...252 | byte or variable | C | byte or variable |
 | PARA 2 | Bit to reset | byte or variable | D | byte or variable |
 | PARA 3 | UNAPI ID Level 2 | -/- | B = 8 | - |
@@ -699,7 +699,7 @@ Commands implemented in ROM:
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | TIMER INIT | _TIMER INIT(ADDR) | 33 | Timer_Init |
+| Syntax | TIMER INIT | _TIMER INIT() | 33 | Timer_Init() |
 | PARA 1 | IO addr 0...251 | byte or variable | C | byte or variable |
 
 *) ROM only
@@ -710,7 +710,7 @@ Commands implemented in ROM:
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | TIMER 0 RD | _TIMER 0 RD(ADDR,VALUE) | 34 | Timer_Read0 |
+| Syntax | TIMER 0 RD | _TIMER 0 RD() | 34 | Timer_Read0() |
 | PARA 1 | IO addr 0...251 | byte or variable | C | byte or variable |
 | PARA 2 | Word to read | variable | DE as varptr | return value (word) |
 | PARA 3 | UNAPI ID Level 2 | -/- | B = 0 | - |
@@ -723,7 +723,7 @@ Commands implemented in ROM:
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | TIMER 0 WR | _TIMER 0 WR(ADDR,VALUE) | 35 | Timer_Write0 |
+| Syntax | TIMER 0 WR | _TIMER 0 WR() | 35 | Timer_Write0() |
 | PARA 1 | IO addr 0...251 | byte or variable | C | byte or variable |
 | PARA 2 | Word to write | word or variable | DE | word or variable |
 | PARA 3 | UNAPI ID Level 2 | -/- | B = 1 | - |
@@ -736,7 +736,7 @@ Commands implemented in ROM:
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | TIMER 1 RD | _TIMER 1 RD(ADDR,VALUE) | 36 | Timer_Read1 |
+| Syntax | TIMER 1 RD | _TIMER 1 RD() | 36 | Timer_Read1() |
 | PARA 1 | IO addr 0...251 | byte or variable | C | byte or variable |
 | PARA 2 | Word to read | variable | DE as varptr | return value (word) |
 | PARA 3 | UNAPI ID Level 2 | -/- | B = 2 | - |
@@ -749,7 +749,7 @@ Commands implemented in ROM:
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | TIMER 1 WR | _TIMER 1 WR(ADDR,VALUE) | 37 | Timer_Write1 |
+| Syntax | TIMER 1 WR | _TIMER 1 WR() | 37 | Timer_Write1() |
 | PARA 1 | IO addr 0...251 | byte or variable | C | byte or variable |
 | PARA 2 | Word to write | word or variable | DE | word or variable |
 | PARA 3 | UNAPI ID Level 2 | -/- | B = 3 | - |
@@ -762,7 +762,7 @@ Commands implemented in ROM:
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | TIMER 2 RD | _TIMER 2 RD(ADDR,VALUE) | 38 | Timer_Read2 |
+| Syntax | TIMER 2 RD | _TIMER 2 RD() | 38 | Timer_Read2() |
 | PARA 1 | IO addr 0...251 | byte or variable | C | byte or variable |
 | PARA 2 | Word to read | variable | DE as varptr | return value (word) |
 | PARA 3 | UNAPI ID Level 2 | -/- | B = 4 | - |
@@ -775,7 +775,7 @@ Commands implemented in ROM:
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | TIMER 2 WR | _TIMER 2 WR(ADDR,VALUE) | 39 | Timer_Write2 |
+| Syntax | TIMER 2 WR | _TIMER 2 WR() | 39 | Timer_Write2() |
 | PARA 1 | IO addr 0...251 | byte or variable | C | byte or variable |
 | PARA 2 | Word to write | word or variable | DE | word or variable |
 | PARA 3 | UNAPI ID Level 2 | -/- | B = 5 | - |
@@ -788,7 +788,7 @@ Commands implemented in ROM:
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | TIMER CTRL | _TIMER CTRL(ADDR,VALUE) | 40 | Timer_Ctrl |
+| Syntax | TIMER CTRL | _TIMER CTRL() | 40 | Timer_Ctrl() |
 | PARA 1 | IO addr 0...251 | byte or variable | C | byte or variable |
 | PARA 2 | Word to write | word or variable | E (D must be 0) | word or variable |
 | PARA 3 | UNAPI ID Level 2 | -/- | B = 6 | - |
@@ -803,7 +803,7 @@ Commands implemented in ROM:
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | TIMER SET GATE | _TIMER SET GATE(ADDR,VALUE) | 41 | Timer_SetGate |
+| Syntax | TIMER SET GATE | _TIMER SET GATE() | 41 | Timer_SetGate() |
 | PARA 1 | IO addr 0...251 | byte or variable | C | byte or variable |
 | PARA 2 | GATE 0..3 (0..7) | byte or variable | E (D must be 0) | word or variable |
 | PARA 3 | UNAPI ID Level 2 | -/- | B = 7 | - |
@@ -818,7 +818,7 @@ Commands implemented in ROM:
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | TIMER RESET GATE | _TIMER RESET GATE(ADDR,VALUE) | 42 | Timer_ResetGate |
+| Syntax | TIMER RESET GATE | _TIMER RESET GATE() | 42 | Timer_ResetGate() |
 | PARA 1 | IO addr 0...251 | byte or variable | C | byte or variable |
 | PARA 2 | GATE 0..3 (0..7) | byte or variable | E (D must be 0) | word or variable |
 | PARA 3 | UNAPI ID Level 2 | -/- | B = 8 | - |
@@ -861,7 +861,7 @@ Commands implemented in ROM:
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | CAN INIT | _CAN INIT(ADDR,ACC) | 43 | Can_Init |
+| Syntax | CAN INIT | _CAN INIT() | 43 | Can_Init() |
 | PARA 1 | IO addr 0...254 | byte or variable | C | byte or variable |
 | PARA 2 | ACC code&mask | array index 0 | DE as varptr | pointer |
 
@@ -873,7 +873,7 @@ Commands implemented in ROM:
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | CAN WR | _CAN WR GATE(ADDR,REG,DATA) | 44 | Can_Write |
+| Syntax | CAN WR | _CAN WR GATE() | 44 | Can_Write() |
 | PARA 1 | IO addr 0...254 | byte or variable | C | byte or variable |
 | PARA 2 | Register | byte or variable | D | byte or variable |
 | PARA 3 | Byte to write | byte or variable | E | byte or variable |
@@ -886,7 +886,7 @@ Commands implemented in ROM:
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | CAN RD | _CAN RD GATE(ADDR,REG,DATA) | 45 | Can_Read |
+| Syntax | CAN RD | _CAN RD GATE() | 45 | Can_Read() |
 | PARA 1 | IO addr 0...254 | byte or variable | C | byte or variable |
 | PARA 2 | Register | byte or variable | D | byte or variable |
 | PARA 3 | Byte to read | variable | A contains result | return value (byte) |
@@ -899,7 +899,7 @@ Commands implemented in ROM:
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | CAN CHECK | _CAN CHECK(ADDR,RMC) | 46 | Can_Check |
+| Syntax | CAN CHECK | _CAN CHECK() | 46 | Can_Check() |
 | PARA 1 | IO addr 0...254 | byte or variable | C | byte or variable |
 | PARA 2 | 1 = new msg | variable | A contains result | return value (byte) |
 
@@ -911,7 +911,7 @@ Commands implemented in ROM:
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | CAN RX | _CAN RX(ADDR,DATA) | 47 | Can_Rx |
+| Syntax | CAN RX | _CAN RX() | 47 | Can_Rx() |
 | PARA 1 | IO addr 0...254 | byte or variable | C | byte or variable |
 | PARA 2 | New msg (PELICAN 2.0) | array len = 13 | DE as varptr | pointer |
 
@@ -923,7 +923,7 @@ Commands implemented in ROM:
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | CAN RX | _CAN GET ADDR(ADDR,INTDATA) | 48 | Can_GetIntAddr |
+| Syntax | CAN RX | _CAN GET ADDR() | 48 | Can_GetIntAddr() |
 | PARA 1 | IO addr 0...254 | byte or variable | C | byte or variable |
 | PARA 2 | RAM address pointer | variable | DE as varptr | return value (word) |
 
@@ -935,7 +935,7 @@ Commands implemented in ROM:
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | CAN TX | _CAN TX(ADDR,DATA) | 49 | Can_Tx |
+| Syntax | CAN TX | _CAN TX() | 49 | Can_Tx() |
 | PARA 1 | IO addr 0...254 | byte or variable | C | byte or variable |
 | PARA 2 | Message (PELICAN 2.0) | array len = 13 | DE as varptr | pointer |
 
@@ -967,7 +967,7 @@ Commands implemented in ROM:
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | SPI INIT | _SPI INIT(ADDR) | 50 | Spi_Init |
+| Syntax | SPI INIT | _SPI INIT() | 50 | Spi_Init() |
 | PARA 1 | IO addr 0...252 | byte or variable | C | byte or variable |
 
 *) ROM only
@@ -978,7 +978,7 @@ Commands implemented in ROM:
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | SPI WR | _SPI WR(ADDR,BUS,DATA) | 51 | Spi_Write |
+| Syntax | SPI WR | _SPI WR() | 51 | Spi_Write() |
 | PARA 1 | IO addr 0...252 | byte or variable | E | byte or variable |
 | PARA 2 | SPI BUS 0..3 | byte or variable | C | byte or variable |
 | PARA 3 | Byte to write | byte or variable | B | byte or variable |
@@ -991,7 +991,7 @@ Commands implemented in ROM:
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | SPI WRB | _SPI WRB(ADDR,BUS,LEN,DATA) | 52 | Spi_Wrb |
+| Syntax | SPI WRB | _SPI WRB() | 52 | Spi_Wrb() |
 | PARA 1 | IO addr 0...252 | byte or variable | H | byte or variable |
 | PARA 2 | SPI BUS 0..3 | byte or variable | C | byte or variable |
 | PARA 3 | Length of array | byte or variable | B | byte or variable |
@@ -1005,7 +1005,7 @@ Commands implemented in ROM:
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | SPI RD | _SPI RD(ADDR,BUS,DATA) | 53 | Spi_Read |
+| Syntax | SPI RD | _SPI RD() | 53 | Spi_Read() |
 | PARA 1 | IO addr 0...252 | byte or variable | C | byte or variable |
 | PARA 2 | SPI BUS 0..3 | byte or variable | B | byte or variable |
 | PARA 3 | Byte to read | variable | DE as varptr | return value (byte) |
@@ -1018,7 +1018,7 @@ Commands implemented in ROM:
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | SPI RDB | _SPI RDB(ADDR,BUS,LEN,DATA) | 54 | Spi_Rdb |
+| Syntax | SPI RDB | _SPI RDB() | 54 | Spi_Rdb() |
 | PARA 1 | IO addr 0...252 | byte or variable | H | byte or variable |
 | PARA 2 | SPI BUS 0..3 | byte or variable | C | byte or variable |
 | PARA 3 | Length of array | byte or variable | B | byte or variable |
@@ -1034,7 +1034,7 @@ Commands implemented in ROM:
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | SPI RDH | _SPI RDH(ADDR,BUS,LEN_WR,LEN_RD,DATA) | 55 | Spi_Rdh |
+| Syntax | SPI RDH | _SPI RDH() | 55 | Spi_Rdh() |
 | PARA 1 | IO addr 0...252 | byte or variable | C | byte or variable |
 | PARA 2 | SPI BUS 0..3 | byte or variable | B | byte or variable |
 | PARA 3 | Length of array to write | byte or variable | H | word high byte or variable |
@@ -1057,7 +1057,7 @@ Commands implemented in ROM:
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | SPI MODE | _SPI MODE(ADDR,BUS,MOD,FQZ) | 56 | Spi_Mode |
+| Syntax | SPI MODE | _SPI MODE() | 56 | Spi_Mode() |
 | PARA 1 | IO addr 0...252 | byte or variable | C | byte or variable |
 | PARA 2 | SPI BUS 0..3 | byte or variable | B | byte or variable |
 | PARA 3 | Mode | byte or variable | D | byte or variable |
@@ -1091,7 +1091,7 @@ Commands implemented in ROM:
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | ADS INIT | _ADS INIT(BUS) | 57 | Ads_Init |
+| Syntax | ADS INIT | _ADS INIT() | 57 | Ads_Init() |
 | PARA 1 | IO addr 0...252 | byte or variable | C | byte or variable |
 
 *) ROM only
@@ -1108,7 +1108,7 @@ Commands implemented in ROM:
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | ADS MODE | _ADS MODE(BUS,TYPE) | 58 | Ads_SetMode |
+| Syntax | ADS MODE | _ADS MODE() | 58 | Ads_SetMode() |
 | PARA 1 | IO addr 0...252 | byte or variable | C | byte or variable |
 | PARA 2 | Measurement type 0...11 | byte or variable | E | byte or variable |
 
@@ -1120,7 +1120,7 @@ Commands implemented in ROM:
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | ADS CMD | _ADS CMD(BUS,VAL) | 59 | Ads_Cmd |
+| Syntax | ADS CMD | _ADS CMD() | 59 | Ads_Cmd() |
 | PARA 1 | IO addr 0...252 | byte or variable | C | byte or variable |
 | PARA 2 | Raw value 0...255 | byte or variable | E | byte or variable |
 
@@ -1132,7 +1132,7 @@ Commands implemented in ROM:
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | ADS STATUS | _ADS STATUS(BUS,VAL) | 60 | Ads_GetStatus |
+| Syntax | ADS STATUS | _ADS STATUS() | 60 | Ads_GetStatus() |
 | PARA 1 | IO addr 0...252 | byte or variable | C | byte or variable |
 | PARA 2 | Byte to read | variable | DE as varptr | return value (byte) |
 
@@ -1144,7 +1144,7 @@ Commands implemented in ROM:
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | ADS READ | _ADS READ(BUS,VAL) | 61 | Ads_Read |
+| Syntax | ADS READ | _ADS READ() | 61 | Ads_Read() |
 | PARA 1 | IO addr 0...252 | byte or variable | C | byte or variable |
 | PARA 2 | Byte to read | variable | DE as varptr | return value (byte) |
 
@@ -1162,7 +1162,7 @@ Commands implemented in ROM:
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | ADS GET | _ADS GET(BUS,TYPE,VAL) | 62 | Ads_Get |
+| Syntax | ADS GET | _ADS GET() | 62 | Ads_Get() |
 | PARA 1 | IO addr 0...252 | byte or variable | C | byte or variable |
 | PARA 2 | Measurement type 0...11 | byte or variable | B | byte or variable |
 | PARA 3 | Result | SNG variable | DE as varptr | pointer (4 bytes) |

@@ -20,6 +20,7 @@ Thomas
 + [1. The XIO cartridge](#1-msxretrothings---the-xio-cartridge)
 + [2. The RCX ROM cartridge and RC2014 cards](#2-msxretrothings---the-rcx-rom-cartridge-and-rc2014-cards)
 + [3. mbc89, a Maerklin Connect6021 CAN accessory module](#3-msxretrothings---mbc89-a-maerklin-connect6021-can-accessory-module)
++ [License](#license)
 
 
 ## 1. MSXRetroThings - The XIO cartridge
@@ -1265,5 +1266,19 @@ No dedicated hardware - runs on any MSX1/MSX2/MSX2+ with `RC2014 card E` (SJA100
 #### <b>3.4 Software:</b>
 
 For SDCC development, the module is built with [MSXgl](https://github.com/aoineko-fr/MSXgl) against the same `xio_io`/`rcx_io`/`dostools` libraries the XIO and RCX SDCC tools use. Full source, build configuration, a prebuilt `.com`, and rebuild instructions are in [`mbc89/`](mbc89/) - see [`mbc89/README.md`](mbc89/README.md) for details.
+
+[↑ Contents](#contents)
+
+## License
+
+Except where explicitly stated otherwise, this repository is licensed as follows (details in [LICENSE.txt](LICENSE.txt)):
+
+| Content | License |
+| --- | --- |
+| Software: source code, build scripts, firmware | [MIT](LICENSE.txt) |
+| Hardware designs: schematics, PCB layouts, Gerber and drill files, bills of materials, GAL equations | [CERN-OHL-S-2.0](LICENSE-CERN-OHL-S-2.0.txt) |
+| Documentation and images: READMEs, manuals, photos, screenshots, videos | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/legalcode) |
+
+Third-party components keep their own licenses (listed in [LICENSE.txt](LICENSE.txt)). Original ROM images and third-party software images are not part of this repository.
 
 [↑ Contents](#contents)

@@ -1,46 +1,67 @@
-﻿Except where explicitly otherwise stated, the contents of TommyGermanyRetro repository "MSXRetroThings"
-has the following licenses:
+﻿MSXRetroThings - Copyright (c) 2026 Thomas Wiesner
+Source Location: https://github.com/TommyGermanyRetro/MSXRetroThings
+
+Except where explicitly stated otherwise, the contents of this repository are
+licensed as follows.
 
 
-- For software: the MIT license:
+1. Software (source code, build scripts, firmware): MIT License
 
-Copyright (c) 2026 Thomas Wiesner
+   Permission is hereby granted, free of charge, to any person obtaining a copy
+   of this software and associated documentation files (the "Software"), to deal
+   in the Software without restriction, including without limitation the rights
+   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+   copies of the Software, and to permit persons to whom the Software is
+   furnished to do so, subject to the following conditions:
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+   The above copyright notice and this permission notice shall be included in
+   all copies or substantial portions of the Software.
 
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+   THE SOFTWARE.
 
 
-- For documents: Creative Commons BY-SA (see http://creativecommons.org/licenses/by-sa/4.0):
+2. Hardware designs (schematics, PCB layouts, Gerber and drill files, bills of
+   materials, GAL equations): CERN Open Hardware Licence Version 2 - Strongly
+   Reciprocal (CERN-OHL-S-2.0).
 
-You are free to:
+   Full licence text: LICENSE-CERN-OHL-S-2.0.txt in this repository.
 
-  Share — copy and redistribute the material in any medium or format
-  Adapt — remix, transform, and build upon the material for any purpose, even commercially.
-  The licensor cannot revoke these freedoms as long as you follow the license terms.
+   This source describes Open Hardware and is licensed under the CERN-OHL-S v2.
+   You may redistribute and modify this source and make products using it under
+   the terms of the CERN-OHL-S v2 (https://ohwr.org/cern_ohl_s_v2.txt).
+   This source is distributed WITHOUT ANY EXPRESS OR IMPLIED WARRANTY,
+   INCLUDING OF MERCHANTABILITY, SATISFACTORY QUALITY AND FITNESS FOR A
+   PARTICULAR PURPOSE. Please see the CERN-OHL-S v2 for applicable conditions.
+   As per CERN-OHL-S v2 section 4, should you produce hardware based on this
+   source, you must where practicable maintain the Source Location visible on
+   the external case or other products you make using this source.
 
-Under the following terms:
 
-Attribution — You must give appropriate credit, provide a link to the license,
-   and indicate if changes were made. You may do so in any reasonable manner,
-   but not in any way that suggests the licensor endorses you or your use.
+3. Documentation and images (READMEs, manuals, photos, screenshots, videos):
+   Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0).
 
-ShareAlike — If you remix, transform, or build upon the material, you must distribute
-   your contributions under the same license as the original.
+   Legal code: https://creativecommons.org/licenses/by-sa/4.0/legalcode
 
-No additional restrictions — You may not apply legal terms or technological measures
-   that legally restrict others from doing anything the license permits.
+
+4. Third-party components (they keep their own licences):
+
+   - Z80 CPU core "z80.h" from floooh/chips (https://github.com/floooh/chips),
+     Copyright (c) 2018, 2021 Andre Weissflog, zlib/libpng license. It is used
+     by the emulators; its licence text is kept in the LICENSE file next to it
+     and in the header of z80.h.
+
+
+5. Not included and not covered by these licences:
+
+   - Original ROM images (Spectravideo, Microsoft, ASCII, Philips and others).
+     The emulators do not contain them; users supply their own images. The
+     manuals list file names and SHA1 checksums only.
+   - Disk, cassette and module images of third-party software.
+   - Names and trademarks such as MSX, Spectravideo and Philips belong to their
+     owners and are used for identification only.

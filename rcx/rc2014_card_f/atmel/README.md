@@ -17,5 +17,5 @@ held low via a 74123 monostable while each access is handled):
   right before the next transfer on that bus.
 
 This is the firmware counterpart to the ROM's `SPI INIT/WR/WRB/RD/RDB/RDH/MODE` commands (see the
-main [README.md](../../../README.md)) - each of those ends up as one or more raw register
+card's [README.md](../README.md#command-reference)) - each of those ends up as one or more raw register
 accesses following exactly this Cmd/CS/Transfer sequence.

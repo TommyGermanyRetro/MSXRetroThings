@@ -55,6 +55,12 @@ licensed as follows.
      Copyright (c) 2018, 2021 Andre Weissflog, zlib/libpng license. It is used
      by the emulators; its licence text is kept in the LICENSE file next to it
      and in the header of z80.h.
+   - CP/M 2.2 by Digital Research (sources of CCP and BDOS and the programs
+     ASM, DDT, DUMP, ED, LOAD, PIP, STAT, SUBMIT, XSUB in
+     tools/svi3x8_cpm224/src), from the Unofficial CP/M Web Site
+     (http://www.cpm.z80.de/). Used under the grant of DRDOS, Inc. of 7 July
+     2022: "a right to use, distribute, modify, enhance, and otherwise make
+     available in a nonexclusive manner CP/M and its derivatives".
 
 
 5. Not included and not covered by these licences:
@@ -63,5 +69,7 @@ licensed as follows.
      The emulators do not contain them; users supply their own images. The
      manuals list file names and SHA1 checksums only.
    - Disk, cassette and module images of third-party software.
+   - The Spectravideo CP/M BIOS source and boot sector that
+     tools/svi3x8_cpm224 needs; users supply their own.
    - Names and trademarks such as MSX, Spectravideo and Philips belong to their
      owners and are used for identification only.

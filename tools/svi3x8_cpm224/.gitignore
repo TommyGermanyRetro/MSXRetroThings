@@ -1,0 +1,5 @@
+build/
+src/SVI328BIOS224.ASM
+src/CPM227DS.DSK
+*.DSK
+__pycache__/

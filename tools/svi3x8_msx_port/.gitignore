@@ -1,0 +1,9 @@
+# Original games and everything built from them stay out of the repository.
+*.cas
+*.CAS
+*.rom
+*.ROM
+*.BIN
+*.INC
+work/
+__pycache__/

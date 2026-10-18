@@ -24,5 +24,5 @@ buffer instead of Arduino's `String` class, since `String` was observed to fragm
 ATmega8's 1&nbsp;KB heap after a handful of measurements.
 
 This is the firmware counterpart to the ROM's `ADS INIT/MODE/CMD/STATUS/READ/GET` commands (see
-the main [README.md](../../../README.md)) - each of those ends up as one or more raw register
+the card's [README.md](../README.md#command-reference)) - each of those ends up as one or more raw register
 accesses following exactly this Mode/Cmd/Result sequence.

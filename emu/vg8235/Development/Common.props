@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Settings of the VG8235 solution: the machine on top of the shared MSX components and chips. -->
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="Globals">
+    <SolutionRoot>$(MSBuildThisFileDirectory)</SolutionRoot>
+    <BuildRoot>$(MSBuildThisFileDirectory)..\Build\</BuildRoot>
+  </PropertyGroup>
+  <Import Project="$(MSBuildThisFileDirectory)..\..\msx\Common.props" />
+  <PropertyGroup>
+    <Vg8235Include>$(SolutionRoot)VG8235\include</Vg8235Include>
+  </PropertyGroup>
+</Project>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="include\WD2793">
+      <UniqueIdentifier>{704FA09C-0A05-5F84-9F68-EE1D9CA75051}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{E3CB8611-A89C-5C36-8418-08296638C6E4}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\FloppyDrive.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\WD2793.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\WD2793\FloppyDrive.hpp">
+      <Filter>include\WD2793</Filter>
+    </ClInclude>
+    <ClInclude Include="include\WD2793\WD2793.hpp">
+      <Filter>include\WD2793</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

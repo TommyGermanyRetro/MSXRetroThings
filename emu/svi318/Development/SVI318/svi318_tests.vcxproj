@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>17.0</VCProjectVersion>
+    <ProjectGuid>{CA49CDF6-7424-4956-988B-A34099ACF7EC}</ProjectGuid>
+    <RootNamespace>svi318_tests</RootNamespace>
+    <ProjectName>svi318_tests</ProjectName>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration" Condition="'$(Configuration)'=='Debug'">
+    <UseDebugLibraries>true</UseDebugLibraries>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration" Condition="'$(Configuration)'=='Release'">
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\Common.props" />
+  </ImportGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(Svi318Include);$(Z80CpuInclude);$(Ppi8255Include);$(Ay8910Include);$(Tms99x8Include);$(Tms9918aInclude);$(Tms9929aInclude);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="tests\svi318_tests.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="svi318.vcxproj">
+      <Project>{2A93AF6C-9B8A-4B78-96AA-C553184660DB}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\chips\Z80CPU\z80bus.vcxproj">
+      <Project>{5EB04C60-1925-5B57-AFC0-10B95C18A968}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\chips\PPI8255\ppi8255.vcxproj">
+      <Project>{4C4D149E-BD20-5DE9-83A0-C90454502E4F}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\chips\AY8910\ay8910.vcxproj">
+      <Project>{FE2C1EA3-1B2A-5F7F-9A2B-EB12265B9390}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\chips\TMS99X8\tms99x8.vcxproj">
+      <Project>{97538D74-1467-5317-876D-06D8F339A8D8}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\chips\TMS9918A\tms9918a.vcxproj">
+      <Project>{3EE4A277-6353-41EA-B86E-F2FBA8D43F97}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\chips\TMS9929A\tms9929a.vcxproj">
+      <Project>{D4F75727-9859-4B72-9F0F-08EA5119C719}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>

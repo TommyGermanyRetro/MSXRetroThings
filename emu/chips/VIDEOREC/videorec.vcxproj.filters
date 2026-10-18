@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{532FC91D-64AA-4368-B511-767025E3D06B}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include">
+      <UniqueIdentifier>{B7285D68-173F-41AB-B49F-E9BE3B446D0D}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\VIDEOREC">
+      <UniqueIdentifier>{D7E20F08-96CC-4C2C-8EA0-0C6B1F109095}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\VideoRecorder.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\VIDEOREC\VideoRecorder.hpp">
+      <Filter>include\VIDEOREC</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

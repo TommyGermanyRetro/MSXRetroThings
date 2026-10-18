@@ -53,8 +53,8 @@ licensed as follows.
 
    - Z80 CPU core "z80.h" from floooh/chips (https://github.com/floooh/chips),
      Copyright (c) 2018, 2021 Andre Weissflog, zlib/libpng license. It is used
-     by the emulators; its licence text is kept in the LICENSE file next to it
-     and in the header of z80.h.
+     by the emulators (emu/chips/Z80CPU/third_party/chips); its licence text is
+     kept in the LICENSE file next to it and in the header of z80.h.
    - CP/M 2.2 by Digital Research (sources of CCP and BDOS and the programs
      ASM, DDT, DUMP, ED, LOAD, PIP, STAT, SUBMIT, XSUB in
      tools/svi3x8_cpm224/src), from the Unofficial CP/M Web Site

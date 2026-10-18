@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="include\TMS9929A">
+      <UniqueIdentifier>{C394C919-D1F1-4352-B2B4-F7A1E625E3B6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{3C617BC5-E9A1-48A8-872A-51F4B6A7C345}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\TMS9929A.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\TMS9929A\TMS9929A.hpp">
+      <Filter>include\TMS9929A</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

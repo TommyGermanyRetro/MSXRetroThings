@@ -1,0 +1,27 @@
+SVI-318 Emulator - Windows Setup
+================================
+
+Requirements: Windows 10 or 11 (64-bit), a 64-bit dual core from about the Intel Core 4th
+generation or AMD Ryzen 1000 (four cores for video recording), 4 GB of memory and a screen of
+at least 1920 x 1080 at 100 % scaling. The manual lists the details.
+
+Run SVI318-Setup.exe and choose the target folder in the setup dialog. The setup installs
+the emulator with the BASIC ROM (svi111.rom), the character ROM of the SVI-806 (svi806.rom)
+and the EPROM of the SVI-608M boot card (svi609.rom), installs the manual, creates Start
+menu and desktop shortcuts and registers the uninstaller in the Windows app settings.
+
+The default folder is %LOCALAPPDATA%\Programs\SVI318. The settings (svi318.ini) are kept
+next to the program; the suggested folder is writable without administrator rights.
+
+To remove it, use Settings > Apps > Installed apps > SVI-318 Emulator. The setup creates the
+folders CAS (cassettes), DSK (disks, write-protected originals in DSK\Original with the blank
+disks LEER_BASIC.DSK (Disk BASIC) and LEER_CPM.DSK (CP/M)), HDD (hard disks), MOD (modules),
+PRINT (printer output), ROM (ROM images), STATE (snapshots) and VIDEO (video recordings) in
+Documents\SVI-318; the file dialogs start there. Uninstalling leaves these folders and their
+contents in place. Apart from the blank disks, cassette, disk, hard disk and module images
+are not included. The menu item ? shows the manual in the browser.
+
+ROMs: The setup without ROMs (SVI318-Setup-NoRoms.exe) contains no ROM images. It creates
+the empty folder Documents\SVI-318\ROM; place your own images (svi111.rom, svi806.rom,
+svi609.rom) there and start the emulator again. Without svi111.rom it does not start;
+without the card ROMs the affected cards and expanders are not offered.

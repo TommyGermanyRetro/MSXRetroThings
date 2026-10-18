@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="include\V9938">
+      <UniqueIdentifier>{162BBBBE-8472-5C51-BFDC-C8BBF66B52E8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{E3CB8611-A89C-5C36-8418-08296638C6E4}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\V9938.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\V9938\V9938.hpp">
+      <Filter>include\V9938</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

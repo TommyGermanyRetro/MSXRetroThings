@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="include\RP5C01">
+      <UniqueIdentifier>{19D48CE7-80DA-568B-BA91-3470D7CCDD44}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{E3CB8611-A89C-5C36-8418-08296638C6E4}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\RP5C01.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\RP5C01\RP5C01.hpp">
+      <Filter>include\RP5C01</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

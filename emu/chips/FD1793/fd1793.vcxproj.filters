@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{A1BBCFDD-89EF-533F-8DB9-2760150B44A9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include">
+      <UniqueIdentifier>{A3F11311-4DA0-54D3-97A1-0AE13BCE76DA}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\FD1793">
+      <UniqueIdentifier>{D15BF2B4-4E10-5B01-B96E-19DCCCF7969A}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\FD1793.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\FD1793\FD1793.hpp">
+      <Filter>include\FD1793</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

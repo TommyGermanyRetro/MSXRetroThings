@@ -1,0 +1,23 @@
+SVI-728 Emulator - Windows Setup
+================================
+
+Requirements: Windows 10 or 11 (64-bit), a 64-bit dual core from about the Intel Core 4th
+generation or AMD Ryzen 1000 (four cores for video recording), 4 GB of memory and a screen of
+at least 1920 x 1080 at 100 % scaling. The manual lists the details.
+
+Run SVI728-Setup.exe and choose the target folder in the setup dialog. The setup installs
+the emulator, its manual and its ROM image, creates a Start menu shortcut and registers the
+uninstaller in the Windows app settings.
+
+The default folder is %LOCALAPPDATA%\Programs\SVI728. The program keeps svi728.ini next to
+the program, so the suggested folder is writable without administrator rights.
+
+To remove it, use Settings > Apps > Installed apps > SVI-728 Emulator. The setup creates the
+folders CAS (cassettes), CARD (modules), ROM (ROM images), STATE (snapshots), PRINT (printer
+output) and VIDEO (video recordings) in Documents\SVI-728; the file dialogs start there.
+Uninstalling leaves these folders and their contents in place. Cassette images (.cas) and ROM
+modules (.rom) are not included. The menu item ? shows the manual in the browser.
+
+ROMs: The setup without ROMs (SVI728-Setup-NoRoms.exe) contains no ROM image. It creates the
+empty folder Documents\SVI-728\ROM; place your own SVI-MSX-BIOS+Basic.bin there and start
+the emulator again.

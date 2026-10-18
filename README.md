@@ -21,7 +21,8 @@ Thomas
 + [2. The RCX ROM cartridge and RC2014 cards](#2-msxretrothings---the-rcx-rom-cartridge-and-rc2014-cards)
 + [3. mbc89, a Maerklin Connect6021 CAN accessory module](#3-msxretrothings---mbc89-a-maerklin-connect6021-can-accessory-module)
 + [4. Tools](#4-msxretrothings---tools)
-+ [5. License](#5-license)
++ [5. Emulators](#5-msxretrothings---emulators)
++ [6. License](#6-license)
 
 
 ## 1. MSXRetroThings - The XIO cartridge
@@ -384,7 +385,53 @@ A Python tool that ports Spectravideo SVI-318/328 cassette games to MSX: from th
 
 [↑ Contents](#contents)
 
-## 5. License
+## 5. MSXRetroThings - Emulators
+
+My first computer was an SVI-318; the cards and ROMs above were written for an SVI-728 and an MSX2+. To try them, and the software of that time, at the timing of the real machines, four Windows emulators grew alongside: SVI-318, SVI-328, SVI-728 and Philips VG-8235. They step the Z80 T-state by T-state and run every chip on the same master clock; the chips are shared libraries with their own tests, built from the data sheets. Each emulator has a user manual, a Windows setup and a video recorder (MP4) for picture and sound.
+
+Overview, building and ROM notes: [emu/README.md](emu/README.md). The original ROM images are not included; the manuals name the files and their SHA1 checksums.
+
+Click a picture to open the video.
+
+#### <b>5.1 Spectravideo SVI-318</b>
+
+The SVI-318 with 16 KiB RAM and BASIC 1.11, PAL or NTSC, cassette, modules, the expanders SVI-601, SVI-602, SVI-605B (also with hard disk) and SVI-608M with all their cards: disk controller, Centronics, RAM, RS-232, 80 columns, SASI hard disk and boot card. Left: start into BASIC. Right: the SVI-608M with SVI-806 80-column card and an SVI-807 64 KB RAM card boots CP/M 2.27 from the hard disk; the 80-column screen appears in the green panel beside the TV picture.
+
+<a href="emu/svi318/media/SVI318_BASIC.mp4"><img src="emu/svi318/media/SVI318_BASIC.png" alt="SVI-318 starting into BASIC" width="38%"></a> <a href="emu/svi318/media/SVI318_CPM227_HDD_80col.mp4"><img src="emu/svi318/media/SVI318_CPM227_HDD_80col.png" alt="SVI-318 booting CP/M 2.27 from hard disk with 80 columns" width="60%"></a>
+
+Manual: [MANUAL.md](emu/svi318/Distribution/MANUAL.md), project: [emu/svi318](emu/svi318/README.md)
+
+#### <b>5.2 Spectravideo SVI-328</b>
+
+The SVI-328 with 64 KiB RAM: everything of the SVI-318, plus the SVI-609 Master Station with its LAN card. Left: start into BASIC. Right: CP/M 2.27 from the hard disk of the SVI-608M, console on the SVI-806 80-column card.
+
+<a href="emu/svi328/media/SVI328_BASIC.mp4"><img src="emu/svi328/media/SVI328_BASIC.png" alt="SVI-328 starting into BASIC" width="38%"></a> <a href="emu/svi328/media/SVI328_CPM227_HDD_80col.mp4"><img src="emu/svi328/media/SVI328_CPM227_HDD_80col.png" alt="SVI-328 booting CP/M 2.27 from hard disk with 80 columns" width="60%"></a>
+
+Manual: [MANUAL.md](emu/svi328/Distribution/MANUAL.md), project: [emu/svi328](emu/svi328/README.md)
+
+#### <b>5.3 Spectravideo SVI-728</b>
+
+The SVI-728, Spectravideo's MSX1, PAL or NTSC, with cassette, two module slots with the common MegaROM mappers and printer output to files. The video shows the start into MSX BASIC.
+
+<a href="emu/svi728/media/SVI728_BASIC.mp4"><img src="emu/svi728/media/SVI728_BASIC.png" alt="SVI-728 starting into MSX BASIC" width="50%"></a>
+
+Manual: [MANUAL.md](emu/svi728/Distribution/MANUAL.md), project: [emu/svi728](emu/svi728/README.md)
+
+#### <b>5.4 Philips VG-8235</b>
+
+The Philips VG 8235/00, an MSX2 with V9938 video chip (all screen modes, command unit), 3.5" disk drive with WD2793 controller, real-time clock with CMOS memory, cassette, two module slots and printer. The video shows the start into Disk BASIC.
+
+<a href="emu/vg8235/media/VG8235_BASIC.mp4"><img src="emu/vg8235/media/VG8235_BASIC.png" alt="VG-8235 starting into Disk BASIC" width="50%"></a>
+
+**Special application: an SVI game on MSX.** The [SVI3x8 to MSX game porter](#43-svi3x8-to-msx-game-porter) turns the SVI-318/328 cassette of Spectron (Spectravideo, 1983) into a plain 16 KiB MSX cartridge. Here the VG-8235 starts with that module, shows the menu, starts a game with key `1` and plays a round: the SVI hardware accesses of the game were moved to the MSX ports, keyboard and joystick are read through a small helper block.
+
+<a href="emu/vg8235/media/VG8235_Spectron.mp4"><img src="emu/vg8235/media/VG8235_Spectron.png" alt="Spectron ported from the SVI-318/328, running as MSX cartridge on the VG-8235" width="50%"></a>
+
+Manual: [MANUAL.md](emu/vg8235/Distribution/MANUAL.md), project: [emu/vg8235](emu/vg8235/README.md)
+
+[↑ Contents](#contents)
+
+## 6. License
 
 Except where explicitly stated otherwise, this repository is licensed as follows (details in [LICENSE.txt](LICENSE.txt)):
 

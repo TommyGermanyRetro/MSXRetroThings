@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="include\VG8235">
+      <UniqueIdentifier>{01306D5B-076C-531D-8EE2-289CFFF03EB4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{E3CB8611-A89C-5C36-8418-08296638C6E4}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\VG8235.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\VG8235\Cassette.hpp">
+      <Filter>include\VG8235</Filter>
+    </ClInclude>
+    <ClInclude Include="include\VG8235\CassetteRecorder.hpp">
+      <Filter>include\VG8235</Filter>
+    </ClInclude>
+    <ClInclude Include="include\VG8235\Keyboard.hpp">
+      <Filter>include\VG8235</Filter>
+    </ClInclude>
+    <ClInclude Include="include\VG8235\ManualPage.hpp">
+      <Filter>include\VG8235</Filter>
+    </ClInclude>
+    <ClInclude Include="include\VG8235\UiText.hpp">
+      <Filter>include\VG8235</Filter>
+    </ClInclude>
+    <ClInclude Include="include\VG8235\VG8235.hpp">
+      <Filter>include\VG8235</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="include\PPI8255">
+      <UniqueIdentifier>{E6262445-89F8-548E-8D00-1D6D61AFA875}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{30ED40C8-0011-5FF9-AC17-EC0680247222}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\PPI8255.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\PPI8255\PPI8255.hpp">
+      <Filter>include\PPI8255</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

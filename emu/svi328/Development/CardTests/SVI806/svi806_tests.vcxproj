@@ -1,0 +1,121 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>17.0</VCProjectVersion>
+    <ProjectGuid>{982626F7-307D-4D95-9AC4-4767BE4CE196}</ProjectGuid>
+    <RootNamespace>svi806_tests</RootNamespace>
+    <ProjectName>svi806_tests</ProjectName>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration" Condition="'$(Configuration)'=='Debug'">
+    <UseDebugLibraries>true</UseDebugLibraries>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration" Condition="'$(Configuration)'=='Release'">
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\..\Common.props" />
+  </ImportGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(Svi801Include);$(Svi802Include);$(Svi803Include);$(Svi805Include);$(Svi806Include);$(Svi807Include);$(LanHd01Include);$(LanIf01Include);$(Svi608mInclude);$(Svi605bInclude);$(Wd1002shdInclude);$(Mc6821Include);$(Mc6845Include);$(Ins8250Include);$(Fd1793Include);$(PrinterInclude);$(Svi328Include);$(Z80CpuInclude);$(Ppi8255Include);$(Ay8910Include);$(Tms99x8Include);$(Tms9918aInclude);$(Tms9929aInclude);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="tests\svi806_tests.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\svi3x8\SVI806\svi806.vcxproj">
+      <Project>{6CCFD060-AE29-4C15-8298-E6786B85CC01}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\..\svi3x8\SVI801\svi801.vcxproj">
+      <Project>{E323A37B-AB4E-4536-8581-634441554A9F}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\..\svi3x8\SVI802\svi802.vcxproj">
+      <Project>{F3FCAC61-F602-4EB2-9686-B1224724C8C4}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\..\svi3x8\SVI803\svi803.vcxproj">
+      <Project>{8CDDCDBA-B51F-4EBA-8B07-ADE594E6DE37}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\..\svi3x8\SVI805\svi805.vcxproj">
+      <Project>{B72FC257-8072-40D5-AF80-DAC6D7FFB18A}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\..\svi3x8\SVI807\svi807.vcxproj">
+      <Project>{51A79E3D-B75D-4211-A675-E404F7D12F41}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\..\svi3x8\LANHD01\lanhd01.vcxproj">
+      <Project>{E1D556DA-E343-49E5-BDC5-6BE72F94EBED}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\..\svi3x8\LANIF01\lanif01.vcxproj">
+      <Project>{8657645A-DBD0-4901-A5AF-53BEAD9F9230}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\..\svi3x8\SVI608M\svi608m.vcxproj">
+      <Project>{AF546A88-8813-45D8-9232-19C3378E4877}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\..\svi3x8\SVI605B\svi605b.vcxproj">
+      <Project>{39D9720E-3660-52D7-9C59-0488B57335C8}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\..\chips\WD1002SHD\wd1002shd.vcxproj">
+      <Project>{F2546708-DA89-55EC-A05E-B61F02A1A26E}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\..\chips\MC6821\mc6821.vcxproj">
+      <Project>{E867450B-9A57-5DCD-9328-D077D50B5E81}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\..\chips\MC6845\mc6845.vcxproj">
+      <Project>{47F8A711-3F17-5BE1-94E1-587554F334B3}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\..\chips\INS8250\ins8250.vcxproj">
+      <Project>{2701816F-8B3C-5245-8CBE-70404FB56F5C}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\..\chips\FD1793\fd1793.vcxproj">
+      <Project>{46AB17DF-4C22-5609-A2CC-C05431E0E4D7}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\..\chips\PRINTER\printer.vcxproj">
+      <Project>{28704401-3A5E-4B3E-9340-BD2E59071666}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\SVI328\svi328.vcxproj">
+      <Project>{61A3035A-D990-57B8-BBB9-FF25A853F4FC}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\..\chips\Z80CPU\z80bus.vcxproj">
+      <Project>{5EB04C60-1925-5B57-AFC0-10B95C18A968}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\..\chips\PPI8255\ppi8255.vcxproj">
+      <Project>{4C4D149E-BD20-5DE9-83A0-C90454502E4F}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\..\chips\AY8910\ay8910.vcxproj">
+      <Project>{FE2C1EA3-1B2A-5F7F-9A2B-EB12265B9390}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\..\chips\TMS99X8\tms99x8.vcxproj">
+      <Project>{97538D74-1467-5317-876D-06D8F339A8D8}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\..\chips\TMS9918A\tms9918a.vcxproj">
+      <Project>{3EE4A277-6353-41EA-B86E-F2FBA8D43F97}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\..\chips\TMS9929A\tms9929a.vcxproj">
+      <Project>{D4F75727-9859-4B72-9F0F-08EA5119C719}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>

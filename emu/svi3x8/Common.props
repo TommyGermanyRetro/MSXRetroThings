@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Settings of the SVI-318/328 expansion interface, expanders and cards; builds on the chip settings. -->
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildThisFileDirectory)..\chips\Common.props" />
+  <PropertyGroup>
+    <Svi3x8Root>$(MSBuildThisFileDirectory)</Svi3x8Root>
+    <Svi3x8Include>$(Svi3x8Root)SVI3X8\include</Svi3x8Include>
+    <Svi605bInclude>$(Svi3x8Root)SVI605B\include</Svi605bInclude>
+    <Svi801Include>$(Svi3x8Root)SVI801\include</Svi801Include>
+    <Svi802Include>$(Svi3x8Root)SVI802\include</Svi802Include>
+    <Svi803Include>$(Svi3x8Root)SVI803\include</Svi803Include>
+    <Svi805Include>$(Svi3x8Root)SVI805\include</Svi805Include>
+    <Svi806Include>$(Svi3x8Root)SVI806\include</Svi806Include>
+    <Svi807Include>$(Svi3x8Root)SVI807\include</Svi807Include>
+    <LanHd01Include>$(Svi3x8Root)LANHD01\include</LanHd01Include>
+    <LanIf01Include>$(Svi3x8Root)LANIF01\include</LanIf01Include>
+    <Svi608mInclude>$(Svi3x8Root)SVI608M\include</Svi608mInclude>
+    <Svi605bhdInclude>$(Svi3x8Root)SVI605BHD\include</Svi605bhdInclude>
+    <Svi602Include>$(Svi3x8Root)SVI602\include</Svi602Include>
+    <Svi601Include>$(Svi3x8Root)SVI601\include</Svi601Include>
+    <Svi609Include>$(Svi3x8Root)SVI609\include</Svi609Include>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(Svi3x8Include);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+</Project>

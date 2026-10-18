@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{97C7E8C2-2E85-4B5E-B621-0D7C91D7DAA4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include">
+      <UniqueIdentifier>{45E71FB8-8418-4547-8499-7479018E1A51}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\SVI608M">
+      <UniqueIdentifier>{76E11A1B-79EF-4AAD-A521-15B4CC850F89}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\SVI608M.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\SVI608M\SVI608M.hpp">
+      <Filter>include\SVI608M</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

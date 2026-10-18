@@ -1,0 +1,62 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>17.0</VCProjectVersion>
+    <ProjectGuid>{39D9720E-3660-52D7-9C59-0488B57335C8}</ProjectGuid>
+    <RootNamespace>svi605b</RootNamespace>
+    <ProjectName>svi605b</ProjectName>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration" Condition="'$(Configuration)'=='Debug'">
+    <UseDebugLibraries>true</UseDebugLibraries>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration" Condition="'$(Configuration)'=='Release'">
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\Common.props" />
+  </ImportGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(Svi605bInclude);$(Svi801Include);$(Svi802Include);$(Svi803Include);$(Svi805Include);$(Svi806Include);$(Svi807Include);$(LanHd01Include);$(LanIf01Include);$(Mc6845Include);$(Ins8250Include);$(Fd1793Include);$(PrinterInclude);$(Z80CpuInclude);$(Ppi8255Include);$(Ay8910Include);$(Tms99x8Include);$(Tms9918aInclude);$(Tms9929aInclude);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="src\CardCage.cpp" />
+    <ClCompile Include="src\ExpanderBoard.cpp" />
+    <ClCompile Include="src\SVI605B.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\SVI605B\CardCage.hpp" />
+    <ClInclude Include="include\SVI605B\ExpanderBoard.hpp" />
+    <ClInclude Include="include\SVI605B\SVI605B.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\SVI801\svi801.vcxproj">
+      <Project>{E323A37B-AB4E-4536-8581-634441554A9F}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\SVI802\svi802.vcxproj">
+      <Project>{F3FCAC61-F602-4EB2-9686-B1224724C8C4}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>

@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="include\TMS99X8">
+      <UniqueIdentifier>{D75A596A-961C-4F0F-81FC-008A29BBFF35}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{91E9A419-3A49-4074-80D6-08EC40EA8BAA}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\TMS99X8.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\TMS99X8\TMS99X8.hpp">
+      <Filter>include\TMS99X8</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

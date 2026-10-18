@@ -1,0 +1,28 @@
+VG-8235 Emulator - Windows Setup
+================================
+
+Requirements: Windows 10 or 11 (64-bit), a 64-bit dual core from about the Intel Core 4th
+generation or AMD Ryzen 1000 (four cores for video recording), 4 GB of memory and a screen of
+at least 1920 x 1080 at 100 % scaling. The manual lists the details.
+
+Run VG8235-Setup.exe and choose the target folder in the setup dialog. The setup installs
+the emulator, its manual and the three system ROMs, creates Start menu and desktop shortcuts
+and registers the uninstaller in the Windows app settings.
+
+The default folder is %LOCALAPPDATA%\Programs\VG8235. The CMOS data of the clock and the
+settings are kept next to the program, so the suggested folder is writable without
+administrator rights.
+
+To remove it, use Settings > Apps > Installed apps > VG-8235 Emulator. The setup creates the
+folders DISK (disks, templates for new disks in DISK\Original with the blank disks
+LEER_1DD_360K.DSK (360 KB, single-sided) and LEER_2DD_720K.DSK (720 KB, double-sided)), CAS
+(cassettes), CARD (modules), ROM (ROM images), STATE (snapshots), PRINT (printer output) and
+VIDEO (video recordings) in Documents\VG-8235; the file dialogs start there. Uninstalling
+leaves these folders and their contents in place. Apart from the blank disks, cassette images
+(.cas), disk images (.dsk) and ROM modules (.rom) are not included. The menu item ? shows the
+manual in the browser.
+
+ROMs: The setup without ROMs (VG8235-Setup-NoRoms.exe) contains no ROM images. It creates the
+empty folder Documents\VG-8235\ROM; place your own images (VG8235-ROM1 - Basic2.0.bin,
+VG8235-ROM2 - Basic2.0.bin, VG8235-ROM3 - DiskDD.bin) there and start the emulator again.
+Without ROM1 and ROM2 it does not start; without ROM3 the disk drive stays off.

@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{44E8EA76-4A89-4A22-B006-5E9A56EF5BE8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include">
+      <UniqueIdentifier>{E84C8328-871F-494B-A2A1-AF742A4623E0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\Z8530">
+      <UniqueIdentifier>{9BA9D519-FB5E-4F35-92EE-08BC617D4335}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\Z8530.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\Z8530\Z8530.hpp">
+      <Filter>include\Z8530</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

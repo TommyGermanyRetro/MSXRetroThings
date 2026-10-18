@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>17.0</VCProjectVersion>
+    <ProjectGuid>{09957B73-9581-5CE3-9697-8689513EBDFD}</ProjectGuid>
+    <RootNamespace>vg8235_tests</RootNamespace>
+    <ProjectName>vg8235_tests</ProjectName>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration" Condition="'$(Configuration)'=='Debug'">
+    <UseDebugLibraries>true</UseDebugLibraries>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration" Condition="'$(Configuration)'=='Release'">
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\Common.props" />
+  </ImportGroup>
+  <PropertyGroup>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(Vg8235Include);$(Z80CpuInclude);$(Ppi8255Include);$(Ay8910Include);$(V9938Include);$(Rp5c01Include);$(Wd2793Include);$(CartridgeInclude);$(PrinterInclude);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="tests\vg8235_tests.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="vg8235.vcxproj">
+      <Project>{62FF8A48-5DC1-5C03-9B81-7FC18847FFA1}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\chips\Z80CPU\z80bus.vcxproj">
+      <Project>{5EB04C60-1925-5B57-AFC0-10B95C18A968}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\chips\PPI8255\ppi8255.vcxproj">
+      <Project>{4C4D149E-BD20-5DE9-83A0-C90454502E4F}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\chips\V9938\v9938.vcxproj">
+      <Project>{D1C10103-85D1-5F1A-AEED-03954B1D6A4F}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\chips\AY8910\ay8910.vcxproj">
+      <Project>{FE2C1EA3-1B2A-5F7F-9A2B-EB12265B9390}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\chips\RP5C01\rp5c01.vcxproj">
+      <Project>{625DDBDE-4744-57D4-8F9E-05FA34CB648A}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\chips\WD2793\wd2793.vcxproj">
+      <Project>{2835B655-B42C-5D88-8914-33FD2216B63B}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\msx\CARTRIDGE\cartridge.vcxproj">
+      <Project>{E993920E-892F-51EF-90C5-5C4945007331}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\chips\PRINTER\printer.vcxproj">
+      <Project>{28704401-3A5E-4B3E-9340-BD2E59071666}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>

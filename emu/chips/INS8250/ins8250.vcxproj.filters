@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{D0D69928-1AA0-5586-B458-7F210FF56C99}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include">
+      <UniqueIdentifier>{CE655A88-9518-5E92-A04D-E3872315B749}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\INS8250">
+      <UniqueIdentifier>{B560A244-ED80-5A09-90FD-DB679CB4A166}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\INS8250.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\INS8250\INS8250.hpp">
+      <Filter>include\INS8250</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

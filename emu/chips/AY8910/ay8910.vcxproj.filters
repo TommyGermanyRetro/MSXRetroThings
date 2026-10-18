@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="include\AY8910">
+      <UniqueIdentifier>{0355CA99-C3FA-543C-B84D-CA99CD2D772D}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{30ED40C8-0011-5FF9-AC17-EC0680247222}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\AY8910.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\AY8910\AY8910.hpp">
+      <Filter>include\AY8910</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

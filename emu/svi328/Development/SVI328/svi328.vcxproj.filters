@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="include\SVI328">
+      <UniqueIdentifier>{E97B7501-0099-58C0-A323-28EDF67772CE}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{D6A83423-B153-576F-A0BE-47F8D173864D}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\SVI328.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\SVI328\Cassette.hpp">
+      <Filter>include\SVI328</Filter>
+    </ClInclude>
+    <ClInclude Include="include\SVI328\Keyboard.hpp">
+      <Filter>include\SVI328</Filter>
+    </ClInclude>
+    <ClInclude Include="include\SVI328\ManualPage.hpp">
+      <Filter>include\SVI328</Filter>
+    </ClInclude>
+    <ClInclude Include="include\SVI328\UiText.hpp">
+      <Filter>include\SVI328</Filter>
+    </ClInclude>
+    <ClInclude Include="include\SVI328\SVI328.hpp">
+      <Filter>include\SVI328</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

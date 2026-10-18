@@ -1,0 +1,14 @@
+# Build output, generated documentation and local settings
+Build/
+CallGraph/html/
+Doxygen_index.html
+.vs/
+*.ini
+*.user
+*.cmos
+# Setups are built with create_installation.ps1; original ROM images are never part of the repository
+*-Setup*.exe
+**/rom/*.rom
+**/rom/*.bin
+**/rom/*.ROM
+**/rom/*.BIN

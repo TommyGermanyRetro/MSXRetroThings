@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shared settings of every project: chip include paths, compiler settings and the output folders.
+     A project built in a solution writes to the Build folder next to the solution's Development
+     folder (or to BuildRoot when a property sheet sets it), otherwise to Build here. -->
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <ChipsRoot>$(MSBuildThisFileDirectory)</ChipsRoot>
+    <BuildRoot Condition="'$(BuildRoot)'=='' and '$(SolutionDir)'!='' and '$(SolutionDir)'!='*Undefined*'">$(SolutionDir)..\Build\</BuildRoot>
+    <BuildRoot Condition="'$(BuildRoot)'==''">$(MSBuildThisFileDirectory)Build\</BuildRoot>
+    <OutDir>$(BuildRoot)$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(BuildRoot)obj\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+    <Z80CpuInclude>$(ChipsRoot)Z80CPU\include</Z80CpuInclude>
+    <Ppi8255Include>$(ChipsRoot)PPI8255\include</Ppi8255Include>
+    <Ay8910Include>$(ChipsRoot)AY8910\include</Ay8910Include>
+    <Tms99x8Include>$(ChipsRoot)TMS99X8\include</Tms99x8Include>
+    <Tms9918aInclude>$(ChipsRoot)TMS9918A\include</Tms9918aInclude>
+    <Tms9929aInclude>$(ChipsRoot)TMS9929A\include</Tms9929aInclude>
+    <Fd1793Include>$(ChipsRoot)FD1793\include</Fd1793Include>
+    <Ins8250Include>$(ChipsRoot)INS8250\include</Ins8250Include>
+    <Mc6845Include>$(ChipsRoot)MC6845\include</Mc6845Include>
+    <Mc6821Include>$(ChipsRoot)MC6821\include</Mc6821Include>
+    <Z8530Include>$(ChipsRoot)Z8530\include</Z8530Include>
+    <Wd1002shdInclude>$(ChipsRoot)WD1002SHD\include</Wd1002shdInclude>
+    <PrinterInclude>$(ChipsRoot)PRINTER\include</PrinterInclude>
+    <V9938Include>$(ChipsRoot)V9938\include</V9938Include>
+    <Rp5c01Include>$(ChipsRoot)RP5C01\include</Rp5c01Include>
+    <Wd2793Include>$(ChipsRoot)WD2793\include</Wd2793Include>
+    <VideorecInclude>$(ChipsRoot)VIDEOREC\include</VideorecInclude>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <WarningLevel>Level4</WarningLevel>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard_C>stdc11</LanguageStandard_C>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+      <DisableSpecificWarnings>4244;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <ProgramDataBaseFileName>$(IntDir)$(ProjectName).compile.pdb</ProgramDataBaseFileName>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)'=='Release'">
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+</Project>

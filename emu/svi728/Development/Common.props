@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Settings of the SVI728 solution: the machine on top of the shared MSX components and chips. -->
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="Globals">
+    <SolutionRoot>$(MSBuildThisFileDirectory)</SolutionRoot>
+    <BuildRoot>$(MSBuildThisFileDirectory)..\Build\</BuildRoot>
+  </PropertyGroup>
+  <Import Project="$(MSBuildThisFileDirectory)..\..\msx\Common.props" />
+  <PropertyGroup>
+    <Svi728Include>$(SolutionRoot)SVI728\include</Svi728Include>
+  </PropertyGroup>
+</Project>

@@ -1,0 +1,63 @@
+# Doxygen configuration for the function tree of the SVI-318 emulator: call and caller graphs of every
+# function in the machine, the frontend and the components. Run ..\create_callgraph.ps1 from the
+# Development folder; the result is CallGraph\html\index.html.
+
+PROJECT_NAME           = "SVI-318 Emulator"
+PROJECT_BRIEF          = "Function tree: call and caller graphs"
+OUTPUT_DIRECTORY       = CallGraph
+CREATE_SUBDIRS         = NO
+INPUT                  = . "../../svi3x8" "../../chips"
+INPUT_ENCODING         = UTF-8
+FILE_PATTERNS          = *.cpp *.hpp *.h
+RECURSIVE              = YES
+EXCLUDE                = installer CallGraph
+EXCLUDE_PATTERNS       = */tests/* */tools/* */third_party/*
+FULL_PATH_NAMES        = YES
+STRIP_FROM_PATH        = . ../..
+
+ENABLE_PREPROCESSING   = YES
+MACRO_EXPANSION        = NO
+PREDEFINED             = SVI318_GUI_APP
+
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = YES
+EXTRACT_STATIC         = YES
+EXTRACT_LOCAL_CLASSES  = YES
+EXTRACT_ANON_NSPACES   = YES
+EXTRACT_PRIV_VIRTUAL   = YES
+HIDE_UNDOC_MEMBERS     = NO
+HIDE_UNDOC_CLASSES     = NO
+
+SOURCE_BROWSER         = YES
+INLINE_SOURCES         = NO
+REFERENCED_BY_RELATION = YES
+REFERENCES_RELATION    = YES
+REFERENCES_LINK_SOURCE = YES
+
+HAVE_DOT               = YES
+DOT_PATH               = $(GRAPHVIZ_BIN)
+DOT_IMAGE_FORMAT       = svg
+INTERACTIVE_SVG        = YES
+CALL_GRAPH             = YES
+CALLER_GRAPH           = YES
+CLASS_GRAPH            = YES
+COLLABORATION_GRAPH    = NO
+INCLUDE_GRAPH          = NO
+INCLUDED_BY_GRAPH      = NO
+GRAPHICAL_HIERARCHY    = YES
+DIRECTORY_GRAPH        = YES
+DOT_GRAPH_MAX_NODES    = 60
+MAX_DOT_GRAPH_DEPTH    = 0
+DOT_NUM_THREADS        = 0
+
+GENERATE_HTML          = YES
+HTML_OUTPUT            = html
+GENERATE_TREEVIEW      = YES
+SEARCHENGINE           = YES
+GENERATE_LATEX         = NO
+
+QUIET                  = YES
+WARNINGS               = NO
+WARN_IF_UNDOCUMENTED   = NO
+WARN_IF_DOC_ERROR      = NO
+WARN_NO_PARAMDOC       = NO

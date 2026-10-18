@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{2F3297ED-5E81-5E45-AFF5-2DA50D943E52}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include">
+      <UniqueIdentifier>{1E62965A-A647-55F9-9543-51F15A11AA90}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\MC6845">
+      <UniqueIdentifier>{4AA1FCAA-6CEA-5CF4-8D33-D3F0D7B4DE4E}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\MC6845.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\MC6845\MC6845.hpp">
+      <Filter>include\MC6845</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

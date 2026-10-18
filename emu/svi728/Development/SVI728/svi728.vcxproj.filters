@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="include\SVI728">
+      <UniqueIdentifier>{1BA2135E-AB7D-5C0B-907C-01DCC75938A3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="include\PRINTER">
+      <UniqueIdentifier>{7B44F901-A437-47D0-91C2-89B21AB5BF35}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{30ED40C8-0011-5FF9-AC17-EC0680247222}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\SVI728.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\SVI728\Cassette.hpp">
+      <Filter>include\SVI728</Filter>
+    </ClInclude>
+    <ClInclude Include="include\SVI728\CassetteRecorder.hpp">
+      <Filter>include\SVI728</Filter>
+    </ClInclude>
+    <ClInclude Include="include\SVI728\Keyboard.hpp">
+      <Filter>include\SVI728</Filter>
+    </ClInclude>
+    <ClInclude Include="include\SVI728\ManualPage.hpp">
+      <Filter>include\SVI728</Filter>
+    </ClInclude>
+    <ClInclude Include="include\SVI728\UiText.hpp">
+      <Filter>include\SVI728</Filter>
+    </ClInclude>
+    <ClInclude Include="include\SVI728\SVI728.hpp">
+      <Filter>include\SVI728</Filter>
+    </ClInclude>
+    <ClInclude Include="..\PRINTER\include\PRINTER\Printer.hpp">
+      <Filter>include\PRINTER</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

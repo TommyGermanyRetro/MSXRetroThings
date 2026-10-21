@@ -7,7 +7,7 @@
 //* Datei: MSXADS1220.ino                                                                       *
 //***********************************************************************************************
 //* Changes:                                                                                    *
-//* V1.0.0 - 01.09.2026 - base version                                                          *
+//* V1.0.0 - 21.10.2026 - base version                                                          *
 //***********************************************************************************************
 
 #include <Arduino.h>
@@ -34,6 +34,51 @@ ADS1220_WE ads = ADS1220_WE(ADS1220_CS_PIN, ADS1220_DRDY_PIN);
 // Define cycle for hardware wait steering
 
 elapsedMicros waitTime = 0;
+
+// ADS1220 answered its start-up check (ads.init())
+
+bool adsReady = false;
+
+// SPI test result after a failed start (read at address 2): pattern 0x5A written to ADS1220
+// configuration register 0 and read back at 1 MHz
+
+uint8_t adsConf0 = 0;
+
+// Write 0x5A to ADS1220 configuration register 0, read it back and clear it again (WREG/RREG
+// register 0, one byte, SPI mode 1, 1 MHz)
+
+static uint8_t readConf0Raw(){
+  uint8_t value;
+
+  SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE1));
+  digitalWrite(ADS1220_CS_PIN, LOW);
+  SPI.transfer(0x40);
+  SPI.transfer(0x5A);
+  digitalWrite(ADS1220_CS_PIN, HIGH);
+  digitalWrite(ADS1220_CS_PIN, LOW);
+  SPI.transfer(0x20);
+  value = SPI.transfer(0x00);
+  digitalWrite(ADS1220_CS_PIN, HIGH);
+  digitalWrite(ADS1220_CS_PIN, LOW);
+  SPI.transfer(0x40);
+  SPI.transfer(0x00);
+  digitalWrite(ADS1220_CS_PIN, HIGH);
+  SPI.endTransaction();
+  return value;
+}
+
+// Start the ADS1220; on failure keep the SPI test result for the diagnostic read
+
+static void startAds(){
+  adsReady = ads.init();
+  if (adsReady){
+    ads.bypassPGA(true);
+    adsConf0 = 0;
+  }
+  else {
+    adsConf0 = readConf0Raw();
+  }
+}
 
 // Define control signals
 
@@ -78,13 +123,11 @@ uint8_t digitidx    = 0;
 
 void setup() {
 
-  // Start ADS1220
+  // Start ADS1220; if it does not answer, the bus is served anyway (MODE reads 0xEE, address 2
+  // reads the raw configuration register 0) and the start is repeated with the next conversion
+  // command
 
-  if(!ads.init()){
-    while(1);
-  }
-
-  ads.bypassPGA(true); 
+  startAds();
 
   // PORT D as databus
   // Starts as input
@@ -117,7 +160,7 @@ void setup() {
 //*                     0..3  single-ended AIN0..AIN3 vs GND, 4..9 differential AIN0-1/0-2/     *
 //*                     0-3/1-2/1-3/2-3, 10..11 differential AIN1-0/AIN3-2, other -> AIN0/GND   *
 //*          (sets mChannel = target result buffer for the selected measurement type)           *
-//*   READ   always 0 (no readback)                                                             *
+//*   READ   0x00 = ADS1220 ready, 0xEE = ADS1220 did not answer its start-up check             *
 //*                                                                                             *
 //* Address 1 - CMD                                                                             *
 //*   WRITE  bit 7:6 = command   0 = select read channel, 1 = set mCount, 2 = start conversion, *
@@ -128,9 +171,9 @@ void setup() {
 //*          writes the 4-byte MSX-float result into mByte[mChannel][0..3]                      *
 //*   READ   bit 7:4 = 0, bit 3:2 = mCount, bit 1:0 = rChannel                                  *
 //*                                                                                             *
-//* Address 2 - unused (NC)                                                                     *
+//* Address 2 - DIAG                                                                            *
 //*   WRITE  ignored                                                                            *
-//*   READ   always 0                                                                           *
+//*   READ   SPI test after a failed start: 0x5A written to config register 0, read back        *
 //*                                                                                             *
 //* Address 3 - RESULT                                                                          *
 //*   WRITE  ignored                                                                            *
@@ -238,11 +281,13 @@ void loop() {
 
                 DDRD = 0xff;  // PORT D output
 
-                data = 0;
-                
-                PORTD = data;                
+                // 0x00 = ADS1220 ready, 0xEE = ADS1220 did not answer its start-up check
 
-              }      
+                data = adsReady ? 0x00 : 0xEE;
+
+                PORTD = data;
+
+              }
 
       break;
 
@@ -269,6 +314,15 @@ void loop() {
                   break;
 
                   case 2: // Start Conversion
+
+                    // Repeat the start of the ADS1220 if it did not answer before
+
+                    if (!adsReady){
+                      startAds();
+                    }
+                    if (!adsReady){
+                      break;
+                    }
 
                     res = ads.getVoltage_mV();
 
@@ -352,20 +406,20 @@ void loop() {
 
       break;
 
-      // NC
-      
+      // DIAG - read: SPI test result after a failed start (0 when ready)
+
       case 2:
 
               if (wr){
 
-                data = PIND; 
+                data = PIND;
 
               }
               else {
 
                 DDRD = 0xff;  // PORT D output
 
-                data = 0;
+                data = adsConf0;
 
                 PORTD = data;                  
 
@@ -410,13 +464,11 @@ void loop() {
 
     PORTC |= IORDY;
 
-    // Wait 500 ns till /IORQ cycle has ended
+    // Keep driving the data bus until the read cycle has ended (/RD high again); /WAIT on the
+    // bus rises slowly through its pull-up and the CPU takes the data one clock after that
 
-    asm volatile("nop");
-    asm volatile("nop");
-    asm volatile("nop");
-    asm volatile("nop");
-  
+    while (!(PINB & SRD));
+
     // Port D as Input
 
     DDRD = 0;

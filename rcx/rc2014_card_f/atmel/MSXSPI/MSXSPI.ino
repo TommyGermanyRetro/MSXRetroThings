@@ -6,7 +6,7 @@
 //* Datei: MSXSPI.ino                                                                           *
 //***********************************************************************************************
 //* Changes:                                                                                    *
-//* V1.0.0 - 12.03.2026 - base version                                                          *
+//* V1.0.0 - 21.10.2026 - base version                                                          *
 //***********************************************************************************************
 
 #include <Arduino.h>
@@ -256,13 +256,11 @@ void loop() {
 
     PORTC |= IORDY;
 
-    // Wait 500 ns till /IORQ cycle has ended
+    // Keep driving the data bus until the read cycle has ended (/RD high again); /WAIT on the
+    // bus rises slowly through its pull-up and the CPU takes the data one clock after that
 
-    asm volatile("nop");
-    asm volatile("nop");
-    asm volatile("nop");
-    asm volatile("nop");
-  
+    while (!(PINB & SRD));
+
     // Port D as Input
 
     DDRD = 0;

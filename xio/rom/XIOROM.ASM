@@ -8,7 +8,9 @@
                                     ;* and CALL statement posted on     *
                                     ;* https://www.msx.org              *
                                     ;************************************
- 
+                                    ;* VERSION: 23/10/26                *
+                                    ;************************************
+
               ORG    #04000
 
 ;---------------------------
@@ -1250,11 +1252,13 @@ B_CORE5:      CALL CHKCHAR
               LD A,0
               LD (DE),A             ; No? Set ISI = 0 
 
+              OR A                  ; Clear Carry Flag to end routine handler
               RET                   ; Go back to main routine
 
 B_CORE5ISI:   LD A,1                ; Yes? Set ISI = 1 
               LD (DE),A
 
+              OR A                  ; Clear Carry Flag to end routine handler
               RET                   ; Go back to main routine             
 
                                     ;************************************
@@ -1437,12 +1441,7 @@ CORE6RAMOFF:  LD DE,X_HFLAGS
                                     ;* AF                               *
                                     ;************************************
 
-B_CORE7:      CALL MODINIT          ; Module installed?
-              JP Z,B_CORE7START     ; Yes? Continue  
-              CALL MODERR           ; Prompt error no XIO
-              RET                   ; Go back to calling routine
-
-B_CORE7START: CALL CHKCHAR
+B_CORE7:      CALL CHKCHAR
               DEFB "("              ; Check for (
               
               LD B,0
@@ -1491,7 +1490,10 @@ B_CORE7SAVE2: CALL CHKCHAR
 
               LD C,#0FF             ; Set SLOT to BASIC Call
 
-              JP CORE7              ; Continue with CORE command
+              CALL MODINIT          ; Module installed?
+              JP Z,CORE7            ; Yes? Continue with CORE command
+              CALL MODERR           ; Prompt error no XIO
+              RET                   ; Go back to calling routine
 
                                     ;************************************
                                     ;* EXTBIOS                          * 
@@ -1670,12 +1672,7 @@ CORE7END:     POP HL                ; Get BASIC Line-Pointer (if CALL is used)
                                     ;* AF, DE                           *
                                     ;************************************
 
-B_CORE8:      CALL MODINIT          ; Module installed?
-              JP Z,B_CORE8START     ; Yes? Continue 
-              CALL MODERR           ; Prompt error no XIO
-              RET                   ; Go back to calling routine
-
-B_CORE8START: CALL CHKCHAR
+B_CORE8:      CALL CHKCHAR
               DEFB "("              ; Check for (
               
               PUSH BC
@@ -1686,7 +1683,10 @@ B_CORE8START: CALL CHKCHAR
               CALL CHKCHAR
               DEFB ")"              ; Check for )
 
-              JP CORE8              ; Continue with CORE command
+              CALL MODINIT          ; Module installed?
+              JP Z,CORE8            ; Yes? Continue with CORE command
+              CALL MODERR           ; Prompt error no XIO
+              RET                   ; Go back to calling routine
 
 
 
@@ -1785,12 +1785,7 @@ CORE8:        PUSH HL               ; Save BASIC Line-Pointer (if CALL is used)
                                     ;* AF, B                            *
                                     ;************************************
 
-B_CORE9:      CALL MODINIT          ; Module installed?
-              JP Z,B_CORE9START     ; Yes? Continue 
-              CALL MODERR           ; Prompt error no XIO
-              RET                   ; Go back to calling routine
-
-B_CORE9START: CALL CHKCHAR
+B_CORE9:      CALL CHKCHAR
               DEFB "("              ; Check for (
               
               LD B,0
@@ -1825,7 +1820,10 @@ B_CORE9SAVE2: CALL CHKCHAR
               LD A,#0FF             ; Sign as BASIC Call
               LD C,A
 
-              JP CORE9              ; Continue with CORE command
+              CALL MODINIT          ; Module installed?
+              JP Z,CORE9            ; Yes? Continue with CORE command
+              CALL MODERR           ; Prompt error no XIO
+              RET                   ; Go back to calling routine
 
 
 
@@ -1958,12 +1956,7 @@ CORE9END:     POP HL                ; Get BASIC Line-Pointer (if CALL is used)
                                     ;* AF, DE                           *
                                     ;************************************
 
-B_CORE10:     CALL MODINIT          ; Module installed?
-              JP Z,B_CORE10ST       ; Yes? Continue 
-              CALL MODERR           ; Prompt error no XIO
-              RET                   ; Go back to calling routine
-
-B_CORE10ST:   CALL CHKCHAR
+B_CORE10:     CALL CHKCHAR
               DEFB "("              ; Check for (
               
               LD B,0
@@ -1972,7 +1965,10 @@ B_CORE10ST:   CALL CHKCHAR
               CALL CHKCHAR
               DEFB ")"              ; Check for )
 
-              JP CORE10             ; Continue with CORE command
+              CALL MODINIT          ; Module installed?
+              JP Z,CORE10           ; Yes? Continue with CORE command
+              CALL MODERR           ; Prompt error no XIO
+              RET                   ; Go back to calling routine
 
                                     ;************************************
                                     ;* EXTBIOS                          * 
@@ -3217,6 +3213,7 @@ MODERR:       PUSH HL
               LD HL,PERRINIT        ; Not installed? Prompt Message
               CALL PROMPT
               POP HL
+              OR A                  ; Clear Carry Flag to end routine handler
               RET
 
 ;---------------------------

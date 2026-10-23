@@ -9,7 +9,7 @@
                                     ;* https://www.msx.org              *
                                     ;* Assembled with pasmo.            *
                                     ;************************************
-                                    ;* VERSION: 17/09/26                *
+                                    ;* VERSION: 23/10/26                *
                                     ;************************************
 
               ORG    #04000
@@ -1821,12 +1821,7 @@ IODIS:        PUSH AF
                                     ;* AF                               *
                                     ;************************************
 
-B_CORE6:      CALL RCXINIT          ; Module installed?
-              JP Z,B_CORE6START     ; Installed? Continue
-              CALL MODERR           ; Prompt error no RCX
-              RET                   ; Go back to calling routine
-   
-B_CORE6START: CALL CHKCHAR
+B_CORE6:      CALL CHKCHAR
               DEFB "("              ; Check for (
               
               LD B,0
@@ -1837,6 +1832,8 @@ B_CORE6START: CALL CHKCHAR
          
               CALL CHKCHAR
               DEFB ")"              ; Check for )
+              CALL RCXINIT          ; Module installed?
+              JP NZ,B_NOTINST1      ; No? Prompt error no RCX
 
               POP BC                ; Get IO addr from stack 
 
@@ -1975,12 +1972,7 @@ CORE6END:     POP HL                ; Get BASIC Line-Pointer (if CALL is used)
                                     ;* AF                               *
                                     ;************************************
 
-B_CORE7:      CALL RCXINIT          ; Module installed?
-              JP Z,B_CORE7START     ; Installed? Continue
-              CALL MODERR           ; Prompt error no RCX
-              RET                   ; Go back to calling routine
-
-B_CORE7START: CALL CHKCHAR
+B_CORE7:      CALL CHKCHAR
               DEFB "("              ; Check for (
               
               LD B,0
@@ -2009,6 +2001,8 @@ B_CORE7START: CALL CHKCHAR
                             
               CALL CHKCHAR
               DEFB ")"              ; Check for )
+              CALL RCXINIT          ; Module installed?
+              JP NZ,B_NOTINST1      ; No? Prompt error no RCX
 
               POP DE                ; DE contains Bus IO address
 
@@ -2169,12 +2163,7 @@ CORE7STOP:    LD A,E                ; Yes? Send STOP on I2C
                                     ;* AF                               *
                                     ;************************************
 
-B_CORE8:      CALL RCXINIT          ; Module installed?
-              JP Z,B_CORE8START     ; Installed? Continue
-              CALL MODERR           ; Prompt error no RCX
-              RET                   ; Go back to calling routine
-
-B_CORE8START: CALL CHKCHAR
+B_CORE8:      CALL CHKCHAR
               DEFB "("              ; Check for (
               
               LD B,0                ; First PARA
@@ -2210,6 +2199,8 @@ B_CORE8START: CALL CHKCHAR
                                           
               CALL CHKCHAR
               DEFB ")"              ; Check for )
+              CALL RCXINIT          ; Module installed?
+              JP NZ,B_NOTINST2      ; No? Prompt error no RCX
 
               POP BC                ; Get I2C address & I2C len on stack
               POP AF                ; Get BUS address from stack
@@ -2383,12 +2374,7 @@ CORE8STOP:    LD A,E                ; Yes? Send STOP on I2C
                                     ;* AF                               *
                                     ;************************************
 
-B_CORE9:      CALL RCXINIT          ; Module installed?
-              JP Z,B_CORE9START     ; Installed? Continue
-              CALL MODERR           ; Prompt error no RCX
-              RET                   ; Go back to calling routine
-
-B_CORE9START: CALL CHKCHAR
+B_CORE9:      CALL CHKCHAR
               DEFB "("              ; Check for (
               
               LD B,0
@@ -2415,6 +2401,8 @@ B_CORE9START: CALL CHKCHAR
                             
               CALL CHKCHAR
               DEFB ")"              ; Check for )
+              CALL RCXINIT          ; Module installed?
+              JP NZ,B_NOTINST1      ; No? Prompt error no RCX
 
               POP BC                ; BC contains Bus IO and chip address
 
@@ -2590,12 +2578,7 @@ CORE9STOP:    LD A,E                ; Yes? Send STOP on I2C
                                     ;* AF                               *
                                     ;************************************
 
-B_CORE10:     CALL RCXINIT          ; Module installed?
-              JP Z,B_CORE10ST       ; Installed? Continue
-              CALL MODERR           ; Prompt error no RCX
-              RET                   ; Go back to calling routine
-
-B_CORE10ST:   CALL CHKCHAR
+B_CORE10:     CALL CHKCHAR
               DEFB "("              ; Check for (
               
               LD B,0                ; First PARA
@@ -2631,6 +2614,8 @@ B_CORE10ST:   CALL CHKCHAR
                                           
               CALL CHKCHAR
               DEFB ")"              ; Check for )
+              CALL RCXINIT          ; Module installed?
+              JP NZ,B_NOTINST2      ; No? Prompt error no RCX
 
               POP BC                ; Get I2C address & I2C len on stack
               POP AF                ; Get BUS address from stack
@@ -2825,12 +2810,7 @@ CORE10STOP:   LD A,E                ; Yes? Send STOP on I2C
                                     ;* AF                               *
                                     ;************************************
 
-B_CORE11:     CALL RCXINIT          ; Module installed?
-              JP Z,B_CORE11ST       ; Installed? Continue
-              CALL MODERR           ; Prompt error no RCX
-              RET                   ; Go back to calling routine
-
-B_CORE11ST:   CALL CHKCHAR
+B_CORE11:     CALL CHKCHAR
               DEFB "("              ; Check for (
               
               LD B,0                ; First PARA
@@ -2839,6 +2819,8 @@ B_CORE11ST:   CALL CHKCHAR
                                           
               CALL CHKCHAR
               DEFB ")"              ; Check for )
+              CALL RCXINIT          ; Module installed?
+              JP NZ,MODERR          ; No? Prompt error no RCX
 
               PUSH BC               ; Save bus address to stack
               LD B,SI2C             ; Set type SI2C
@@ -2963,12 +2945,7 @@ CORE11:       PUSH HL               ; Save BASIC Line-Pointer (if CALL is used)
                                     ;* AF                               *
                                     ;************************************
 
-B_CORE12:     CALL RCXINIT          ; Module installed?
-              JP Z,B_CORE12ST       ; Installed? Continue
-              CALL MODERR           ; Prompt error no RCX
-              RET                   ; Go back to calling routine
-
-B_CORE12ST:   CALL CHKCHAR
+B_CORE12:     CALL CHKCHAR
               DEFB "("              ; Check for (
               
               LD B,0                ; First PARA
@@ -2987,6 +2964,8 @@ B_CORE12ST:   CALL CHKCHAR
 
               CALL CHKCHAR
               DEFB ")"              ; Check for )
+              CALL RCXINIT          ; Module installed?
+              JP NZ,B_NOTINST1      ; No? Prompt error no RCX
 
               POP BC                ; Get bus address from stack
 
@@ -3149,12 +3128,7 @@ CORE12BCD:    LD A,(DE)
                                     ;* AF                               *
                                     ;************************************
 
-B_CORE13:     CALL RCXINIT          ; Module installed?
-              JP Z,B_CORE13ST       ; Installed? Continue
-              CALL MODERR           ; Prompt error no RCX
-              RET                   ; Go back to calling routine
-
-B_CORE13ST:   CALL CHKCHAR
+B_CORE13:     CALL CHKCHAR
               DEFB "("              ; Check for (
               
               LD B,0                ; First PARA
@@ -3173,6 +3147,8 @@ B_CORE13ST:   CALL CHKCHAR
 
               CALL CHKCHAR
               DEFB ")"              ; Check for )
+              CALL RCXINIT          ; Module installed?
+              JP NZ,B_NOTINST1      ; No? Prompt error no RCX
 
               POP BC                ; Get bus address from stack
               PUSH BC               ; Save bus address to stack
@@ -3347,12 +3323,7 @@ CORE13BCD:    LD B,A
                                     ;* AF                               *
                                     ;************************************
 
-B_CORE14:     CALL RCXINIT          ; Module installed?
-              JP Z,B_CORE14ST       ; Installed? Continue
-              CALL MODERR           ; Prompt error no RCX
-              RET                   ; Go back to calling routine
-
-B_CORE14ST:   CALL CHKCHAR
+B_CORE14:     CALL CHKCHAR
               DEFB "("              ; Check for (
               
               LD B,0                ; First PARA
@@ -3371,6 +3342,8 @@ B_CORE14ST:   CALL CHKCHAR
 
               CALL CHKCHAR
               DEFB ")"              ; Check for )
+              CALL RCXINIT          ; Module installed?
+              JP NZ,B_NOTINST1      ; No? Prompt error no RCX
 
               POP BC                ; Get bus address from stack
 
@@ -3548,12 +3521,7 @@ CORE14BCD:    LD A,(DE)
                                     ;* AF                               *
                                     ;************************************
 
-B_CORE15:     CALL RCXINIT          ; Module installed?
-              JP Z,B_CORE15ST       ; Installed? Continue
-              CALL MODERR           ; Prompt error no RCX
-              RET                   ; Go back to calling routine
-
-B_CORE15ST:   CALL CHKCHAR
+B_CORE15:     CALL CHKCHAR
               DEFB "("              ; Check for (
               
               LD B,0                ; First PARA
@@ -3572,6 +3540,8 @@ B_CORE15ST:   CALL CHKCHAR
 
               CALL CHKCHAR
               DEFB ")"              ; Check for )
+              CALL RCXINIT          ; Module installed?
+              JP NZ,B_NOTINST1      ; No? Prompt error no RCX
 
               POP BC                ; Get bus address from stack
               PUSH BC               ; Save bus address to stack
@@ -3901,12 +3871,7 @@ PTESTOK:      POP BC                ; Get BC back from stack
                                     ;* AF                               *
                                     ;************************************
 
-B_CORE16:     CALL RCXINIT          ; Module installed?
-              JP Z,B_CORE16ST       ; Installed? Continue
-              CALL MODERR           ; Prompt error no RCX
-              RET                   ; Go back to calling routine
-   
-B_CORE16ST:   CALL CHKCHAR
+B_CORE16:     CALL CHKCHAR
               DEFB "("              ; Check for (
               
               LD B,0
@@ -3917,6 +3882,8 @@ B_CORE16ST:   CALL CHKCHAR
          
               CALL CHKCHAR
               DEFB ")"              ; Check for )
+              CALL RCXINIT          ; Module installed?
+              JP NZ,B_NOTINST1      ; No? Prompt error no RCX
 
               POP BC                ; Get IO addr from stack 
 
@@ -3999,11 +3966,8 @@ FN_CORE16OK:  CCF                   ; Clear CARRY flag
                                     ;* AF                               *
                                     ;************************************
 
-B_CORE17:     CALL RCXINIT          ; Module installed?
-              LD B,0                ; Z80 PIO A RD
-              JP Z,B_COREPIO        ; Installed? Continue
-              CALL MODERR           ; Prompt error no RCX
-              RET                   ; Go back to calling routine
+B_CORE17:     LD B,0                ; Z80 PIO A RD
+              JP B_COREPIO          ; Continue with common routine
 
                                     ;************************************
                                     ;* BASIC                            * 
@@ -4027,11 +3991,8 @@ B_CORE17:     CALL RCXINIT          ; Module installed?
                                     ;* AF                               *
                                     ;************************************
 
-B_CORE18:     CALL RCXINIT          ; Module installed?
-              LD B,1                ; Z80 PIO A WR
-              JP Z,B_COREPIO        ; Installed? Continue
-              CALL MODERR           ; Prompt error no RCX
-              RET                   ; Go back to calling routine
+B_CORE18:     LD B,1                ; Z80 PIO A WR
+              JP B_COREPIO          ; Continue with common routine
 
                                     ;************************************
                                     ;* BASIC                            * 
@@ -4055,11 +4016,8 @@ B_CORE18:     CALL RCXINIT          ; Module installed?
                                     ;* AF                               *
                                     ;************************************
 
-B_CORE19:     CALL RCXINIT          ; Module installed?
-              LD B,2                ; Z80 PIO B RD
-              JP Z,B_COREPIO        ; Installed? Continue
-              CALL MODERR           ; Prompt error no RCX
-              RET                   ; Go back to calling routine
+B_CORE19:     LD B,2                ; Z80 PIO B RD
+              JP B_COREPIO          ; Continue with common routine
 
                                     ;************************************
                                     ;* BASIC                            * 
@@ -4083,11 +4041,8 @@ B_CORE19:     CALL RCXINIT          ; Module installed?
                                     ;* AF                               *
                                     ;************************************
 
-B_CORE20:     CALL RCXINIT          ; Module installed?
-              LD B,3                ; Z80 PIO B WR
-              JP Z,B_COREPIO        ; Installed? Continue
-              CALL MODERR           ; Prompt error no RCX
-              RET                   ; Go back to calling routine
+B_CORE20:     LD B,3                ; Z80 PIO B WR
+              JP B_COREPIO          ; Continue with common routine
 
                                     ;************************************
                                     ;* BASIC                            * 
@@ -4111,11 +4066,8 @@ B_CORE20:     CALL RCXINIT          ; Module installed?
                                     ;* AF                               *
                                     ;************************************
 
-B_CORE21:     CALL RCXINIT          ; Module installed?
-              LD B,4                ; Z80 PIO A CTRL
-              JP Z,B_COREPIO        ; Installed? Continue
-              CALL MODERR           ; Prompt error no RCX
-              RET                   ; Go back to calling routine
+B_CORE21:     LD B,4                ; Z80 PIO A CTRL
+              JP B_COREPIO          ; Continue with common routine
 
                                     ;************************************
                                     ;* BASIC                            * 
@@ -4139,11 +4091,8 @@ B_CORE21:     CALL RCXINIT          ; Module installed?
                                     ;* AF                               *
                                     ;************************************
 
-B_CORE22:     CALL RCXINIT          ; Module installed?
-              LD B,5                ; Z80 PIO B CTRL
-              JP Z,B_COREPIO        ; Installed? Continue
-              CALL MODERR           ; Prompt error no RCX
-              RET                   ; Go back to calling routine
+B_CORE22:     LD B,5                ; Z80 PIO B CTRL
+              JP B_COREPIO          ; Continue with common routine
 
                                     ;************************************
                                     ;* BASIC                            * 
@@ -4204,6 +4153,8 @@ B_COREPIOV:   CALL EVALVARINT       ; DE contains VARPTR to read data
               
 B_COREPIOW:   CALL CHKCHAR
               DEFB ")"              ; Check for )
+              CALL RCXINIT          ; Module installed?
+              JP NZ,B_NOTINST1      ; No? Prompt error no RCX
 
               POP BC                ; Get PIO mode & addr from stack
 
@@ -4535,12 +4486,7 @@ COREPIOEND:   CALL IODIS            ; Switched IO disabled
                                     ;* AF                               *
                                     ;************************************
 
-B_CORE23:     CALL RCXINIT          ; Module installed?
-              JP Z,B_CORE23ST       ; Installed? Continue
-              CALL MODERR           ; Prompt error no RCX
-              RET                   ; Go back to calling routine
-   
-B_CORE23ST:   CALL CHKCHAR
+B_CORE23:     CALL CHKCHAR
               DEFB "("              ; Check for (
               
               LD B,0
@@ -4551,6 +4497,8 @@ B_CORE23ST:   CALL CHKCHAR
          
               CALL CHKCHAR
               DEFB ")"              ; Check for )
+              CALL RCXINIT          ; Module installed?
+              JP NZ,B_NOTINST1      ; No? Prompt error no RCX
 
               POP BC                ; Get IO addr from stack 
 
@@ -4635,11 +4583,8 @@ FN_CORE23OK:  CCF                   ; Clear CARRY flag
                                     ;* AF                               *
                                     ;************************************
 
-B_CORE24:     CALL RCXINIT          ; Module installed?
-              LD B,0                ; 82C55 A RD
-              JP Z,B_COREPPI        ; Installed? Continue
-              CALL MODERR           ; Prompt error no RCX
-              RET                   ; Go back to calling routine
+B_CORE24:     LD B,0                ; 82C55 A RD
+              JP B_COREPPI          ; Continue with common routine
 
                                     ;************************************
                                     ;* BASIC                            * 
@@ -4663,11 +4608,8 @@ B_CORE24:     CALL RCXINIT          ; Module installed?
                                     ;* AF                               *
                                     ;************************************
 
-B_CORE25:     CALL RCXINIT          ; Module installed?
-              LD B,1                ; 82C55 A WR
-              JP Z,B_COREPPI        ; Installed? Continue
-              CALL MODERR           ; Prompt error no RCX
-              RET                   ; Go back to calling routine
+B_CORE25:     LD B,1                ; 82C55 A WR
+              JP B_COREPPI          ; Continue with common routine
 
                                     ;************************************
                                     ;* BASIC                            * 
@@ -4691,11 +4633,8 @@ B_CORE25:     CALL RCXINIT          ; Module installed?
                                     ;* AF                               *
                                     ;************************************
 
-B_CORE26:     CALL RCXINIT          ; Module installed?
-              LD B,2                ; 82C55 B RD
-              JP Z,B_COREPPI        ; Installed? Continue
-              CALL MODERR           ; Prompt error no RCX
-              RET                   ; Go back to calling routine
+B_CORE26:     LD B,2                ; 82C55 B RD
+              JP B_COREPPI          ; Continue with common routine
 
                                     ;************************************
                                     ;* BASIC                            * 
@@ -4719,11 +4658,8 @@ B_CORE26:     CALL RCXINIT          ; Module installed?
                                     ;* AF                               *
                                     ;************************************
 
-B_CORE27:     CALL RCXINIT          ; Module installed?
-              LD B,3                ; 82C55 B WR
-              JP Z,B_COREPPI        ; Installed? Continue
-              CALL MODERR           ; Prompt error no RCX
-              RET                   ; Go back to calling routine
+B_CORE27:     LD B,3                ; 82C55 B WR
+              JP B_COREPPI          ; Continue with common routine
 
                                     ;************************************
                                     ;* BASIC                            * 
@@ -4747,11 +4683,8 @@ B_CORE27:     CALL RCXINIT          ; Module installed?
                                     ;* AF                               *
                                     ;************************************
 
-B_CORE28:     CALL RCXINIT          ; Module installed?
-              LD B,4                ; 82C55 C RD
-              JP Z,B_COREPPI        ; Installed? Continue
-              CALL MODERR           ; Prompt error no RCX
-              RET                   ; Go back to calling routine
+B_CORE28:     LD B,4                ; 82C55 C RD
+              JP B_COREPPI          ; Continue with common routine
 
                                     ;************************************
                                     ;* BASIC                            * 
@@ -4775,11 +4708,8 @@ B_CORE28:     CALL RCXINIT          ; Module installed?
                                     ;* AF                               *
                                     ;************************************
 
-B_CORE29:     CALL RCXINIT          ; Module installed?
-              LD B,5                ; 82C55 C WR
-              JP Z,B_COREPPI        ; Installed? Continue
-              CALL MODERR           ; Prompt error no RCX
-              RET                   ; Go back to calling routine
+B_CORE29:     LD B,5                ; 82C55 C WR
+              JP B_COREPPI          ; Continue with common routine
 
                                     ;************************************
                                     ;* BASIC                            * 
@@ -4803,11 +4733,8 @@ B_CORE29:     CALL RCXINIT          ; Module installed?
                                     ;* AF                               *
                                     ;************************************
 
-B_CORE30:     CALL RCXINIT          ; Module installed?
-              LD B,6                ; 82C55 CTRL
-              JP Z,B_COREPPI        ; Installed? Continue
-              CALL MODERR           ; Prompt error no RCX
-              RET                   ; Go back to calling routine
+B_CORE30:     LD B,6                ; 82C55 CTRL
+              JP B_COREPPI          ; Continue with common routine
 
                                     ;************************************
                                     ;* BASIC                            * 
@@ -4831,11 +4758,8 @@ B_CORE30:     CALL RCXINIT          ; Module installed?
                                     ;* AF                               *
                                     ;************************************
 
-B_CORE31:     CALL RCXINIT          ; Module installed?
-              LD B,7                ; 82C55 SET BIT
-              JP Z,B_COREPPI        ; Installed? Continue
-              CALL MODERR           ; Prompt error no RCX
-              RET                   ; Go back to calling routine
+B_CORE31:     LD B,7                ; 82C55 SET BIT
+              JP B_COREPPI          ; Continue with common routine
 
                                     ;************************************
                                     ;* BASIC                            * 
@@ -4859,11 +4783,8 @@ B_CORE31:     CALL RCXINIT          ; Module installed?
                                     ;* AF                               *
                                     ;************************************
 
-B_CORE32:     CALL RCXINIT          ; Module installed?
-              LD B,8                ; 82C55 RESET BIT
-              JP Z,B_COREPPI        ; Installed? Continue
-              CALL MODERR           ; Prompt error no RCX
-              RET                   ; Go back to calling routine
+B_CORE32:     LD B,8                ; 82C55 RESET BIT
+              JP B_COREPPI          ; Continue with common routine
 
                                     ;************************************
                                     ;* BASIC                            * 
@@ -4926,6 +4847,8 @@ B_COREPPIV:   CALL EVALVARINT       ; DE contains VARPTR to read data
               
 B_COREPPIW:   CALL CHKCHAR
               DEFB ")"              ; Check for )
+              CALL RCXINIT          ; Module installed?
+              JP NZ,B_NOTINST1      ; No? Prompt error no RCX
 
               POP BC                ; Get PPI mode & addr from stack
 
@@ -5390,12 +5313,7 @@ COREPPIERR:   LD HL,PERRTYPE
                                     ;* AF                               *
                                     ;************************************
 
-B_CORE33:     CALL RCXINIT          ; Module installed?
-              JP Z,B_CORE33ST       ; Installed? Continue
-              CALL MODERR           ; Prompt error no RCX
-              RET                   ; Go back to calling routine
-   
-B_CORE33ST:   CALL CHKCHAR
+B_CORE33:     CALL CHKCHAR
               DEFB "("              ; Check for (
               
               LD B,0
@@ -5406,6 +5324,8 @@ B_CORE33ST:   CALL CHKCHAR
          
               CALL CHKCHAR
               DEFB ")"              ; Check for )
+              CALL RCXINIT          ; Module installed?
+              JP NZ,B_NOTINST1      ; No? Prompt error no RCX
 
               POP BC                ; Get IO addr from stack 
 
@@ -5537,11 +5457,8 @@ FN_CORE33OK:  DI
                                     ;* AF                               *
                                     ;************************************
 
-B_CORE34:     CALL RCXINIT          ; Module installed?
-              LD B,0                ; 82C54 0 RD
-              JP Z,B_CORETIM        ; Installed? Continue
-              CALL MODERR           ; Prompt error no RCX
-              RET                   ; Go back to calling routine
+B_CORE34:     LD B,0                ; 82C54 0 RD
+              JP B_CORETIM          ; Continue with common routine
 
                                     ;************************************
                                     ;* BASIC                            * 
@@ -5565,11 +5482,8 @@ B_CORE34:     CALL RCXINIT          ; Module installed?
                                     ;* AF                               *
                                     ;************************************
 
-B_CORE35:     CALL RCXINIT          ; Module installed?
-              LD B,1                ; 82C54 0 WR
-              JP Z,B_CORETIM        ; Installed? Continue
-              CALL MODERR           ; Prompt error no RCX
-              RET                   ; Go back to calling routine
+B_CORE35:     LD B,1                ; 82C54 0 WR
+              JP B_CORETIM          ; Continue with common routine
 
                                     ;************************************
                                     ;* BASIC                            * 
@@ -5593,11 +5507,8 @@ B_CORE35:     CALL RCXINIT          ; Module installed?
                                     ;* AF                               *
                                     ;************************************
 
-B_CORE36:     CALL RCXINIT          ; Module installed?
-              LD B,2                ; 82C54 1 RD
-              JP Z,B_CORETIM        ; Installed? Continue
-              CALL MODERR           ; Prompt error no RCX
-              RET                   ; Go back to calling routine
+B_CORE36:     LD B,2                ; 82C54 1 RD
+              JP B_CORETIM          ; Continue with common routine
 
                                     ;************************************
                                     ;* BASIC                            * 
@@ -5621,11 +5532,8 @@ B_CORE36:     CALL RCXINIT          ; Module installed?
                                     ;* AF                               *
                                     ;************************************
 
-B_CORE37:     CALL RCXINIT          ; Module installed?
-              LD B,3                ; 82C54 1 WR
-              JP Z,B_CORETIM        ; Installed? Continue
-              CALL MODERR           ; Prompt error no RCX
-              RET                   ; Go back to calling routine
+B_CORE37:     LD B,3                ; 82C54 1 WR
+              JP B_CORETIM          ; Continue with common routine
 
                                     ;************************************
                                     ;* BASIC                            * 
@@ -5649,11 +5557,8 @@ B_CORE37:     CALL RCXINIT          ; Module installed?
                                     ;* AF                               *
                                     ;************************************
 
-B_CORE38:     CALL RCXINIT          ; Module installed?
-              LD B,4                ; 82C54 2 RD
-              JP Z,B_CORETIM        ; Installed? Continue
-              CALL MODERR           ; Prompt error no RCX
-              RET                   ; Go back to calling routine
+B_CORE38:     LD B,4                ; 82C54 2 RD
+              JP B_CORETIM          ; Continue with common routine
 
                                     ;************************************
                                     ;* BASIC                            * 
@@ -5677,11 +5582,8 @@ B_CORE38:     CALL RCXINIT          ; Module installed?
                                     ;* AF                               *
                                     ;************************************
 
-B_CORE39:     CALL RCXINIT          ; Module installed?
-              LD B,5                ; 82C54 2 WR
-              JP Z,B_CORETIM        ; Installed? Continue
-              CALL MODERR           ; Prompt error no RCX
-              RET                   ; Go back to calling routine
+B_CORE39:     LD B,5                ; 82C54 2 WR
+              JP B_CORETIM          ; Continue with common routine
 
                                     ;************************************
                                     ;* BASIC                            * 
@@ -5705,11 +5607,8 @@ B_CORE39:     CALL RCXINIT          ; Module installed?
                                     ;* AF                               *
                                     ;************************************
 
-B_CORE40:     CALL RCXINIT          ; Module installed?
-              LD B,6                ; 82C54 CTRL
-              JP Z,B_CORETIM        ; Installed? Continue
-              CALL MODERR           ; Prompt error no RCX
-              RET                   ; Go back to calling routine
+B_CORE40:     LD B,6                ; 82C54 CTRL
+              JP B_CORETIM          ; Continue with common routine
 
                                     ;************************************
                                     ;* BASIC                            * 
@@ -5733,11 +5632,8 @@ B_CORE40:     CALL RCXINIT          ; Module installed?
                                     ;* AF                               *
                                     ;************************************
 
-B_CORE41:     CALL RCXINIT          ; Module installed?
-              LD B,7                ; 82C54 SET GATE
-              JP Z,B_CORETIM        ; Installed? Continue
-              CALL MODERR           ; Prompt error no RCX
-              RET                   ; Go back to calling routine
+B_CORE41:     LD B,7                ; 82C54 SET GATE
+              JP B_CORETIM          ; Continue with common routine
 
                                     ;************************************
                                     ;* BASIC                            * 
@@ -5761,11 +5657,8 @@ B_CORE41:     CALL RCXINIT          ; Module installed?
                                     ;* AF                               *
                                     ;************************************
 
-B_CORE42:     CALL RCXINIT          ; Module installed?
-              LD B,8                ; 82C54 RESET GATE
-              JP Z,B_CORETIM        ; Installed? Continue
-              CALL MODERR           ; Prompt error no RCX
-              RET                   ; Go back to calling routine
+B_CORE42:     LD B,8                ; 82C54 RESET GATE
+              JP B_CORETIM          ; Continue with common routine
 
                                     ;************************************
                                     ;* BASIC                            * 
@@ -5827,6 +5720,8 @@ B_CORETIMV:   CALL EVALVARINT       ; DE contains VARPTR to read data
               
 B_CORETIMW:   CALL CHKCHAR
               DEFB ")"              ; Check for )
+              CALL RCXINIT          ; Module installed?
+              JP NZ,B_NOTINST1      ; No? Prompt error no RCX
 
               POP BC                ; Get TIMER mode & addr from stack
 
@@ -6395,12 +6290,7 @@ CANNORMMODE:  EQU #0002             ; Normal Mode
                                     ;* AF                               *
                                     ;************************************
 
-B_CORE43:     CALL RCXINIT          ; Module installed?
-              JP Z,B_CORE43ST       ; Installed? Continue
-              CALL MODERR           ; Prompt error no RCX
-              RET                   ; Go back to calling routine
-   
-B_CORE43ST:   CALL CHKCHAR
+B_CORE43:     CALL CHKCHAR
               DEFB "("              ; Check for (
               
               LD B,0
@@ -6439,6 +6329,8 @@ B_CORE43ST:   CALL CHKCHAR
                                           
               CALL CHKCHAR
               DEFB ")"              ; Check for )
+              CALL RCXINIT          ; Module installed?
+              JP NZ,B_NOTINST1      ; No? Prompt error no RCX
 
               POP BC                ; Get IO addr back from stack
 
@@ -6842,12 +6734,7 @@ CORE43S05:    LD D,CANCMDREG        ; COMMAND REG
                                     ;* AF                               *
                                     ;************************************
 
-B_CORE44:     CALL RCXINIT          ; Module installed?
-              JP Z,B_CORE44ST       ; Installed? Continue
-              CALL MODERR           ; Prompt error no RCX
-              RET                   ; Go back to calling routine
-
-B_CORE44ST:   CALL CHKCHAR
+B_CORE44:     CALL CHKCHAR
               DEFB "("              ; Check for (
               
               LD B,0                ; First PARA
@@ -6872,6 +6759,8 @@ B_CORE44ST:   CALL CHKCHAR
                                           
               CALL CHKCHAR
               DEFB ")"              ; Check for )
+              CALL RCXINIT          ; Module installed?
+              JP NZ,MODERR          ; No? Prompt error no RCX
 
               LD B,SCAN             ; Set type SCAN
               PUSH IX               ; Result not used
@@ -6999,12 +6888,7 @@ CANOUT:       PUSH HL               ; Save BASIC Line-Pointer (if CALL is used)
                                     ;* AF                               *
                                     ;************************************
 
-B_CORE45:     CALL RCXINIT          ; Module installed?
-              JP Z,B_CORE45ST       ; Installed? Continue
-              CALL MODERR           ; Prompt error no RCX
-              RET                   ; Go back to calling routine
-
-B_CORE45ST:   PUSH DE               ; Save DE to stack
+B_CORE45:     PUSH DE               ; Save DE to stack
               PUSH BC               ; Save BC to stack
 
               CALL CHKCHAR
@@ -7038,6 +6922,8 @@ B_CORE45ST:   PUSH DE               ; Save DE to stack
 
               CALL CHKCHAR
               DEFB ")"              ; Check for )
+              CALL RCXINIT          ; Module installed?
+              JP NZ,B_NOTINST3      ; No? Prompt error no RCX
 
               POP BC                ; Get IO addr & CAN REG from stack
 
@@ -7187,12 +7073,7 @@ CANINP:       PUSH HL               ; Save BASIC Line-Pointer (if CALL is used)
                                     ;* AF                               *
                                     ;************************************
 
-B_CORE46:     CALL RCXINIT          ; Module installed?
-              JP Z,B_CORE46ST       ; Installed? Continue
-              CALL MODERR           ; Prompt error no RCX
-              RET                   ; Go back to calling routine
-   
-B_CORE46ST:   CALL CHKCHAR
+B_CORE46:     CALL CHKCHAR
               DEFB "("              ; Check for (
               
               LD B,0
@@ -7211,6 +7092,8 @@ B_CORE46ST:   CALL CHKCHAR
                                          
               CALL CHKCHAR
               DEFB ")"              ; Check for )
+              CALL RCXINIT          ; Module installed?
+              JP NZ,B_NOTINST1      ; No? Prompt error no RCX
 
               POP BC                ; Get IO addr back from stack 
 
@@ -7345,12 +7228,7 @@ FN_CORE46DONE: POP DE               ; Get DE back from stack
                                     ;* AF,BC                            *
                                     ;************************************
 
-B_CORE47:     CALL RCXINIT          ; Module installed?
-              JP Z,B_CORE47ST       ; Installed? Continue
-              CALL MODERR           ; Prompt error no RCX
-              RET                   ; Go back to calling routine
-
-B_CORE47ST:   CALL CHKCHAR
+B_CORE47:     CALL CHKCHAR
               DEFB "("              ; Check for (
               
               LD B,0                ; First PARA
@@ -7389,6 +7267,8 @@ B_CORE47ST:   CALL CHKCHAR
                                           
               CALL CHKCHAR
               DEFB ")"              ; Check for )
+              CALL RCXINIT          ; Module installed?
+              JP NZ,B_NOTINST1      ; No? Prompt error no RCX
 
               POP BC                ; Get IO addr back from stack
 
@@ -7564,12 +7444,7 @@ CORE47_01:    LD (HL),A             ; Save read msg count
                                     ;* AF,BC                            *
                                     ;************************************
 
-B_CORE48:     CALL RCXINIT          ; Module installed?
-              JP Z,B_CORE48ST       ; Installed? Continue
-              CALL MODERR           ; Prompt error no RCX
-              RET                   ; Go back to calling routine
-
-B_CORE48ST:   CALL CHKCHAR
+B_CORE48:     CALL CHKCHAR
               DEFB "("              ; Check for (
               
               LD B,0                ; First PARA
@@ -7587,6 +7462,8 @@ B_CORE48ST:   CALL CHKCHAR
                                         
               CALL CHKCHAR
               DEFB ")"              ; Check for )
+              CALL RCXINIT          ; Module installed?
+              JP NZ,B_NOTINST1      ; No? Prompt error no RCX
 
               POP BC                ; Get IO addr back from stack
 
@@ -7704,12 +7581,7 @@ FN_CORE48ADR: PUSH HL               ; Save HL to stack
                                     ;* AF,BC                            *
                                     ;************************************
 
-B_CORE49:     CALL RCXINIT          ; Module installed?
-              JP Z,B_CORE49ST       ; Installed? Continue
-              CALL MODERR           ; Prompt error no RCX
-              RET                   ; Go back to calling routine
-
-B_CORE49ST:   CALL CHKCHAR
+B_CORE49:     CALL CHKCHAR
               DEFB "("              ; Check for (
               
               LD B,0                ; First PARA
@@ -7748,6 +7620,8 @@ B_CORE49ST:   CALL CHKCHAR
                                           
               CALL CHKCHAR
               DEFB ")"              ; Check for )
+              CALL RCXINIT          ; Module installed?
+              JP NZ,B_NOTINST1      ; No? Prompt error no RCX
 
               POP BC                ; Get IO addr back from stack
 
@@ -7936,12 +7810,7 @@ CORE49L2:     IN A,(SWIO)
                                     ;* AF                               *
                                     ;************************************
 
-B_CORE50:     CALL RCXINIT          ; Module installed?
-              JP Z,B_CORE50ST       ; Installed? Continue
-              CALL MODERR           ; Prompt error no RCX
-              RET                   ; Go back to calling routine
-   
-B_CORE50ST:   CALL CHKCHAR
+B_CORE50:     CALL CHKCHAR
               DEFB "("              ; Check for (
               
               LD B,0
@@ -7952,6 +7821,8 @@ B_CORE50ST:   CALL CHKCHAR
          
               CALL CHKCHAR
               DEFB ")"              ; Check for )
+              CALL RCXINIT          ; Module installed?
+              JP NZ,B_NOTINST1      ; No? Prompt error no RCX
 
               POP BC                ; Get IO addr from stack 
 
@@ -8035,12 +7906,7 @@ FN_CORE50OK:  CCF                   ; Clear CARRY flag
                                     ;* AF                               *
                                     ;************************************
 
-B_CORE51:     CALL RCXINIT          ; Module installed?
-              JP Z,B_CORE51ST       ; Installed? Continue
-              CALL MODERR           ; Prompt error no RCX
-              RET                   ; Go back to calling routine
-
-B_CORE51ST:   CALL CHKCHAR
+B_CORE51:     CALL CHKCHAR
               DEFB "("              ; Check for (
               
               LD B,0
@@ -8069,6 +7935,8 @@ B_CORE51ST:   CALL CHKCHAR
                             
               CALL CHKCHAR
               DEFB ")"              ; Check for )
+              CALL RCXINIT          ; Module installed?
+              JP NZ,B_NOTINST1      ; No? Prompt error no RCX
 
               POP DE                ; DE contains Bus IO address
 
@@ -8215,12 +8083,7 @@ CORE51:       PUSH HL               ; Save BASIC Line-Pointer (if CALL is used)
                                     ;* AF                               *
                                     ;************************************
 
-B_CORE52:     CALL RCXINIT          ; Module installed?
-              JP Z,B_CORE52ST       ; Installed? Continue
-              CALL MODERR           ; Prompt error no RCX
-              RET                   ; Go back to calling routine
-
-B_CORE52ST:   CALL CHKCHAR
+B_CORE52:     CALL CHKCHAR
               DEFB "("              ; Check for (
               
               LD B,0                ; First PARA
@@ -8256,6 +8119,8 @@ B_CORE52ST:   CALL CHKCHAR
                                           
               CALL CHKCHAR
               DEFB ")"              ; Check for )
+              CALL RCXINIT          ; Module installed?
+              JP NZ,B_NOTINST2      ; No? Prompt error no RCX
 
               POP BC                ; Get SPI address & SPI len on stack
               POP AF                ; Get BUS address from stack
@@ -8412,12 +8277,7 @@ CORE52LOOP:   LD A,(HL)
                                     ;* AF                               *
                                     ;************************************
 
-B_CORE53:     CALL RCXINIT          ; Module installed?
-              JP Z,B_CORE53ST       ; Installed? Continue
-              CALL MODERR           ; Prompt error no RCX
-              RET                   ; Go back to calling routine
-
-B_CORE53ST:   CALL CHKCHAR
+B_CORE53:     CALL CHKCHAR
               DEFB "("              ; Check for (
               
               LD B,0
@@ -8444,6 +8304,8 @@ B_CORE53ST:   CALL CHKCHAR
                             
               CALL CHKCHAR
               DEFB ")"              ; Check for )
+              CALL RCXINIT          ; Module installed?
+              JP NZ,B_NOTINST1      ; No? Prompt error no RCX
 
               POP BC                ; BC contains SPI ADDR & BUS
 
@@ -8595,12 +8457,7 @@ CORE53:       PUSH HL               ; Save BASIC Line-Pointer (if CALL is used)
                                     ;* AF                               *
                                     ;************************************
 
-B_CORE54:     CALL RCXINIT          ; Module installed?
-              JP Z,B_CORE54ST       ; Installed? Continue
-              CALL MODERR           ; Prompt error no RCX
-              RET                   ; Go back to calling routine
-
-B_CORE54ST:   CALL CHKCHAR
+B_CORE54:     CALL CHKCHAR
               DEFB "("              ; Check for (
               
               LD B,0                ; First PARA
@@ -8636,6 +8493,8 @@ B_CORE54ST:   CALL CHKCHAR
                                           
               CALL CHKCHAR
               DEFB ")"              ; Check for )
+              CALL RCXINIT          ; Module installed?
+              JP NZ,B_NOTINST2      ; No? Prompt error no RCX
 
               POP BC                ; Get SPI BUS & SPI LEN on stack
               POP AF                ; Get SPI ADDR from stack
@@ -8797,12 +8656,7 @@ CORE54LOOP:   IN A,(SWIO)
                                     ;* AF                               *
                                     ;************************************
 
-B_CORE55:     CALL RCXINIT          ; Module installed?
-              JP Z,B_CORE55ST       ; Installed? Continue
-              CALL MODERR           ; Prompt error no RCX
-              RET                   ; Go back to calling routine
-
-B_CORE55ST:   CALL CHKCHAR
+B_CORE55:     CALL CHKCHAR
               DEFB "("              ; Check for (
               
               LD B,0                ; First PARA
@@ -8823,32 +8677,13 @@ B_CORE55ST:   CALL CHKCHAR
               LD B,A                ; B contains SPI BUS
               PUSH BC               ; Save SPI ADDR & BUS on stack
 
-              LD B,SSPI             ; Set type SSPI
-              CALL GETRCXSLT        ; Check card with BC  
-                                    ; IX contains RAM-address
-
-              POP BC                ; Get SPI ADDR & BUS
-
-              JP C,B_CORE55_1       ; JP if slot found
-
-              JP SLTERR             ; No suitable slot found
-
-B_CORE55_1:   PUSH BC               ; Save SPI ADDR & BUS on stack
-              PUSH IX
-                           
               CALL CHKCHAR
               DEFB ","              ; Check for ,
 
               LD B,2                ; Third PARA
               CALL EVALBYTEVAR
               
-              POP IX 
-              POP BC                ; Get SPI ADDR & BUS
-
-              LD (IX),A             ; SPI Len Header 
-
-              PUSH BC               ; Save SPI ADDR & BUS on stack
-              PUSH IX               ; Save SPI Len Header on stack
+              PUSH AF               ; Save SPI Len Header on stack
 
               CALL CHKCHAR
               DEFB ","              ; Check for ,
@@ -8856,13 +8691,9 @@ B_CORE55_1:   PUSH BC               ; Save SPI ADDR & BUS on stack
               LD B,3                ; Fourth PARA
               CALL EVALBYTEVAR
               
-              POP IX                ; Get SPI Len Header  
-              POP BC                ; Get SPI ADDR & BUS
-
-              LD (IX+1),A           ; SPI Len Data
-               
-              PUSH BC               ; Save SPI ADDR & BUS on stack
-              PUSH IX               ; Save SPI Len Header on stack
+              POP BC                ; B contains SPI Len Header
+              LD C,A                ; C contains SPI Len Data
+              PUSH BC               ; Save SPI Len Header & Data on stack
   
               CALL CHKCHAR
               DEFB ","              ; Check for ,
@@ -8872,11 +8703,34 @@ B_CORE55_1:   PUSH BC               ; Save SPI ADDR & BUS on stack
                                           
               CALL CHKCHAR
               DEFB ")"              ; Check for )
+              CALL RCXINIT          ; Module installed?
+              JP NZ,B_NOTINST2      ; No? Prompt error no RCX
 
-              POP IX                ; Get SPI Len Header 
-              POP BC                ; Get SPI ADDR & BUS from stack
+              POP BC                ; Get SPI Len Header & Data
+              EX (SP),HL            ; HL = SPI ADDR & BUS, BASIC pointer on stack
+              PUSH BC               ; Save SPI Len Header & Data on stack
+
+              LD C,L                ; C contains SPI ADDR
+              LD B,SSPI             ; Set type SSPI
+              CALL GETRCXSLT        ; Check card with BC  
+                                    ; IX contains RAM-address
+
+              POP BC                ; Get SPI Len Header & Data
+
+              JP NC,B_CORE55ERR     ; JP if no slot found
+
+              LD (IX),B             ; SPI Len Header 
+              LD (IX+1),C           ; SPI Len Data
+
+              LD B,H                ; B contains SPI BUS
+              LD C,L                ; C contains SPI ADDR
+              POP HL                ; Get BASIC pointer from stack
+              LD A,C                ; Get SPI ADDR
      
               JP CORE55             ; JP if slot found
+
+B_CORE55ERR:  POP HL                ; Get BASIC pointer from stack
+              JP SLTERR             ; No suitable slot found
 
                                     ;************************************
                                     ;* EXTBIOS                          * 
@@ -9038,12 +8892,7 @@ CORE55LOOPR:  IN A,(SWIO)
                                     ;* AF                               *
                                     ;************************************
 
-B_CORE56:     CALL RCXINIT          ; Module installed?
-              JP Z,B_CORE56ST       ; Installed? Continue
-              CALL MODERR           ; Prompt error no RCX
-              RET                   ; Go back to calling routine
-
-B_CORE56ST:   CALL CHKCHAR
+B_CORE56:     CALL CHKCHAR
               DEFB "("              ; Check for (
               
               LD B,0                ; First PARA
@@ -9087,6 +8936,8 @@ B_CORE56ST:   CALL CHKCHAR
 
               CALL CHKCHAR
               DEFB ")"              ; Check for )
+              CALL RCXINIT          ; Module installed?
+              JP NZ,B_NOTINST1      ; No? Prompt error no RCX
 
               POP BC                ; Get SPI ADDR & BUS from stack
 
@@ -9247,12 +9098,7 @@ CORE56:       PUSH HL               ; Save BASIC Line-Pointer (if CALL is used)
                                     ;* AF                               *
                                     ;************************************
 
-B_CORE57:     CALL RCXINIT          ; Module installed?
-              JP Z,B_CORE57ST       ; Installed? Continue
-              CALL MODERR           ; Prompt error no RCX
-              RET                   ; Go back to calling routine
-
-B_CORE57ST:   CALL CHKCHAR
+B_CORE57:     CALL CHKCHAR
               DEFB "("              ; Check for (
 
               LD B,0
@@ -9263,6 +9109,8 @@ B_CORE57ST:   CALL CHKCHAR
 
               CALL CHKCHAR
               DEFB ")"              ; Check for )
+              CALL RCXINIT          ; Module installed?
+              JP NZ,B_NOTINST1      ; No? Prompt error no RCX
 
               POP BC                ; Get IO addr from stack
 
@@ -9341,12 +9189,7 @@ FN_CORE57OK:  CCF                   ; Clear CARRY flag
                                     ;* AF                               *
                                     ;************************************
 
-B_CORE58:     CALL RCXINIT          ; Module installed?
-              JP Z,B_CORE58ST       ; Installed? Continue
-              CALL MODERR           ; Prompt error no RCX
-              RET                   ; Go back to calling routine
-
-B_CORE58ST:   CALL CHKCHAR
+B_CORE58:     CALL CHKCHAR
               DEFB "("              ; Check for (
 
               LD B,0                ; First PARA = ADS ADDR
@@ -9366,6 +9209,8 @@ B_CORE58ST:   CALL CHKCHAR
 
               CALL CHKCHAR
               DEFB ")"              ; Check for )
+              CALL RCXINIT          ; Module installed?
+              JP NZ,MODERR          ; No? Prompt error no RCX
 
               LD B,SADS             ; Set type SADS
               PUSH DE               ; Save ADS TYPE across GETRCXSLT
@@ -9490,12 +9335,7 @@ CORE58ERR:    LD HL,PERRVAL         ; Value of parameter
                                     ;* AF                               *
                                     ;************************************
 
-B_CORE59:     CALL RCXINIT          ; Module installed?
-              JP Z,B_CORE59ST       ; Installed? Continue
-              CALL MODERR           ; Prompt error no RCX
-              RET                   ; Go back to calling routine
-
-B_CORE59ST:   CALL CHKCHAR
+B_CORE59:     CALL CHKCHAR
               DEFB "("              ; Check for (
 
               LD B,0                ; First PARA = ADS ADDR
@@ -9515,6 +9355,8 @@ B_CORE59ST:   CALL CHKCHAR
 
               CALL CHKCHAR
               DEFB ")"              ; Check for )
+              CALL RCXINIT          ; Module installed?
+              JP NZ,MODERR          ; No? Prompt error no RCX
 
               LD B,SADS             ; Set type SADS
               PUSH DE               ; Save ADS VAL across GETRCXSLT
@@ -9625,12 +9467,7 @@ CORE59:       PUSH HL               ; Save BASIC Line-Pointer (if CALL is used)
                                     ;* AF                               *
                                     ;************************************
 
-B_CORE60:     CALL RCXINIT          ; Module installed?
-              JP Z,B_CORE60ST       ; Installed? Continue
-              CALL MODERR           ; Prompt error no RCX
-              RET                   ; Go back to calling routine
-
-B_CORE60ST:   CALL CHKCHAR
+B_CORE60:     CALL CHKCHAR
               DEFB "("              ; Check for (
 
               LD B,0                ; First PARA = ADS ADDR
@@ -9649,6 +9486,8 @@ B_CORE60ST:   CALL CHKCHAR
 
               CALL CHKCHAR
               DEFB ")"              ; Check for )
+              CALL RCXINIT          ; Module installed?
+              JP NZ,MODERR          ; No? Prompt error no RCX
 
               LD B,SADS             ; Set type SADS
               PUSH DE               ; Save varptr(ADS VAL) across GETRCXSLT
@@ -9766,12 +9605,7 @@ CORE60:       PUSH HL               ; Save BASIC Line-Pointer (if CALL is used)
                                     ;* AF                               *
                                     ;************************************
 
-B_CORE61:     CALL RCXINIT          ; Module installed?
-              JP Z,B_CORE61ST       ; Installed? Continue
-              CALL MODERR           ; Prompt error no RCX
-              RET                   ; Go back to calling routine
-
-B_CORE61ST:   CALL CHKCHAR
+B_CORE61:     CALL CHKCHAR
               DEFB "("              ; Check for (
 
               LD B,0                ; First PARA = ADS ADDR
@@ -9790,6 +9624,8 @@ B_CORE61ST:   CALL CHKCHAR
 
               CALL CHKCHAR
               DEFB ")"              ; Check for )
+              CALL RCXINIT          ; Module installed?
+              JP NZ,MODERR          ; No? Prompt error no RCX
 
               LD B,SADS             ; Set type SADS
               PUSH DE               ; Save varptr(ADS VAL) across GETRCXSLT
@@ -9909,12 +9745,7 @@ CORE61:       PUSH HL               ; Save BASIC Line-Pointer (if CALL is used)
                                     ;* AF                               *
                                     ;************************************
 
-B_CORE62:     CALL RCXINIT          ; Module installed?
-              JP Z,B_CORE62ST       ; Installed? Continue
-              CALL MODERR           ; Prompt error no RCX
-              RET                   ; Go back to calling routine
-
-B_CORE62ST:   CALL CHKCHAR
+B_CORE62:     CALL CHKCHAR
               DEFB "("              ; Check for (
 
               LD B,0                ; First PARA = ADS ADDR
@@ -9943,6 +9774,8 @@ B_CORE62ST:   CALL CHKCHAR
 
               CALL CHKCHAR
               DEFB ")"              ; Check for )
+              CALL RCXINIT          ; Module installed?
+              JP NZ,B_NOTINST1      ; No? Prompt error no RCX
 
               POP BC                ; B = ADS TYPE, C = ADS ADDR back
 
@@ -10874,7 +10707,32 @@ MODERR:       PUSH HL
               LD HL,PERRINIT        ; Not installed? Prompt Message
               CALL PROMPT
               POP HL
+              OR A                  ; Clear Carry Flag to end routine handler
               RET
+
+;--------------------------- 
+
+                                    ;************************************
+                                    ;* Module not installed after       *
+                                    ;* parameters were read             *
+                                    ;************************************
+                                    ;* Input:                           *
+                                    ;************************************
+                                    ;* Stack = 1..3 saved words         *
+                                    ;************************************
+                                    ;* Output:                          *
+                                    ;************************************
+                                    ;* -/-                              *
+                                    ;************************************
+                                    ;* Modified:                        *
+                                    ;************************************
+                                    ;* AF, DE                           *
+                                    ;************************************
+
+B_NOTINST3:   POP DE                ; Clear stack
+B_NOTINST2:   POP DE                ; Clear stack
+B_NOTINST1:   POP DE                ; Clear stack
+              JP MODERR             ; Prompt error no RCX
 
 ;++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ;+++ Slot/Workarea functions based on KONAMIMAN                       +++

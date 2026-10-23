@@ -1,0 +1,206 @@
+<?xml version="1.0" ?>
+<!DOCTYPE msxconfig SYSTEM 'msxconfig2.dtd'>
+<msxconfig>
+
+  <info>
+    <manufacturer>openMSX Team</manufacturer>
+    <code>Boosted MSX2 EN</code>
+    <release_year>2004</release_year>
+    <description>A super-charged Philips NMS 8245</description>
+    <type>MSX2</type>
+    <region>eu</region>
+  </info>
+
+  <MapperReadBackBits>largest</MapperReadBackBits>
+
+  <CassettePort/>
+
+  <devices>
+
+    <primary slot="0">
+      <ROM id="MSX BIOS with BASIC ROM">
+        <mem base="0x0000" size="0x8000"/>
+        <rom>
+          <filename>NMS8245SystemROM1.08.bin</filename>
+          <sha1>cc57c1dcd7249ea9f8e2547244592e7d97308ed0</sha1>
+          <window base="0x0000" size="0x8000"/>
+        </rom>
+      </ROM>
+    </primary>
+
+    <primary slot="1" external="true"/>
+
+    <primary slot="2">
+
+      <secondary slot="0" external="true"/>
+
+      <secondary slot="1" external="true"/>
+
+      <secondary slot="2">
+        <MegaRam id="MegaRam">
+          <io base="0x8e" num="1"/>
+          <mem base="0x0000" size="0x10000"/>
+          <size>512</size>
+        </MegaRam>
+      </secondary>
+
+       <secondary slot="3">
+        <SCCplus id="Konami SCC+ Cartridge with expanded RAM">
+          <mem base="0x4000" size="0x8000"/>
+          <subtype>expanded</subtype>
+          <sound>
+            <volume>13000</volume>
+          </sound>
+        </SCCplus>
+      </secondary>
+
+    </primary>
+
+    <primary slot="3">
+
+      <secondary slot="0">
+        <ROM id="MSX Sub ROM">
+          <mem base="0x0000" size="0x4000"/> <!-- no mirroring -->
+          <rom>
+            <filename>NMS8245SystemROM1.08.bin</filename>
+            <sha1>cc57c1dcd7249ea9f8e2547244592e7d97308ed0</sha1>
+            <window base="0x8000" size="0x4000"/>
+          </rom>
+        </ROM>
+      </secondary>
+
+       <secondary slot="1">
+        <FMPAC id="PanaSoft SW-M004 FMPAC">
+          <io base="0x7C" num="2" type="O"/>
+          <mem base="0x4000" size="0x4000"/>
+          <sound>
+            <volume>13000</volume>
+            <balance>-75</balance>
+          </sound>
+          <ym2413-core>NukeYKT</ym2413-core>
+          <rom>
+            <sha1>fec451b9256570a0e4869355a40329c57f40705f</sha1>
+            <filename>fmpac.rom</filename>
+          </rom>
+          <sramname>fmpac.pac</sramname>
+        </FMPAC>
+        <ROM id="BASIC Compiler">
+          <rom>
+            <filename>phc-70fd2_basickun.rom</filename>
+            <sha1>22b3191d865010264001b9d896186a9818478a6b</sha1>
+          </rom>
+          <mem base="0x8000" size="0x4000"/>
+        </ROM>
+    </secondary>
+
+     <secondary slot="2">
+        <MemoryMapper id="Main RAM">
+          <mem base="0x0000" size="0x10000"/>
+          <size>2048</size>
+          <initialContent encoding="gz-base64">eNpj+M8wouEI9z4DAJBx/wE=</initialContent> <!-- (chr(0) + chr(255)) * 128 + (chr(255)+ chr(0)) * 128) -->
+        </MemoryMapper>
+      </secondary>
+
+      <secondary slot="3">
+        <WD2793 id="Memory Mapped FDC">
+          <connectionstyle>Philips</connectionstyle>
+          <!-- See 8245 config for info on mirroring stuff -->
+          <mem base="0x4000" size="0x8000"/>
+          <rom>
+            <filename>NMS8245SystemROM1.08.bin</filename>
+            <sha1>cc57c1dcd7249ea9f8e2547244592e7d97308ed0</sha1> <!-- EPROM dump by Erik Luppes -->
+            <window base="0xC000" size="0x4000"/>
+          </rom>
+          <drives>2</drives>
+        </WD2793>
+      </secondary>
+
+    </primary>
+
+    <PPI id="ppi">
+      <io base="0xA8" num="4"/>
+      <sound>
+        <volume>16000</volume>
+      </sound>
+      <key_ghosting>false</key_ghosting>
+      <keyboard_type>int</keyboard_type>
+      <has_keypad>true</has_keypad>
+      <key_ghosting_sgc_protected>true</key_ghosting_sgc_protected>
+      <code_kana_locks>false</code_kana_locks>
+      <graph_locks>false</graph_locks>
+    </PPI>
+
+    <VDP id="VDP">
+      <io base="0x98" num="4" type="O"/>
+      <io base="0x98" num="2" type="I"/>
+      <version>V9958</version>
+      <vram>192</vram>
+    </VDP>
+
+    <PSG id="PSG">
+      <type>YM2149</type>
+      <io base="0xA0" num="4" type="IO"/>
+      <sound>
+        <volume>21000</volume>
+      </sound>
+      <ignorePortDirections>true</ignorePortDirections> <!-- highest compatibility -->
+    </PSG>
+
+    <PSG id="PSG 2">
+      <io base="0x10" num="4" type="IO"/>
+      <sound>
+        <volume>21000</volume>
+      </sound>
+    </PSG>
+
+    <RTC id="Real time clock">
+      <io base="0xB4" num="2" type="O"/>
+      <io base="0xB5" num="1" type="I"/>
+      <sramname>Boosted_MSX2_EN.cmos</sramname>
+    </RTC>
+
+    <PrinterPort id="Printer Port">
+      <io base="0x90" num="2"/>
+    </PrinterPort>
+
+    <MSX-AUDIO id="Generic MSX-Audio">
+      <io base="0xC0" num="2"/>
+      <io base="0x0A" num="1" type="O"/>
+      <type>Philips</type>
+      <sound>
+        <volume>12000</volume>
+        <balance>75</balance>
+      </sound>
+      <sampleram>256</sampleram>
+    </MSX-AUDIO>
+
+    <MusicModuleMIDI id="Generic MSX-Audio-MIDI">
+      <io base="0x00" num="2" type="O"/>
+      <io base="0x04" num="2" type="I"/>
+    </MusicModuleMIDI>
+
+    <MoonSound id="Sunrise MoonSound">
+      <io base="0x7e" num="2"/>
+      <io base="0xc4" num="4"/>
+      <rom>
+        <sha1>32760893ce06dbe3930627755ba065cc3d8ec6ca</sha1>
+        <filename>yrw801.rom</filename>
+      </rom>
+      <sound>
+        <volume>17000</volume>
+      </sound>
+      <sampleram>640</sampleram>
+    </MoonSound>
+
+    <V9990 id="Sunrise GFX9000">
+      <io base="0x60" num="0x0f"/>
+    </V9990>
+    <Video9000 id="Video9000">
+      <io base="0x6f" num="0x01"/>
+      <device idref="VDP"/>
+      <device idref="Sunrise GFX9000"/>
+    </Video9000>
+
+  </devices>
+
+</msxconfig>

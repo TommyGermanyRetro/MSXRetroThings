@@ -1,0 +1,133 @@
+<?xml version="1.0" ?>
+<!DOCTYPE msxconfig SYSTEM 'msxconfig2.dtd'>
+<msxconfig>
+
+  <info>
+    <manufacturer>Sony</manufacturer>
+    <code>HB-G900AP</code>
+    <release_year>1986</release_year>
+    <description>A professional European MSX2 with 512kB RAM, built in disk drive, super impose capability (not emulated), RS-232C interface and MSX-BASIC extension ROM to control laser players through RS-232C.</description>
+    <type>MSX2</type>
+    <region>eu</region>
+    <!-- Note that superimpose is still missing! -->
+  </info>
+
+  <CassettePort/>
+
+  <devices>
+
+    <S1985 id="S1985"> <!-- includes 5 bits mapper-read-back -->
+      <sramname>hb-g900ap_s1985.sram</sramname>
+    </S1985>
+
+    <PPI id="ppi">
+      <sound>
+        <volume>16000</volume>
+      </sound>
+      <io base="0xA8" num="8"/> <!-- S-1985 mirrors -->
+      <keyboard_type>int</keyboard_type>
+      <has_keypad>true</has_keypad>
+    </PPI>
+
+    <VDP id="VDP">
+      <version>V9938</version>
+      <vram>128</vram>
+      <io base="0x98" num="8" type="O"/> <!-- S-1985 mirrors -->
+      <io base="0x98" num="8" type="I"/> <!-- S-1985 mirrors -->
+    </VDP>
+
+    <PSG id="PSG">
+      <type>YM2149</type> <!-- in S-1985 MSX-ENGINE -->
+      <sound>
+        <volume>21000</volume>
+      </sound>
+      <io base="0xA0" num="8" type="IO"/> <!-- S-1985 mirrors -->
+      <ignorePortDirections>true</ignorePortDirections> <!-- not sure, but guess based on use of Engine IC -->
+    </PSG>
+
+    <RTC id="Real time clock">
+      <sramname>hb-g900ap.cmos</sramname>
+      <io base="0xB4" num="4" type="IO"/> <!-- S-1985 mirrors -->
+    </RTC>
+
+    <PrinterPort id="Printer Port">
+      <io base="0x90" num="8" type="IO"/> <!-- S-1985 mirrors -->
+      <bidirectional>true</bidirectional> <!-- S-1985 feature (but not used, nor implemented) -->
+      <unused_bits>0x00</unused_bits>
+    </PrinterPort>
+
+    <primary slot="0">
+
+      <secondary slot="0">
+        <ROM id="MSX BIOS with BASIC ROM">
+          <rom>
+            <sha1>0de3c802057560560a03d7965fcc4cff69f8575c</sha1> <!-- Verified on Louthrax's machine -->
+            <filename>hb-g900ap_basic-bios2.rom</filename>
+          </rom>
+          <mem base="0x0000" size="0x8000"/>
+        </ROM>
+      </secondary>
+
+      <secondary slot="1">
+        <ROM id="MSX Sub ROM">
+          <rom>
+            <sha1>3288894e1be6af705871499b23c85732dbc40993</sha1> <!-- Verified on Louthrax's machine -->
+            <filename>hb-g900ap_msx2sub.rom</filename>
+          </rom>
+          <mem base="0x0000" size="0x4000"/>
+        </ROM>
+        <WD2793 id="Memory Mapped FDC">
+          <connectionstyle>Sony</connectionstyle>
+          <motor_off_timeout_ms>4000</motor_off_timeout_ms>
+          <broken_fdc_read>false</broken_fdc_read>
+          <drives>1</drives>
+          <rom>
+            <sha1>12f2cc79b3d09723840bae774be48c0d721ec1c6</sha1> <!-- Verified on Louthrax's machine -->
+            <filename>hb-g900ap_disk.rom</filename>
+          </rom>
+          <mem base="0x4000" size="0x8000"/>
+        </WD2793>
+      </secondary>
+
+      <secondary slot="2">
+        <!-- this built in RS-232C seems to be identical to Sony HBI-232 -->
+        <MSX-RS232 id="Sony MSX RS-232">
+          <ram>true</ram>
+          <memorybasedio>true</memorybasedio>
+          <rom>
+            <sha1>b2776159a7b92d74308b434a6b3e5feba161e2b7</sha1> <!-- Verified on Louthrax's machine -->
+            <filename>hb-g900ap_rs232.rom</filename>
+          </rom>
+          <io base="0x80" num="8"/>
+          <mem base="0x0000" size="0x10000"/>
+        </MSX-RS232>
+      </secondary>
+
+      <secondary slot="3">
+        <ROM id="Video Utility">
+          <rom>
+            <sha1>6bb18cd2d69f124ad0c7c23a13eb0d2139037696</sha1> <!-- As found on Louthrax's machine, most (but not all) of the 2nd half is bogus. -->
+            <filename>hb-g900ap_video-utility.rom</filename>
+          </rom>
+          <mem base="0x4000" size="0x4000"/>
+        </ROM>
+      </secondary>
+
+    </primary>
+
+    <primary external="true" slot="1"/>
+
+    <primary external="true" slot="2"/>
+
+    <primary slot="3">
+      <secondary slot="0">
+        <MemoryMapper id="Main RAM">
+          <mem base="0x0000" size="0x10000"/>
+          <size>512</size>
+        </MemoryMapper>
+      </secondary>
+    </primary>
+
+  </devices>
+
+</msxconfig>

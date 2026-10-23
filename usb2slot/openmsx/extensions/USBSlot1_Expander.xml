@@ -1,0 +1,24 @@
+<?xml version="1.0" ?>
+<!DOCTYPE msxconfig SYSTEM 'msxconfig2.dtd'>
+<msxconfig>
+  <info>
+    <name>USB Slot 1 with slot expander</name>
+    <manufacturer>TommyGermanyRetro</manufacturer>
+    <code/>
+    <release_year>2026</release_year>
+    <description>Slot 1 of the USB slot bridge (Teensy 4.1) with a slot expander holding ROM cartridges (e.g. RCX in subslot 0, XIO in subslot 3); needs a non-expanded slot</description>
+    <type>USB slot bridge</type>
+  </info>
+  <devices>
+    <primary slot="any">
+      <secondary slot="any">
+        <USBSlot id="USB Slot 1">
+          <mem base="0x0000" size="0x10000"/>
+          <port>COM16</port>
+          <slot>1</slot>
+          <expander>true</expander>
+        </USBSlot>
+      </secondary>
+    </primary>
+  </devices>
+</msxconfig>

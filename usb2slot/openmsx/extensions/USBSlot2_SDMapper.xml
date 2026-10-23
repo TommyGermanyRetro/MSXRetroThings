@@ -1,0 +1,32 @@
+<?xml version="1.0" ?>
+<!DOCTYPE msxconfig SYSTEM 'msxconfig2.dtd'>
+<msxconfig>
+  <info>
+    <name>USB Slot 2 with SD Mapper</name>
+    <manufacturer>TommyGermanyRetro</manufacturer>
+    <code/>
+    <release_year>2026</release_year>
+    <description>Slot 2 of the USB slot bridge (Teensy 4.1) with an SD Mapper/Megaram 512K cartridge (switch set to Memory Mapper); needs a non-expanded slot</description>
+    <type>USB slot bridge</type>
+  </info>
+  <devices>
+    <primary slot="any">
+      <secondary slot="any">
+        <USBSlot id="USB Slot 2">
+          <mem base="0x0000" size="0x10000"/>
+          <io base="0xFC" num="4" type="IO"/>
+          <port>COM16</port>
+          <slot>2</slot>
+          <expander>true</expander>
+          <subslot id="1">
+            <bank page="1" address="0x6000" mask="0x07"/>
+            <nocache base="0x4000" size="0x0801"/>
+          </subslot>
+          <subslot id="3">
+            <mapper port="0xFC" mask="0x1F"/>
+          </subslot>
+        </USBSlot>
+      </secondary>
+    </primary>
+  </devices>
+</msxconfig>

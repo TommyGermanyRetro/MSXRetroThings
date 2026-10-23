@@ -22,7 +22,8 @@ Thomas
 + [3. mbc89, a Maerklin Connect6021 CAN accessory module](#3-msxretrothings---mbc89-a-maerklin-connect6021-can-accessory-module)
 + [4. Tools](#4-msxretrothings---tools)
 + [5. Emulators](#5-msxretrothings---emulators)
-+ [6. License](#6-license)
++ [6. USB2SLOT, real MSX cartridges in openMSX](#6-msxretrothings---usb2slot-real-msx-cartridges-in-openmsx)
++ [7. License](#7-license)
 
 
 ## 1. MSXRetroThings - The XIO cartridge
@@ -395,17 +396,29 @@ Click a picture to open the video.
 
 #### <b>5.1 Spectravideo SVI-318</b>
 
-The SVI-318 with 16 KiB RAM and BASIC 1.11, PAL or NTSC, cassette, modules, the expanders SVI-601, SVI-602, SVI-605B (also with hard disk) and SVI-608M with all their cards: disk controller, Centronics, RAM, RS-232, 80 columns, SASI hard disk and boot card. Left: start into BASIC. Right: the SVI-608M with SVI-806 80-column card and an SVI-807 64 KB RAM card boots CP/M 2.27 from the hard disk; the 80-column screen appears in the green panel beside the TV picture.
+The SVI-318 with 16 KiB RAM and BASIC 1.11, PAL or NTSC, cassette, modules, the expanders SVI-601, SVI-602, SVI-605B (also with hard disk) and SVI-608M with all their cards: disk controller, Centronics, RAM, RS-232, 80 columns, SASI hard disk and boot card.
 
-<a href="emu/svi318/media/SVI318_BASIC.mp4"><img src="emu/svi318/media/SVI318_BASIC.png" alt="SVI-318 starting into BASIC" width="38%"></a> <a href="emu/svi318/media/SVI318_CPM227_HDD_80col.mp4"><img src="emu/svi318/media/SVI318_CPM227_HDD_80col.png" alt="SVI-318 booting CP/M 2.27 from hard disk with 80 columns" width="60%"></a>
+Start into BASIC
+
+[![SVI-318 starting into BASIC](emu/svi318/media/SVI318_BASIC.png)](emu/svi318/media/SVI318_BASIC.mp4)
+
+The SVI-608M with SVI-806 80-column card and an SVI-807 64 KB RAM card boots CP/M 2.27 from the hard disk; the 80-column screen appears in the green panel beside the TV picture
+
+[![SVI-318 booting CP/M 2.27 from hard disk with 80 columns](emu/svi318/media/SVI318_CPM227_HDD_80col.png)](emu/svi318/media/SVI318_CPM227_HDD_80col.mp4)
 
 Manual: [MANUAL.md](emu/svi318/Distribution/MANUAL.md), project: [emu/svi318](emu/svi318/README.md)
 
 #### <b>5.2 Spectravideo SVI-328</b>
 
-The SVI-328 with 64 KiB RAM: everything of the SVI-318, plus the SVI-609 Master Station with its LAN card. Left: start into BASIC. Right: CP/M 2.27 from the hard disk of the SVI-608M, console on the SVI-806 80-column card.
+The SVI-328 with 64 KiB RAM: everything of the SVI-318, plus the SVI-609 Master Station with its LAN card.
 
-<a href="emu/svi328/media/SVI328_BASIC.mp4"><img src="emu/svi328/media/SVI328_BASIC.png" alt="SVI-328 starting into BASIC" width="38%"></a> <a href="emu/svi328/media/SVI328_CPM227_HDD_80col.mp4"><img src="emu/svi328/media/SVI328_CPM227_HDD_80col.png" alt="SVI-328 booting CP/M 2.27 from hard disk with 80 columns" width="60%"></a>
+Start into BASIC
+
+[![SVI-328 starting into BASIC](emu/svi328/media/SVI328_BASIC.png)](emu/svi328/media/SVI328_BASIC.mp4)
+
+CP/M 2.27 from the hard disk of the SVI-608M, console on the SVI-806 80-column card
+
+[![SVI-328 booting CP/M 2.27 from hard disk with 80 columns](emu/svi328/media/SVI328_CPM227_HDD_80col.png)](emu/svi328/media/SVI328_CPM227_HDD_80col.mp4)
 
 Manual: [MANUAL.md](emu/svi328/Distribution/MANUAL.md), project: [emu/svi328](emu/svi328/README.md)
 
@@ -413,7 +426,7 @@ Manual: [MANUAL.md](emu/svi328/Distribution/MANUAL.md), project: [emu/svi328](em
 
 The SVI-728, Spectravideo's MSX1, PAL or NTSC, with cassette, two module slots with the common MegaROM mappers and printer output to files. The video shows the start into MSX BASIC.
 
-<a href="emu/svi728/media/SVI728_BASIC.mp4"><img src="emu/svi728/media/SVI728_BASIC.png" alt="SVI-728 starting into MSX BASIC" width="50%"></a>
+[![SVI-728 starting into MSX BASIC](emu/svi728/media/SVI728_BASIC.png)](emu/svi728/media/SVI728_BASIC.mp4)
 
 Manual: [MANUAL.md](emu/svi728/Distribution/MANUAL.md), project: [emu/svi728](emu/svi728/README.md)
 
@@ -421,17 +434,63 @@ Manual: [MANUAL.md](emu/svi728/Distribution/MANUAL.md), project: [emu/svi728](em
 
 The Philips VG 8235/00, an MSX2 with V9938 video chip (all screen modes, command unit), 3.5" disk drive with WD2793 controller, real-time clock with CMOS memory, cassette, two module slots and printer. The video shows the start into Disk BASIC.
 
-<a href="emu/vg8235/media/VG8235_BASIC.mp4"><img src="emu/vg8235/media/VG8235_BASIC.png" alt="VG-8235 starting into Disk BASIC" width="50%"></a>
+[![VG-8235 starting into Disk BASIC](emu/vg8235/media/VG8235_BASIC.png)](emu/vg8235/media/VG8235_BASIC.mp4)
 
 **Special application: an SVI game on MSX.** The [SVI3x8 to MSX game porter](#43-svi3x8-to-msx-game-porter) turns the SVI-318/328 cassette of Spectron (Spectravideo, 1983) into a plain 16 KiB MSX cartridge. Here the VG-8235 starts with that module, shows the menu, starts a game with key `1` and plays a round: the SVI hardware accesses of the game were moved to the MSX ports, keyboard and joystick are read through a small helper block.
 
-<a href="emu/vg8235/media/VG8235_Spectron.mp4"><img src="emu/vg8235/media/VG8235_Spectron.png" alt="Spectron ported from the SVI-318/328, running as MSX cartridge on the VG-8235" width="50%"></a>
+[![Spectron ported from the SVI-318/328, running as MSX cartridge on the VG-8235](emu/vg8235/media/VG8235_Spectron.png)](emu/vg8235/media/VG8235_Spectron.mp4)
 
 Manual: [MANUAL.md](emu/vg8235/Distribution/MANUAL.md), project: [emu/vg8235](emu/vg8235/README.md)
 
 [↑ Contents](#contents)
 
-## 6. License
+## 6. MSXRetroThings - USB2SLOT, real MSX cartridges in openMSX
+
+#### <b>6.1 USB2SLOT provides:</b>
+
++ A board with two MSX cartridge slots and a Teensy 4.1 that runs genuine Z80 bus cycles on real cartridges, driven over USB from a Windows PC
+
++ A new openMSX device `USBSlot`: every memory and I/O access of its slot goes to the real cartridge, including /INT and /WAIT
+
++ A read cache that knows slot expanders, ROM banks, Memory Mapper and MegaRAM, so ROM software runs in real time
+
++ A start script that detects what is plugged in (slot expander, ROM per subslot, SD Mapper as Memory Mapper or MegaRAM, RCX/XIO switched I/O) and starts openMSX with matching extensions; [real and emulated cartridges can be mixed](usb2slot/README.md#mixing-real-and-emulated-cartridges)
+
++ A ready-to-run openMSX 21.0 for Windows x64 with the device built in, plus everything to build it yourself
+
++ Tested with the [XIO cartridge](xio/), the [RCX ROM cartridge](rcx/) and its RC2014 cards, and the SD Mapper/Megaram 512K cartridge (Nextor boots from its SD card)
+
+#### <b>6.2 Impressions:</b>
+
+The board: Teensy 4.1, level shifters and the two cartridge slots, here with the SD Mapper/Megaram 512K cartridge in front
+
+![USB2SLOT board](usb2slot/pcb/usb2slot_board.jpg)
+
+At work: the SD Mapper/Megaram 512K cartridge and, over the ribbon cable, the RC2014 backplane with the cards of the RCX/XIO cartridges
+
+![USB2SLOT at work](usb2slot/pcb/usb2slot_setup.jpg)
+
+**Videos: booting Nextor from a real cartridge.** Both machines are emulated by openMSX, the cartridge is real: the SD Mapper/Megaram 512K sits in slot 2 of the board, and openMSX reaches it only over USB. From power-on, the machine scans its slots, finds the Nextor ROM of the cartridge, loads NEXTOR.SYS and COMMAND2.COM from the SD card of the cartridge and stops at the `A:\>` prompt. The videos were recorded in emulated time, so they run at the speed of a real MSX; on the PC the start takes about twice as long, because every SD card access is a round trip over USB. Click a picture to open the video.
+
+Philips VG-8235 (MSX2), prompt after 18 seconds
+
+[![VG-8235 booting Nextor from a real cartridge over USB2SLOT](usb2slot/media/USB2SLOT_VG8235_Nextor.png)](usb2slot/media/USB2SLOT_VG8235_Nextor.mp4)
+
+Spectravideo SVI-728 (MSX1), prompt after 17 seconds
+
+[![SVI-728 booting Nextor from a real cartridge over USB2SLOT](usb2slot/media/USB2SLOT_SVI728_Nextor.png)](usb2slot/media/USB2SLOT_SVI728_Nextor.mp4)
+
+#### <b>6.3 Hardware:</b>
+
+Eagle schematic and layout, Teensy 4.1, 74HCT245/74LVC245 level shifters, external 5 V supply: [usb2slot/pcb](usb2slot/pcb), notes in [usb2slot/README.md](usb2slot/README.md#1-hardware).
+
+#### <b>6.4 Software:</b>
+
+Teensy firmware (source and ready-to-flash HEX), the PC library and test tool `slottest`, the openMSX device with start script and extensions, and the prebuilt openMSX: installation step by step in [usb2slot/README.md](usb2slot/README.md).
+
+[↑ Contents](#contents)
+
+## 7. License
 
 Except where explicitly stated otherwise, this repository is licensed as follows (details in [LICENSE.txt](LICENSE.txt)):
 

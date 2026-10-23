@@ -1,0 +1,19 @@
+<?xml version="1.0" ?>
+<!DOCTYPE msxconfig SYSTEM 'msxconfig2.dtd'>
+<msxconfig>
+  <info>
+    <name>USB Slot I/O 40h-47h</name>
+    <manufacturer>TommyGermanyRetro</manufacturer>
+    <code/>
+    <release_year>2026</release_year>
+    <description>I/O ports 40h-47h (switched I/O) of the cartridges on the USB slot bridge (Teensy 4.1), e.g. RCX and XIO; I/O reaches both bridge slots, so these ports belong to this device only</description>
+    <type>USB slot bridge</type>
+  </info>
+  <devices>
+    <USBSlot id="USB Slot I/O">
+      <io base="0x40" num="8" type="IO"/>
+      <port>COM16</port>
+      <slot>1</slot>
+    </USBSlot>
+  </devices>
+</msxconfig>

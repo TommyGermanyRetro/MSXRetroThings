@@ -61,6 +61,16 @@ licensed as follows.
      (http://www.cpm.z80.de/). Used under the grant of DRDOS, Inc. of 7 July
      2022: "a right to use, distribute, modify, enhance, and otherwise make
      available in a nonexclusive manner CP/M and its derivatives".
+   - openMSX 21.0 (https://openmsx.org/, https://github.com/openMSX/openMSX,
+     tag RELEASE_21_0), GNU General Public License version 2. usb2slot/openmsx/bin
+     contains openmsx.exe, built from that source with the USBSlot device of
+     usb2slot/openmsx and usb2slot/slotlink added by usb2slot/openmsx/apply.py, and
+     the unchanged share and doc folders of the openMSX 21.0 Windows release. The
+     executable as a whole is distributed under GPL-2.0; licence text in
+     usb2slot/openmsx/bin/doc/GPL.txt. Complete source: openMSX 21.0 plus the
+     files in usb2slot/openmsx and usb2slot/slotlink (see usb2slot/README.md).
+   - C-BIOS (https://cbios.sourceforge.net/), part of the openMSX share folder in
+     usb2slot/openmsx/bin/share; licence in usb2slot/openmsx/bin/doc/cbios.txt.
 
 
 5. Not included and not covered by these licences:

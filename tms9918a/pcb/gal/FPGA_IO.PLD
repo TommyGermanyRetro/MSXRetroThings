@@ -1,0 +1,46 @@
+Name     Name ;
+PartNo   00 ;
+Date     20.06.2019 ;
+Revision 01 ;
+Designer Engineer ;
+Company  Privat ;
+Assembly None ;
+Location None ;
+Device   g22v10 ;
+
+/* *************** INPUT PINS ******************************************/
+PIn 1   =   M1                   ; /*                                 */
+PIN 2   =   A7                   ; /*                                 */ 
+PIN 3   =   A6                   ; /*                                 */ 
+PIN 4   =   A5                   ; /*                                 */ 
+PIN 5   =   A4                   ; /*                                 */ 
+PIN 6   =   A3                   ; /*                                 */ 
+PIN 7   =   A2                   ; /*                                 */
+PIN 8   =   A1                   ; /*                                 */ 
+PIN 9   =   A0                   ; /*                                 */ 
+PIN 10  =   WR                   ; /*                                 */ 
+PIN 11  =   RD                   ; /*                                 */ 
+PIN 13  =   IORQ                 ; /*                                 */ 
+
+/* *************** OUTPUT PINS *****************************************/
+
+PIN 15  =   VDP                  ; /*                                 */ 
+PIN 21  =   CSR                  ; /*                                 */ 
+PIN 22  =   CSW                  ; /*                                 */ 
+
+/* *************** LOGIC ***********************************************/
+/* IO-Adressen rechnen */
+
+VDP = M1 & A7 & !A6 & !A5 & A4 & A3 & !A2 & !A1;
+ 
+/* VDP-CS-Signale generieren */
+
+!CSR = VDP & !RD & !IORQ;
+!CSW = VDP & !WR & !IORQ;
+
+
+
+
+
+
+

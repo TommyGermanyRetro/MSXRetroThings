@@ -23,7 +23,8 @@ Thomas
 + [4. Tools](#4-msxretrothings---tools)
 + [5. Emulators](#5-msxretrothings---emulators)
 + [6. USB2SLOT, real MSX cartridges in openMSX](#6-msxretrothings---usb2slot-real-msx-cartridges-in-openmsx)
-+ [7. License](#7-license)
++ [7. TMS9918A, the MSX1 picture on the PC screen](#7-msxretrothings---tms9918a-the-msx1-picture-on-the-pc-screen)
++ [8. License](#8-license)
 
 
 ## 1. MSXRetroThings - The XIO cartridge
@@ -490,7 +491,49 @@ Teensy firmware (source and ready-to-flash HEX), the PC library and test tool `s
 
 [↑ Contents](#contents)
 
-## 7. License
+## 7. MSXRetroThings - TMS9918A, the MSX1 picture on the PC screen
+
+This small card was made for debugging. Developing for a real MSX1 usually means a second monitor or an old CRT on the desk, and turning the head between the code on the PC and the picture of the MSX. With the card in a cartridge slot, the picture of the real MSX appears in a window on the PC instead: sharp, flicker-free and easy on the eyes, right next to the editor, the assembler, the terminal and the other development tools on one screen.
+
+The MSX keeps running at full speed with its own VDP. A Raspberry Pi Pico on the card only listens to every access of the Z80 to the VDP and sends it to the PC over USB, where an exact model of the TMS9918A rebuilds the picture line by line.
+
+#### <b>7.1 TMS9918A provides:</b>
+
++ A cartridge slot card with a Raspberry Pi Pico that captures every VDP access of a real MSX1, including the values the real VDP returns
+
++ An exact, passive TMS9918A emulator for Windows: all screen modes including the undocumented ones, sprites with the 4-per-line limit and the status flags, line-accurate timing
+
++ A self-check against the real chip: every VRAM read and status read is compared with the real VDP, mismatches are counted and logged (none left on a Spectravideo SVI-728 with BASIC, Nextor, SofaRun and games)
+
++ Reset of the MSX from the PC, so the emulator always starts in step with the machine
+
++ Video recording of the picture to MP4, timed by the VDP and starting from power-on of the MSX
+
+#### <b>7.2 Impressions:</b>
+
+The card: Raspberry Pi Pico, GAL22V10 and level shifters, here in front of the Spectravideo SVI-728
+
+![TMS9918A card](tms9918a/pcb/tms9918a_board.jpg)
+
+At work: the card in a home-made slot expander (yellow, on a ribbon cable to the SVI-728), the SD Mapper/Megaram 512K cartridge in the machine; the small monitor shows the video output of the real VDP, the PC screen on the right the development tools
+
+![TMS9918A card at work](tms9918a/pcb/tms9918a_setup.jpg)
+
+**Video: an SVI-728 from power-on to GALAGA.** Recorded with the video recording of the emulator: the start with the SD card driver of the cartridge, Nextor, SofaRun and a round of GALAGA. Nothing of it comes from the video output of the MSX; every picture is rebuilt from the VDP accesses the card has captured. Click the picture to open the video.
+
+[![SVI-728 from power-on to GALAGA, picture rebuilt by the TMS9918A emulator](tms9918a/media/TMS9918A_SVI728_Galaga.png)](tms9918a/media/TMS9918A_SVI728_Galaga.mp4)
+
+#### <b>7.3 Hardware:</b>
+
+Eagle schematic and layout, Gerber and drill files, bill of materials and GAL equations: [tms9918a/pcb](tms9918a/pcb), notes in [tms9918a/README.md](tms9918a/README.md#2-hardware).
+
+#### <b>7.4 Software:</b>
+
+Pico firmware (source and ready-to-flash UF2), the emulator (source and ready-to-run program for Windows x64) and the USB protocol: installation step by step in [tms9918a/README.md](tms9918a/README.md).
+
+[↑ Contents](#contents)
+
+## 8. License
 
 Except where explicitly stated otherwise, this repository is licensed as follows (details in [LICENSE.txt](LICENSE.txt)):
 

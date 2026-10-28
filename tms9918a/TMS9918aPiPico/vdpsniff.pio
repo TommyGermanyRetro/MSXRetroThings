@@ -1,0 +1,66 @@
+;***************************************************************************************************
+;* HEADER - vdpsniff.pio - Capture of the MSX's VDP accesses                                       *
+;***************************************************************************************************
+;* VDP (GP12, jump pin) is HIGH while address 98h/99h is present, also during memory and refresh   *
+;* accesses. An IO access only starts with /CSW or /CSR (GP8/GP9) LOW. Then D0-D7, /CSW, /CSR      *
+;* and A0 (GP0-GP10) are sampled about 250-450 ns later and stored as 11 bits in the RX FIFO.      *
+;* When reading, the VDP's data are valid after at most 150 ns (data manual 5.5, TA(CSR)), /RD     *
+;* stays active for about 700 ns during an IO read.                                                *
+;* If the RX FIFO is nearly full when the address appears, /WAIT (GP21, output to the 74HCT245)    *
+;* holds the access until there is room again. If no /CSW or /CSR follows within about 1.6 µs,     *
+;* it was not an IO access and /WAIT is released.                                                  *
+;* Clock 25 MHz (40 ns per instruction).                                                           *
+;***************************************************************************************************
+;* File: vdpsniff.pio                                                                              *
+;***************************************************************************************************
+;* MSX (c) 2026 by Dr.-Ing. Thomas Wiesner                                                         *
+;***************************************************************************************************
+;* VERSION: 27/10/26                                                                               *
+;***************************************************************************************************
+
+.program vdpsniff
+
+.wrap_target
+idle:
+    wait 1 gpio 12              ; address 98h/99h present
+    mov x, status               ; all bits 1 while the RX FIFO has room
+    jmp !x stall                ; FIFO nearly full: hold the access
+poll:
+    mov osr, ~pins              ; /CSW and /CSR inverted to bits 8/9
+    out null, 8
+    out x, 2                    ; x = 0 while neither /CSW nor /CSR is active
+    jmp x-- active              ; IO access
+    jmp pin poll                ; address still present
+.wrap
+
+active:
+    nop [2]                     ; sample about 250-450 ns after /CSW or /CSR
+    in pins, 11                 ; D0-D7, /CSW, /CSR, A0
+    push block
+release:
+    mov osr, ~pins
+    out null, 8
+    out x, 2
+    jmp x-- release             ; wait until /CSW and /CSR are inactive
+    jmp poll                    ; another access possible while the address is present
+
+stall:
+    set pins, 0                 ; /WAIT LOW
+    set y, 7                    ; at most 8 polls (about 1.6 µs)
+spoll:
+    mov osr, ~pins
+    out null, 8
+    out x, 2
+    jmp x-- sactive             ; IO access, held by /WAIT
+    jmp y-- spoll
+    set pins, 1                 ; no IO access: /WAIT HIGH
+    jmp poll
+sactive:
+    nop [4]
+    in pins, 11                 ; sample while the access is held
+free:
+    mov x, status
+    jmp !x free                 ; wait until the RX FIFO has room
+    push block
+    set pins, 1                 ; /WAIT HIGH
+    jmp release

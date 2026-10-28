@@ -215,7 +215,7 @@ python <this folder>\openmsx\apply.py C:\openMSX-21.0
 
 ## 8. License
 
-The parts in this folder follow the [license of this repository](../README.md#7-license): software MIT, the board
+The parts in this folder follow the [license of this repository](../README.md#8-license): software MIT, the board
 CERN-OHL-S-2.0, documentation CC BY-SA 4.0.
 
 `openmsx/bin` is openMSX 21.0 (GNU General Public License version 2, see `openmsx/bin/doc/GPL.txt`) with the

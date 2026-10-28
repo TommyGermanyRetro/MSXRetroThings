@@ -1,0 +1,10 @@
+Qty,Reference,Value,Package,Description
+1,IC102,Raspberry Pi Pico,RASPPIPICO,"Raspberry Pi Pico (RP2040), flashed with TMS9918aPiPico.ino.uf2"
+1,IC103,GAL22V10D,DIL24-3,"GAL22V10D-7LPN (or faster), programmed with gal/FPGA_IO.jed: decodes ports 98h/99h, /CSR and /CSW"
+2,"IC104, IC105",74LVC245,DIL20,"Octal bus transceiver, slot to Pico (5 V tolerant in, 3.3 V out)"
+1,IC101,74HCT245,DIL20,"Octal bus transceiver, Pico to slot (3.3 V in, 5 V out) for /WAIT and the reset of the MSX"
+1,SLOT101,MSX card,MSXCARD,"MSX cartridge edge connector, 50 pins (2 x 25), 2.54 mm pitch, part of the board"
+1,D103,1N5818,DO41-10,"Schottky diode, slot +5 V to Pico VSYS"
+2,"D101, D102",1N4148,DO35-10,"Signal diode, 74HCT245 pulls /WAIT and /RESET of the slot only LOW"
+2,"C101, C106",470u/16V,E3.5-8,"Electrolytic capacitor 470 uF 16 V, radial, 3.5 mm pitch, 8 mm diameter (C101 Pico VSYS, C106 +3.3 V)"
+4,"C102, C103, C104, C105",100n,C025-025X050,"Ceramic capacitor 100 nF, 2.5 mm pitch"

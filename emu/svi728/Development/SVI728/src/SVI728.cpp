@@ -6,6 +6,7 @@
 #include <optional>
 #include "TMS9918A/TMS9918A.hpp"
 #include "TMS9929A/TMS9929A.hpp"
+#include "USBSLOT/BoardSlot.hpp"
 
 #if defined(SVI728_GUI_APP)
 #define WIN32_LEAN_AND_MEAN
@@ -57,6 +58,17 @@ struct SVI728::Impl {
     std::array<std::uint8_t, MainRomSize> mainRom{};
     // Slots 2 and 3 take ROM cartridges.
     std::array<cartridge::Cartridge, 2> cartridges{};
+    // A slot of a USB2SLOT board in slot 2 or 3 replaces the module there.
+    std::array<usbslot::BoardSlot*, 2> boardSlots{};
+    usbslot::CycleTracker boardReadCycle;
+    usbslot::CycleTracker boardWriteCycle;
+    usbslot::CycleTracker boardIoReadCycle;
+    usbslot::CycleTracker boardIoWriteCycle;
+    std::uint8_t boardData = 0xFF;
+    // T-states the CPU stands still because a cartridge on the board held /WAIT low in the last cycle.
+    // The Z80 core samples WAIT in the T-state that starts an access, before the board has answered,
+    // so the wait states are inserted as whole T-states right after the access.
+    std::uint32_t boardWaitTicks = 0;
     std::array<std::uint8_t, KeyboardRowCount> keyboardRows{};
     std::uint8_t primarySlots = 0;
     std::uint8_t joystickA = 0xFF;
@@ -76,10 +88,57 @@ struct SVI728::Impl {
         refreshPeripheralInputs();
     }
 
+    // Board slot behind the address in the current slot selection, or none.
+    [[nodiscard]] usbslot::BoardSlot* boardSlotAt(std::uint16_t address) const noexcept
+    {
+        const auto page = address / PageSize;
+        const auto slot = static_cast<std::uint8_t>((primarySlots >> (page * 2)) & 0x03);
+        return slot >= 2 ? boardSlots[slot - 2] : nullptr;
+    }
+
+    // /INT of a board in use, wired-OR with the other interrupt sources.
+    [[nodiscard]] bool boardInterruptRequest() const noexcept
+    {
+        for (const auto* boardSlot : boardSlots) {
+            if (boardSlot && boardSlot->bridge().interruptRequest()) return true;
+        }
+        return false;
+    }
+
+    // Connected board slot that claims the I/O port, or none.
+    [[nodiscard]] usbslot::BoardSlot* boardSlotForPort(std::uint8_t port) const noexcept
+    {
+        for (auto* boardSlot : boardSlots) {
+            if (boardSlot && boardSlot->claimsPort(port)) return boardSlot;
+        }
+        return nullptr;
+    }
+
+    // I/O cycle on the board; every board slot on the same board follows its switching ports.
+    [[nodiscard]] std::uint8_t readBoardIo(usbslot::BoardSlot& claimer, std::uint8_t port, std::uint32_t& waits)
+    {
+        const auto value = claimer.bridge().readIo(port, waits);
+        for (auto* boardSlot : boardSlots) {
+            if (boardSlot && &boardSlot->bridge() == &claimer.bridge()) boardSlot->ioRead(port);
+        }
+        return value;
+    }
+
+    void writeBoardIo(usbslot::BoardSlot& claimer, std::uint8_t port, std::uint8_t value, std::uint32_t& waits)
+    {
+        claimer.bridge().writeIo(port, value, waits);
+        for (auto* boardSlot : boardSlots) {
+            if (boardSlot && &boardSlot->bridge() == &claimer.bridge()) boardSlot->ioWritten(port, value);
+        }
+    }
+
+    // Reads without a bus cycle (debugging, tests): a board slot shows FFh, because reading a real
+    // cartridge can change it.
     [[nodiscard]] std::uint8_t readMemory(std::uint16_t address) const noexcept
     {
         const auto page = address / PageSize;
         const auto slot = static_cast<std::uint8_t>((primarySlots >> (page * 2)) & 0x03);
+        if (const auto* boardSlot = boardSlotAt(address)) return boardSlot->peek(address);
         switch (slot) {
         case 0:
             return mainRom[address & (MainRomSize - 1)];
@@ -98,7 +157,7 @@ struct SVI728::Impl {
         const auto page = address / PageSize;
         const auto slot = static_cast<std::uint8_t>((primarySlots >> (page * 2)) & 0x03);
         if (slot == 1) ram[address] = value;
-        if (slot >= 2) cartridges[slot - 2].write(address, value);
+        if (slot >= 2 && !boardSlots[slot - 2]) cartridges[slot - 2].write(address, value);
     }
 
     void refreshPeripheralInputs()
@@ -126,6 +185,10 @@ struct SVI728::Impl {
 
     [[nodiscard]] std::uint8_t readIo(std::uint8_t port)
     {
+        if (auto* boardSlot = boardSlotForPort(port)) {
+            std::uint32_t waits = 0;
+            return readBoardIo(*boardSlot, port, waits);
+        }
         if ((port & 0xF8) == 0x90) return printer.status();
         if ((port & 0xFC) == 0x98) return vdp->read(port & 1);
         if (port == 0xA2) {
@@ -141,6 +204,11 @@ struct SVI728::Impl {
 
     void writeIo(std::uint8_t port, std::uint8_t value)
     {
+        if (auto* boardSlot = boardSlotForPort(port)) {
+            std::uint32_t waits = 0;
+            writeBoardIo(*boardSlot, port, value, waits);
+            return;
+        }
         if ((port & 0xF8) == 0x90) {
             if (port & 1) printer.writeData(value);
             else printer.writeStrobe((value & 0x01) != 0);
@@ -172,23 +240,66 @@ struct SVI728::Impl {
 
     void clockCpuTState()
     {
+        if (boardWaitTicks > 0) {
+            --boardWaitTicks;
+            cassette.tick(CpuClockHz);
+            return;
+        }
         z80bus::Inputs inputs;
 
-        if (cpuPins.memoryRequest && cpuPins.read) {
+        const bool memoryRead = cpuPins.memoryRequest && cpuPins.read;
+        const bool memoryWrite = cpuPins.memoryRequest && cpuPins.write;
+        auto* board = (memoryRead || memoryWrite) ? boardSlotAt(cpuPins.address) : nullptr;
+        const bool boardReadBegins = boardReadCycle.begins(memoryRead && board, cpuPins.address);
+        const bool boardWriteBegins = boardWriteCycle.begins(memoryWrite && board, cpuPins.address);
+        const auto port = static_cast<std::uint8_t>(cpuPins.address);
+        const bool ioRead = cpuPins.ioRequest && cpuPins.read && !cpuPins.m1;
+        const bool ioWrite = cpuPins.ioRequest && cpuPins.write;
+        const bool boardPort = (ioRead || ioWrite) && boardSlotForPort(port) != nullptr;
+        const bool boardIoReadBegins = boardIoReadCycle.begins(ioRead && boardPort, cpuPins.address);
+        const bool boardIoWriteBegins = boardIoWriteCycle.begins(ioWrite && boardPort, cpuPins.address);
+
+        if (memoryRead && board) {
+            if (boardReadBegins) {
+                std::uint32_t waits = 0;
+                boardData = board->read(cpuPins.address, cpuPins.m1, waits);
+                // An opcode fetch already gets the M1 wait state of the machine; /WAIT of the
+                // cartridge overlaps it.
+                boardWaitTicks = cpuPins.m1 && waits > 0 ? waits - 1 : waits;
+            }
+            inputs.dataBus = boardData;
+            inputs.driveDataBus = true;
+        } else if (memoryRead) {
             inputs.dataBus = readMemory(cpuPins.address);
             inputs.driveDataBus = true;
         } else if (cpuPins.ioRequest && cpuPins.m1) {
             inputs.dataBus = 0xFF;
             inputs.driveDataBus = true;
-        } else if (cpuPins.ioRequest && cpuPins.read) {
-            inputs.dataBus = readIo(static_cast<std::uint8_t>(cpuPins.address));
+        } else if (ioRead && boardPort) {
+            if (boardIoReadBegins) {
+                std::uint32_t waits = 0;
+                boardData = readBoardIo(*boardSlotForPort(port), port, waits);
+                boardWaitTicks = waits;
+            }
+            inputs.dataBus = boardData;
+            inputs.driveDataBus = true;
+        } else if (ioRead) {
+            inputs.dataBus = readIo(port);
             inputs.driveDataBus = true;
         }
 
-        if (cpuPins.memoryRequest && cpuPins.write) {
+        if (memoryWrite && board) {
+            if (boardWriteBegins) board->write(cpuPins.address, cpuPins.dataBus);
+        } else if (memoryWrite) {
             writeMemory(cpuPins.address, cpuPins.dataBus);
-        } else if (cpuPins.ioRequest && cpuPins.write) {
-            writeIo(static_cast<std::uint8_t>(cpuPins.address), cpuPins.dataBus);
+        } else if (ioWrite && boardPort) {
+            if (boardIoWriteBegins) {
+                std::uint32_t waits = 0;
+                writeBoardIo(*boardSlotForPort(port), port, cpuPins.dataBus, waits);
+                boardWaitTicks = waits;
+            }
+        } else if (ioWrite) {
+            writeIo(port, cpuPins.dataBus);
         }
 
         // MSX wait generator (74x74 pair): /M1 is clocked into /WAIT at the start of T2 and
@@ -202,7 +313,7 @@ struct SVI728::Impl {
             m1WaitInserted = false;
         }
 
-        inputs.intRequest = vdp->outputs().interruptRequest;
+        inputs.intRequest = vdp->outputs().interruptRequest || boardInterruptRequest();
         cpuPins = cpu.tick(inputs);
         cassette.tick(CpuClockHz);
     }
@@ -237,6 +348,20 @@ void SVI728::reset()
     impl->ram.fill(0);
     impl->primarySlots = 0;
     for (auto& cart : impl->cartridges) cart.reset();
+    // One /RESET pulse per board, also when both of its slots are connected.
+    for (std::size_t index = 0; index < impl->boardSlots.size(); ++index) {
+        auto* boardSlot = impl->boardSlots[index];
+        if (!boardSlot) continue;
+        boardSlot->reset();
+        if (index == 0 || !impl->boardSlots[0] || &impl->boardSlots[0]->bridge() != &boardSlot->bridge()) {
+            boardSlot->bridge().reset();
+        }
+    }
+    impl->boardReadCycle = {};
+    impl->boardWriteCycle = {};
+    impl->boardIoReadCycle = {};
+    impl->boardIoWriteCycle = {};
+    impl->boardWaitTicks = 0;
     impl->cpuPins = {};
     impl->m1WaitInserted = false;
     impl->refreshPeripheralInputs();
@@ -272,6 +397,20 @@ void SVI728::ejectCartridge(std::uint8_t primarySlot) noexcept
 const cartridge::Cartridge& SVI728::cartridgeSlot(std::uint8_t primarySlot) const noexcept
 {
     return impl->cartridges[primarySlot == 3 ? 1 : 0];
+}
+
+bool SVI728::connectBridgeSlot(std::uint8_t primarySlot, usbslot::BoardSlot* boardSlot)
+{
+    if (primarySlot != 2 && primarySlot != 3) return false;
+    impl->boardSlots[primarySlot - 2] = boardSlot;
+    return true;
+}
+
+std::uint8_t SVI728::bridgeSlot(std::uint8_t primarySlot) const noexcept
+{
+    if (primarySlot != 2 && primarySlot != 3) return 0;
+    const auto* boardSlot = impl->boardSlots[primarySlot - 2];
+    return boardSlot ? boardSlot->number() : 0;
 }
 
 std::uint8_t SVI728::readMemory(std::uint16_t address) const noexcept
@@ -609,6 +748,9 @@ constexpr UINT ResetCommand = 166;
 // Cartridge commands: base + 10 * (slot - 2) + choice, choice 0 = detect, 1-5 = fixed mapper, 9 = eject.
 constexpr UINT CartridgeCommandBase = 130;
 constexpr UINT CartridgeEjectChoice = 9;
+// Choices 6 and 7 put slot 1 or 2 of the USB2SLOT board into the module slot.
+constexpr UINT CartridgeBridgeChoice = 6;
+constexpr const char* DefaultBridgePort = "COM16";
 constexpr wchar_t SettingsFileName[] = L"svi728.ini";
 std::wstring mapperText(cartridge::Mapper mapper);
 
@@ -697,6 +839,11 @@ struct AppState {
     int shiftSuppressors = 0;
     std::filesystem::path cassettePath;
     std::array<std::filesystem::path, 2> cartridgePaths;
+    // USB2SLOT board: real cartridges in place of modules, opened when a slot first uses it. Its two
+    // slots, with the switching rules found by the probe, exist while a module slot uses them.
+    std::unique_ptr<usbslot::Bridge> bridge;
+    std::array<std::unique_ptr<usbslot::BoardSlot>, 2> boardSlots;
+    std::string bridgePort = DefaultBridgePort;
     std::filesystem::path printerDirectory;
     std::filesystem::path printerOutputPath;
     std::ofstream printerFile;
@@ -1449,6 +1596,13 @@ void updateWindowTitle(AppState& app)
     const auto state = app.machine.cassetteState();
     auto title = joystickStatus(app);
     for (std::uint8_t slot = 2; slot <= 3; ++slot) {
+        if (const auto boardSlot = app.machine.bridgeSlot(slot)) {
+            const auto& description = app.boardSlots[boardSlot - 1]->config().description;
+            title += ui(L" | Module ", L" | Modul ") + std::to_wstring(slot) + L": USB2SLOT " + std::to_wstring(boardSlot) +
+                     L" " + std::wstring(description.begin(), description.end());
+            if (!app.bridge || !app.bridge->connected()) title += ui(L" (no connection)", L" (keine Verbindung)");
+            continue;
+        }
         const auto& cart = app.machine.cartridgeSlot(slot);
         if (!cart.inserted()) continue;
         title += ui(L" | Module ", L" | Modul ") + std::to_wstring(slot) + L": " + app.cartridgePaths[slot - 2].filename().wstring() +
@@ -1496,8 +1650,9 @@ void updateCassetteMenu(AppState& app)
     EnableMenuItem(menu, CassetteSaveCommand,
                    MF_BYCOMMAND | (state.modified ? MF_ENABLED : MF_GRAYED));
     for (std::uint8_t slot = 2; slot <= 3; ++slot) {
+        const bool occupied = app.machine.cartridgeSlot(slot).inserted() || app.machine.bridgeSlot(slot) != 0;
         EnableMenuItem(menu, CartridgeCommandBase + 10u * (slot - 2u) + CartridgeEjectChoice,
-                       MF_BYCOMMAND | (app.machine.cartridgeSlot(slot).inserted() ? MF_ENABLED : MF_GRAYED));
+                       MF_BYCOMMAND | (occupied ? MF_ENABLED : MF_GRAYED));
     }
     updateWindowTitle(app);
     DrawMenuBar(app.window);
@@ -1637,6 +1792,15 @@ void selectCassetteImage(AppState& app)
     resumeAfterCassetteDialog(app);
 }
 
+bool openBridge(AppState& app, bool showError);
+
+// Resets the machine; a lost connection to the USB2SLOT board is opened again first.
+void resetMachine(AppState& app)
+{
+    if (app.bridge && !app.bridge->connected()) (void)openBridge(app, false);
+    app.machine.reset();
+}
+
 // Changing a cartridge resets the machine like switching it off and on.
 void selectCartridge(AppState& app, std::uint8_t slot, unsigned choice)
 {
@@ -1668,7 +1832,8 @@ void selectCartridge(AppState& app, std::uint8_t slot, unsigned choice)
         if (choice >= 1 && choice <= CartridgeMappers.size()) mapper = CartridgeMappers[choice - 1];
         if (!image.empty() && app.machine.insertCartridge(slot, image, mapper)) {
             app.cartridgePaths[slot - 2] = path;
-            app.machine.reset();
+            (void)app.machine.connectBridgeSlot(slot, nullptr);
+            resetMachine(app);
         } else {
             MessageBoxW(app.window,
                 ui(L"The file does not fit the chosen module type (without mapper up to 64 KiB, otherwise whole banks, at most 4 MiB).", L"Die Datei passt nicht zum gewaehlten Modultyp (ohne Mapper bis 64 KiB, sonst ganze Baenke, "
@@ -1687,8 +1852,73 @@ void ejectCartridge(AppState& app, std::uint8_t slot)
 {
     app.machine.ejectCartridge(slot);
     app.cartridgePaths[slot - 2].clear();
-    app.machine.reset();
+    (void)app.machine.connectBridgeSlot(slot, nullptr);
+    resetMachine(app);
     updateCassetteMenu(app);
+}
+
+// Opens the USB2SLOT board on its COM port unless it is connected already; the board slots in use keep
+// their rules and move to the new connection.
+bool openBridge(AppState& app, bool showError)
+{
+    if (app.bridge && app.bridge->connected()) return true;
+    std::string error;
+    auto transport = usbslot::openSerial(app.bridgePort, error);
+    if (!transport) {
+        if (showError) {
+            const std::wstring text = ui(L"The USB2SLOT board does not answer:\n\n", L"Die USB2SLOT-Platine antwortet nicht:\n\n") +
+                                      std::wstring(error.begin(), error.end());
+            MessageBoxW(app.window, text.c_str(), L"USB2SLOT", MB_OK | MB_ICONERROR);
+        }
+        return false;
+    }
+    auto bridge = std::make_unique<usbslot::Bridge>(std::move(transport));
+    std::array<std::unique_ptr<usbslot::BoardSlot>, 2> boardSlots;
+    for (std::uint8_t number = 1; number <= 2; ++number) {
+        if (const auto& old = app.boardSlots[number - 1]) {
+            boardSlots[number - 1] = std::make_unique<usbslot::BoardSlot>(*bridge, number, old->config());
+        }
+    }
+    for (std::uint8_t slot = 2; slot <= 3; ++slot) {
+        if (const auto number = app.machine.bridgeSlot(slot)) {
+            (void)app.machine.connectBridgeSlot(slot, boardSlots[number - 1].get());
+        }
+    }
+    app.boardSlots = std::move(boardSlots);
+    app.bridge = std::move(bridge);
+    return true;
+}
+
+// Probes the board and sets up its slot with the rules for what was found; false when the slot is empty.
+bool setUpBoardSlot(AppState& app, std::uint8_t number)
+{
+    const auto detection = usbslot::detectBoard(*app.bridge);
+    if (!detection.occupied[number - 1]) return false;
+    for (std::uint8_t slot = 2; slot <= 3; ++slot) {
+        if (app.machine.bridgeSlot(slot) == number) (void)app.machine.connectBridgeSlot(slot, nullptr);
+    }
+    app.boardSlots[number - 1] = std::make_unique<usbslot::BoardSlot>(*app.bridge, number, detection.slots[number - 1]);
+    return true;
+}
+
+// Puts slot 1 or 2 of the board into a module slot; like changing a module, the machine is reset.
+void selectBridgeSlot(AppState& app, std::uint8_t slot, std::uint8_t boardSlot)
+{
+    KillTimer(app.window, EmulationTimer);
+    if (openBridge(app, true)) {
+        if (setUpBoardSlot(app, boardSlot)) {
+            app.machine.ejectCartridge(slot);
+            app.cartridgePaths[slot - 2].clear();
+            (void)app.machine.connectBridgeSlot(slot, app.boardSlots[boardSlot - 1].get());
+        } else {
+            const std::wstring text = ui(L"Slot ", L"Steckplatz ") + std::to_wstring(boardSlot) +
+                                      ui(L" of the USB2SLOT board is empty.", L" der USB2SLOT-Platine ist leer.");
+            MessageBoxW(app.window, text.c_str(), L"USB2SLOT", MB_OK | MB_ICONWARNING);
+        }
+        resetMachine(app);
+    }
+    updateCassetteMenu(app);
+    resumeAfterCassetteDialog(app);
 }
 
 bool writeSettingsAtomically(const std::filesystem::path& path, const std::string& text)
@@ -1723,7 +1953,12 @@ void saveMedia(AppState& app)
     if (!app.printerDirectory.empty()) {
         text += "printerDirectory=" + app.printerDirectory.u8string() + "\n";
     }
+    text += "usb2slotPort=" + app.bridgePort + "\n";
     for (std::uint8_t slot = 2; slot <= 3; ++slot) {
+        if (const auto boardSlot = app.machine.bridgeSlot(slot)) {
+            text += "slot" + std::to_string(slot) + "=usb2slot," + std::to_string(boardSlot) + "\n";
+            continue;
+        }
         const auto& cart = app.machine.cartridgeSlot(slot);
         if (!cart.inserted() || app.cartridgePaths[slot - 2].empty()) continue;
         text += "slot" + std::to_string(slot) + "=" +
@@ -1746,13 +1981,19 @@ void rebuildMachine(AppState& app, svi728::VideoStandard standard)
     const bool tapeInserted = app.machine.cassetteState().inserted && !app.machine.cassetteState().recording;
     std::array<cartridge::Mapper, 2> mappers{};
     std::array<bool, 2> inserted{};
+    std::array<std::uint8_t, 2> boardSlots{};
     for (std::uint8_t slot = 2; slot <= 3; ++slot) {
         inserted[slot - 2] = app.machine.cartridgeSlot(slot).inserted();
         mappers[slot - 2] = app.machine.cartridgeSlot(slot).mapper();
+        boardSlots[slot - 2] = app.machine.bridgeSlot(slot);
     }
     app.machine = svi728::SVI728(standard);
     (void)app.machine.loadMainRom(app.romImage);
     for (std::uint8_t slot = 2; slot <= 3; ++slot) {
+        if (boardSlots[slot - 2]) {
+            (void)app.machine.connectBridgeSlot(slot, app.boardSlots[boardSlots[slot - 2] - 1].get());
+            continue;
+        }
         auto& path = app.cartridgePaths[slot - 2];
         if (!inserted[slot - 2] || path.empty()) continue;
         std::ifstream file(path, std::ios::binary);
@@ -1793,9 +2034,21 @@ void loadMedia(AppState& app)
             if (line.substr(equals + 1) == "NTSC") rebuildMachine(app, svi728::VideoStandard::Ntsc);
             continue;
         }
+        if (key == "usb2slotPort") {
+            if (equals + 1 < line.size()) app.bridgePort = line.substr(equals + 1);
+            continue;
+        }
         if (key != "slot2" && key != "slot3") continue;
 
         const std::string value = line.substr(equals + 1);
+        if (value == "usb2slot,1" || value == "usb2slot,2") {
+            const auto number = static_cast<std::uint8_t>(value.back() - '0');
+            if (!openBridge(app, false) || (!app.boardSlots[number - 1] && !setUpBoardSlot(app, number)) ||
+                !app.machine.connectBridgeSlot(static_cast<std::uint8_t>(key[4] - '0'), app.boardSlots[number - 1].get())) {
+                restoreFailed = true;
+            }
+            continue;
+        }
         const auto comma = value.find(',');
         if (comma == std::string::npos) {
             restoreFailed = true;
@@ -1849,7 +2102,7 @@ void selectVideoStandard(AppState& app, svi728::VideoStandard standard)
 {
     if (app.machine.videoStandard() == standard || !confirmCassetteDiscard(app)) return;
     rebuildMachine(app, standard);
-    app.machine.reset();
+    resetMachine(app);
     app.fieldPhase = 0;
     app.audioSamplePhase = 0;
     updateVideoMenu(app);
@@ -2008,7 +2261,7 @@ bool loadStateFile(AppState& app, const std::filesystem::path& path)
     }
     if (app.machine.videoStandard() != *standard) {
         rebuildMachine(app, *standard);
-        app.machine.reset();
+        resetMachine(app);
         updateVideoMenu(app);
         updateCassetteMenu(app);
         saveMedia(app);
@@ -2312,7 +2565,7 @@ LRESULT CALLBACK windowProcedure(HWND window, UINT message, WPARAM wParam, LPARA
             return 0;
         case ResetCommand:
             releaseAllInput(*app);
-            app->machine.reset();
+            resetMachine(*app);
             return 0;
         case StateLoadCommand:
         case StateSaveCommand:
@@ -2344,6 +2597,14 @@ LRESULT CALLBACK windowProcedure(HWND window, UINT message, WPARAM wParam, LPARA
             return 0;
         case CartridgeCommandBase + 10 + CartridgeEjectChoice:
             ejectCartridge(*app, 3);
+            return 0;
+        case CartridgeCommandBase + CartridgeBridgeChoice:
+        case CartridgeCommandBase + CartridgeBridgeChoice + 1:
+            selectBridgeSlot(*app, 2, static_cast<std::uint8_t>(LOWORD(wParam) - CartridgeCommandBase - CartridgeBridgeChoice + 1));
+            return 0;
+        case CartridgeCommandBase + 10 + CartridgeBridgeChoice:
+        case CartridgeCommandBase + 10 + CartridgeBridgeChoice + 1:
+            selectBridgeSlot(*app, 3, static_cast<std::uint8_t>(LOWORD(wParam) - CartridgeCommandBase - 10 - CartridgeBridgeChoice + 1));
             return 0;
         default: break;
         }
@@ -2387,6 +2648,12 @@ LRESULT CALLBACK windowProcedure(HWND window, UINT message, WPARAM wParam, LPARA
         if (app && wParam == EmulationTimer) {
             const bool hadAudio = app->audio.device != nullptr;
             (void)retryAudio(app->audio);
+            if (app->bridge) {
+                app->bridge->heartbeat();
+                // The board switched the cartridges off while the emulation stood still (menu, dialog):
+                // they lost their state, so the machine starts again as after switching it on.
+                if (app->bridge->takeSwitchedOff()) resetMachine(*app);
+            }
             const bool advanced = advanceWallClock(*app);
             if (app->printerWarningPending) {
                 app->printerWarningPending = false;
@@ -2515,6 +2782,10 @@ HMENU buildMenu()
         const std::wstring slotName = L"Slot " + std::to_wstring(slot);
         AppendMenuW(cartridgeMenu, MF_STRING, base, (slotName + ui(L": &insert (detect mapper)...", L": &einlegen (automatisch)...")).c_str());
         AppendMenuW(cartridgeMenu, MF_POPUP, reinterpret_cast<UINT_PTR>(mapperMenu), (slotName + ui(L": insert &as", L": einlegen &als")).c_str());
+        for (UINT boardSlot = 1; boardSlot <= 2; ++boardSlot) {
+            AppendMenuW(cartridgeMenu, MF_STRING, base + CartridgeBridgeChoice + boardSlot - 1,
+                        (slotName + ui(L": USB2SLOT slot &", L": USB2SLOT-Steckplatz &") + std::to_wstring(boardSlot)).c_str());
+        }
         AppendMenuW(cartridgeMenu, MF_STRING | MF_GRAYED, base + CartridgeEjectChoice, (slotName + ui(L": &remove", L": e&ntfernen")).c_str());
         if (slot == 2) AppendMenuW(cartridgeMenu, MF_SEPARATOR, 0, nullptr);
     }
@@ -2594,7 +2865,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR, int showCommand)
     app.settingsPath = appDirectory / SettingsFileName;
     loadMedia(app);
     if (app.printerDirectory.empty() && developmentMediaRoot().empty()) app.printerDirectory = mediaFolder(L"PRINT");
-    app.machine.reset();
+    resetMachine(app);
 
     const wchar_t* className = L"SVI728KeyboardWindow";
     WNDCLASSW windowClass{};

@@ -47,7 +47,7 @@ $romDirectory = Join-Path $projectRoot 'VG8235\rom'
 $romFiles = @(
     'VG8235-ROM1 - Basic2.0.bin',
     'VG8235-ROM2 - Basic2.0.bin',
-    'VG8235-ROM3 - DiskDD.bin'
+    'VG8235-ROM3 - Disc.rom'
 )
 $distributionRoot = Join-Path $projectRoot '..\Distribution'
 $setupPath = Join-Path $distributionRoot 'VG8235-Setup.exe'

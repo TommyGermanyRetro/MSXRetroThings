@@ -40,7 +40,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>$(VideorecInclude);$(Svi728Include);$(Z80CpuInclude);$(Ppi8255Include);$(Ay8910Include);$(Tms9929aInclude);$(Tms9918aInclude);$(Tms99x8Include);$(CartridgeInclude);$(PrinterInclude);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(VideorecInclude);$(Svi728Include);$(Z80CpuInclude);$(Ppi8255Include);$(Ay8910Include);$(Tms9929aInclude);$(Tms9918aInclude);$(Tms99x8Include);$(CartridgeInclude);$(UsbSlotInclude);$(PrinterInclude);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>SVI728_GUI_APP;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
@@ -76,6 +76,9 @@
     </ProjectReference>
     <ProjectReference Include="..\..\..\msx\CARTRIDGE\cartridge.vcxproj">
       <Project>{E993920E-892F-51EF-90C5-5C4945007331}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\msx\USBSLOT\usbslot.vcxproj">
+      <Project>{DD27223C-730B-4F0C-8720-CB37624EDD7A}</Project>
     </ProjectReference>
     <ProjectReference Include="..\..\..\chips\AY8910\ay8910.vcxproj">
       <Project>{FE2C1EA3-1B2A-5F7F-9A2B-EB12265B9390}</Project>

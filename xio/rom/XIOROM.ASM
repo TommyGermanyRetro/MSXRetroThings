@@ -8,7 +8,7 @@
                                     ;* and CALL statement posted on     *
                                     ;* https://www.msx.org              *
                                     ;************************************
-                                    ;* VERSION: 23/10/26                *
+                                    ;* VERSION: 28/10/26                *
                                     ;************************************
 
               ORG    #04000
@@ -23,6 +23,7 @@
                                     ;* MSX-Bios Calls and Hooks         *
                                     ;************************************
 
+MSXVER:       EQU    #0002D         ; MSX version (0 = MSX1)
 CHGMOD:       EQU    #0005F         ; Change screen mode
 CHGET:        EQU    #0009F         ; Get char from screen
 CHPUT:        EQU    #000A2         ; Put char on screen
@@ -243,16 +244,21 @@ FN_TABLE:
                                     ;* Handler when MSX starts          *
                                     ;************************************
 
-INITHAND:     LD A,(HOKVLD)         ; Initialize EXTBIO hook if necessary
-              BIT 0,A
-              JR NZ,OK_INIEXTB
+INITHAND:     LD A,(HOKVLD)         ; Initialize EXTBIO (MSX1) or EXTBIO,
+              BIT 0,A               ; DISINT and ENAINT (MSX2) hooks if
+              JR NZ,OK_INIEXTB      ; necessary
 
               LD HL,EXTBIO
               LD DE,EXTBIO+1
-              LD BC,4
-              LD (HL),#0C9          ; code for RET
+              LD BC,4               ; MSX1: EXTBIO only
+              LD A,(MSXVER)
+              OR A
+              JR Z,INI_HOOKS
+              LD C,14               ; MSX2: 3 hooks of 5 bytes, as the disk ROM
+INI_HOOKS:    LD (HL),#0C9          ; code for RET
               LDIR
 
+              LD A,(HOKVLD)
               OR 1
               LD (HOKVLD),A
 

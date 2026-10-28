@@ -40,7 +40,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>$(VideorecInclude);$(Vg8235Include);$(Z80CpuInclude);$(Ppi8255Include);$(Ay8910Include);$(V9938Include);$(Rp5c01Include);$(Wd2793Include);$(CartridgeInclude);$(PrinterInclude);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(VideorecInclude);$(Vg8235Include);$(Z80CpuInclude);$(Ppi8255Include);$(Ay8910Include);$(V9938Include);$(Rp5c01Include);$(Wd2793Include);$(CartridgeInclude);$(UsbSlotInclude);$(PrinterInclude);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>VG8235_GUI_APP;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
@@ -87,6 +87,9 @@
     </ProjectReference>
     <ProjectReference Include="..\..\..\msx\CARTRIDGE\cartridge.vcxproj">
       <Project>{E993920E-892F-51EF-90C5-5C4945007331}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\msx\USBSLOT\usbslot.vcxproj">
+      <Project>{DD27223C-730B-4F0C-8720-CB37624EDD7A}</Project>
     </ProjectReference>
     <ProjectReference Include="..\..\..\chips\PRINTER\printer.vcxproj">
       <Project>{28704401-3A5E-4B3E-9340-BD2E59071666}</Project>

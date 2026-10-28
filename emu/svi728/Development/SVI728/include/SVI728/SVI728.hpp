@@ -14,6 +14,10 @@
 #include <optional>
 #include <vector>
 
+namespace usbslot {
+class BoardSlot;
+} // namespace usbslot
+
 namespace svi728 {
 
 inline constexpr std::size_t AddressSpaceSize = 0x10000;
@@ -71,6 +75,13 @@ public:
                                        std::optional<cartridge::Mapper> mapper = std::nullopt);
     void ejectCartridge(std::uint8_t primarySlot) noexcept;
     [[nodiscard]] const cartridge::Cartridge& cartridgeSlot(std::uint8_t primarySlot) const noexcept;
+    // Puts a slot of a USB2SLOT board into slot 2 or 3 in place of a module: the CPU then reads and
+    // writes the real cartridge there, one board cycle per bus cycle, and the I/O ports the board slot
+    // claims go to the board. A null board slot frees the slot. The board slot must stay alive while it
+    // is connected.
+    [[nodiscard]] bool connectBridgeSlot(std::uint8_t primarySlot, usbslot::BoardSlot* boardSlot);
+    // Slot of the board in slot 2 or 3, 0 when none is connected.
+    [[nodiscard]] std::uint8_t bridgeSlot(std::uint8_t primarySlot) const noexcept;
 
     [[nodiscard]] std::uint8_t readMemory(std::uint16_t address) const noexcept;
     void writeMemory(std::uint16_t address, std::uint8_t value) noexcept;

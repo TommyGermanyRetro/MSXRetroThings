@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="include\USBSLOT">
+      <UniqueIdentifier>{F7056D0B-0DCA-48BE-950A-24A3336E9E16}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{FAEB7CA3-AE23-4C17-97E3-59E456D49638}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\BoardSlot.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\UsbSlot.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\USBSLOT\BoardSlot.hpp">
+      <Filter>include\USBSLOT</Filter>
+    </ClInclude>
+    <ClInclude Include="include\USBSLOT\UsbSlot.hpp">
+      <Filter>include\USBSLOT</Filter>
+    </ClInclude>
+    <ClInclude Include="src\slotlink.h">
+      <Filter>src</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

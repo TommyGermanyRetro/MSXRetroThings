@@ -194,8 +194,8 @@ internal static class Installer
                     Path.Combine(romDirectory, "VG8235-ROM1 - Basic2.0.bin"));
                 ExtractOptionalResource("VG8235-ROM2 - Basic2.0.bin",
                     Path.Combine(romDirectory, "VG8235-ROM2 - Basic2.0.bin"));
-                ExtractOptionalResource("VG8235-ROM3 - DiskDD.bin",
-                    Path.Combine(romDirectory, "VG8235-ROM3 - DiskDD.bin"));
+                ExtractOptionalResource("VG8235-ROM3 - Disc.rom",
+                    Path.Combine(romDirectory, "VG8235-ROM3 - Disc.rom"));
                 using (FileStream currentSetup = File.OpenRead(Assembly.GetExecutingAssembly().Location))
                 using (FileStream uninstaller = File.Create(Path.Combine(installDirectory, "uninstall.exe")))
                 {

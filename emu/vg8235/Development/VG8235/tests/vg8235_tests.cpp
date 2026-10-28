@@ -1,8 +1,10 @@
+#include "USBSLOT/BoardSlot.hpp"
 #include "VG8235/Keyboard.hpp"
 #include "VG8235/VG8235.hpp"
 
 #include <algorithm>
 #include <cstdlib>
+#include <deque>
 #include <fstream>
 #include <iostream>
 #include <iterator>
@@ -316,10 +318,11 @@ void testBootToDiskBasic(const std::string& romDirectory)
     vg8235::VG8235 machine;
     require(machine.loadMainRom(readFile(romDirectory + "/VG8235-ROM1 - Basic2.0.bin")), "VG 8235 BIOS loads");
     require(machine.loadSubRom(readFile(romDirectory + "/VG8235-ROM2 - Basic2.0.bin")), "VG 8235 Sub-ROM loads");
-    require(machine.loadDiskRom(readFile(romDirectory + "/VG8235-ROM3 - DiskDD.bin")), "disk ROM loads");
+    require(machine.loadDiskRom(readFile(romDirectory + "/VG8235-ROM3 - Disc.rom")), "disk ROM loads");
     machine.reset();
-    for (std::uint32_t field = 0; field < 600; ++field) {
+    for (std::uint32_t field = 0; field < 1500; ++field) {
         for (std::uint32_t tick = 0; tick < vg8235::CpuTicksPerPalField; ++tick) (void)machine.tick();
+        if (screenRow(machine, 4).find("Ok") != std::string::npos) break;
     }
     require(screenRow(machine, 3).find("Disk BASIC version 1.0") != std::string::npos, "the disk ROM starts Disk BASIC");
     require(screenRow(machine, 4).find("Ok") != std::string::npos, "Disk BASIC reaches the Ok prompt");
@@ -440,6 +443,216 @@ void testM1WaitStates()
     }
 }
 
+// Board that answers every memory read with NOP and records the cycles it sees; port 40h reads 3Fh, port FEh
+// (a Memory Mapper on the board) E5h.
+class RecordingBoard final : public usbslot::Transport {
+public:
+    struct Cycle {
+        std::uint8_t slot;
+        std::uint16_t address;
+        bool m1;
+        std::uint8_t value;
+    };
+    std::vector<Cycle> reads;
+    std::vector<Cycle> blocks;
+    std::vector<Cycle> writes;
+    std::vector<Cycle> ioWrites;
+    int ioReads = 0;
+    int resets = 0;
+    std::uint32_t ioWaits = 0;
+    std::deque<std::uint8_t> interrupts;
+
+    bool memRead(std::uint8_t slot, std::uint16_t address, bool m1, std::uint8_t& data, std::uint32_t& waits) override
+    {
+        reads.push_back({slot, address, m1, 0});
+        data = 0x00;
+        waits = 0;
+        return true;
+    }
+    bool memReadBlock(std::uint8_t slot, std::uint16_t address, std::uint16_t count, std::vector<std::uint8_t>& data) override
+    {
+        blocks.push_back({slot, address, false, 0});
+        data.assign(count, 0x00);
+        return true;
+    }
+    bool memWrite(std::uint8_t slot, std::uint16_t address, std::uint8_t value) override
+    {
+        writes.push_back({slot, address, false, value});
+        return true;
+    }
+    bool ioRead(std::uint8_t port, std::uint8_t& data, std::uint32_t& waits) override
+    {
+        ++ioReads;
+        data = port == 0x40 ? 0x3F : (port == 0xFE ? 0xE5 : 0xFF);
+        waits = ioWaits;
+        return true;
+    }
+    bool ioWrite(std::uint8_t port, std::uint8_t value, std::uint32_t& waits) override
+    {
+        ioWrites.push_back({0, port, false, value});
+        waits = 0;
+        return true;
+    }
+    bool reset() override
+    {
+        ++resets;
+        return true;
+    }
+    bool run() override { return true; }
+    bool sync(bool& running, std::uint8_t& intLevel) override
+    {
+        running = true;
+        intLevel = 1;
+        return true;
+    }
+    bool poll() override { return true; }
+    bool popInterrupt(std::uint8_t& level) override
+    {
+        if (interrupts.empty()) return false;
+        level = interrupts.front();
+        interrupts.pop_front();
+        return true;
+    }
+    std::string error() const override { return {}; }
+};
+
+// LD A,#82; OUT (#AB),A; LD A,#80; OUT (#A8),A (page 3 = slot 2); LD (#C100),A; OUT (#40),A;
+// IN A,(#40); JP #C000
+std::vector<std::uint8_t> boardTestRom()
+{
+    const std::vector<std::uint8_t> program = {
+        0x3E, 0x82, 0xD3, 0xAB, 0x3E, 0x80, 0xD3, 0xA8, 0x32, 0x00, 0xC1, 0xD3, 0x40, 0xDB, 0x40,
+        0xC3, 0x00, 0xC0};
+    auto rom = filled(vg8235::MainRomSize, 0x76);
+    std::copy(program.begin(), program.end(), rom.begin());
+    return rom;
+}
+
+void testUsbSlotBridge()
+{
+    vg8235::VG8235 machine;
+    require(machine.loadMainRom(boardTestRom()), "board test ROM loads");
+    auto transport = std::make_unique<RecordingBoard>();
+    auto* board = transport.get();
+    usbslot::Bridge bridge(std::move(transport));
+    usbslot::SlotConfig config;
+    config.rules[0].noCache(0xC000, 0x4000);
+    config.ioPorts = {0x40};
+    usbslot::BoardSlot boardSlot(bridge, 2, config);
+    require(machine.connectBridgeSlot(2, &boardSlot), "slot 2 of the board goes into slot 2");
+    require(!machine.connectBridgeSlot(3, &boardSlot), "only slots 1 and 2 take a board slot");
+    require(machine.bridgeSlot(2) == 2 && machine.bridgeSlot(1) == 0, "the machine reports the board slot");
+    machine.reset();
+    require(board->resets == 1, "a machine reset pulses /RESET on the board");
+
+    for (int tick = 0; tick < 2000 && board->reads.size() < 20; ++tick) (void)machine.tick();
+    require(board->writes.size() == 1 && board->writes[0].slot == 2 && board->writes[0].address == 0xC100 &&
+            board->writes[0].value == 0x80,
+            "the CPU write to the board slot reaches the board once");
+    require(board->ioWrites.size() == 1 && board->ioWrites[0].address == 0x40 && board->ioReads == 1,
+            "a claimed I/O port reaches the board once per I/O cycle");
+    require(board->reads.size() == 20 && board->blocks.empty(), "the NOPs run from the uncached board slot");
+    for (std::size_t index = 0; index < board->reads.size(); ++index) {
+        const auto& read = board->reads[index];
+        require(read.slot == 2 && read.address == 0xC000 + index && read.m1,
+                "every opcode fetch reaches the board once, with /M1, despite the MSX wait state");
+    }
+    require(machine.connectBridgeSlot(2, nullptr) && machine.bridgeSlot(2) == 0, "the board slot can be freed");
+}
+
+void testUsbSlotCache()
+{
+    vg8235::VG8235 machine;
+    require(machine.loadMainRom(boardTestRom()), "board test ROM loads");
+    auto transport = std::make_unique<RecordingBoard>();
+    auto* board = transport.get();
+    usbslot::Bridge bridge(std::move(transport));
+    usbslot::BoardSlot boardSlot(bridge, 1, usbslot::SlotConfig{});
+    require(machine.connectBridgeSlot(2, &boardSlot), "slot 1 of the board goes into slot 2");
+    machine.reset();
+    for (int tick = 0; tick < 1000; ++tick) (void)machine.tick();
+    require(board->blocks.size() == 1 && board->blocks[0].address == 0xC000 && board->reads.empty(),
+            "with the cache the NOPs cost one line fetch");
+    require(board->ioWrites.empty(), "ports the slot does not claim stay in the machine");
+    require(machine.readMemory(0xC010) == 0x00 && machine.readMemory(0xC200) == 0xFF,
+            "reads without a bus cycle show the cache");
+}
+
+void testUsbSlotSharedMapperPorts()
+{
+    vg8235::VG8235 machine;
+    auto transport = std::make_unique<RecordingBoard>();
+    auto* board = transport.get();
+    usbslot::Bridge bridge(std::move(transport));
+    usbslot::SlotConfig config;
+    config.ioPorts = {0xFC, 0xFD, 0xFE, 0xFF};
+    usbslot::BoardSlot boardSlot(bridge, 2, config);
+    require(machine.connectBridgeSlot(1, &boardSlot), "board slot in slot 1");
+    machine.writeIo(0xFE, 0x05);
+    require(machine.mapperRegister(2) == 0x05 && board->ioWrites.size() == 1 && board->ioWrites[0].address == 0xFE &&
+            board->ioWrites[0].value == 0x05,
+            "a mapper port write reaches the internal mapper and the board");
+    require(machine.readIo(0xFE) == ((0x05 | 0xF8) & 0xE5), "both mappers drive the bus: the CPU reads the AND");
+}
+
+// T-states from the opcode fetch at one address to the opcode fetch at another.
+std::uint64_t ticksBetweenFetches(vg8235::VG8235& machine, std::uint16_t from, std::uint16_t to)
+{
+    std::uint64_t start = 0;
+    bool started = false;
+    bool previousFetch = false;
+    for (std::uint64_t tick = 0; tick < 1000; ++tick) {
+        const auto pins = machine.tick();
+        const bool fetch = pins.m1 && pins.memoryRequest && pins.read;
+        if (fetch && !previousFetch) {
+            if (!started && pins.address == from) {
+                start = tick;
+                started = true;
+            } else if (started && pins.address == to) {
+                return tick - start;
+            }
+        }
+        previousFetch = fetch;
+    }
+    return 0;
+}
+
+void testUsbSlotWaitAndInterrupt()
+{
+    // IN A,(#40); NOP; IM 1; EI; HALT; ... #38: HALT
+    auto rom = filled(vg8235::MainRomSize, 0x00);
+    const std::vector<std::uint8_t> program = {0xDB, 0x40, 0x00, 0xED, 0x56, 0xFB, 0x76};
+    std::copy(program.begin(), program.end(), rom.begin());
+    rom[0x38] = 0x76;
+    vg8235::VG8235 machine;
+    require(machine.loadMainRom(rom), "wait test ROM loads");
+    auto transport = std::make_unique<RecordingBoard>();
+    auto* board = transport.get();
+    usbslot::Bridge bridge(std::move(transport));
+    usbslot::SlotConfig config;
+    config.ioPorts = {0x40};
+    usbslot::BoardSlot boardSlot(bridge, 1, config);
+    require(machine.connectBridgeSlot(1, &boardSlot), "board slot connected");
+    board->ioWaits = 10;
+    machine.reset();
+    // IN A,(n): 11 T-states plus the M1 wait state of the machine, plus the 10 wait clocks of the cartridge
+    require(ticksBetweenFetches(machine, 0x0000, 0x0002) == 22, "/WAIT of the cartridge lengthens the I/O cycle");
+
+    bool interrupted = false;
+    for (int tick = 0; tick < 200; ++tick) {
+        const auto pins = machine.tick();
+        if (pins.m1 && pins.memoryRequest && pins.read && pins.address == 0x0038) interrupted = true;
+    }
+    require(!interrupted, "no interrupt while /INT of the board is inactive");
+    board->interrupts = {0};
+    bridge.heartbeat();
+    for (int tick = 0; tick < 200 && !interrupted; ++tick) {
+        const auto pins = machine.tick();
+        if (pins.m1 && pins.memoryRequest && pins.read && pins.address == 0x0038) interrupted = true;
+    }
+    require(interrupted, "/INT of the board interrupts the CPU");
+}
+
 } // namespace
 
 // The same key position gives the character of the PC layout: Shift+2 is " on a German keyboard and @ on a
@@ -483,6 +696,10 @@ int main(int argc, char** argv)
     testFixedPsgPortDirections();
     testPhilipsDiskInterface();
     testM1WaitStates();
+    testUsbSlotBridge();
+    testUsbSlotCache();
+    testUsbSlotSharedMapperPorts();
+    testUsbSlotWaitAndInterrupt();
     testKeyboardLayouts();
     if (argc > 1) {
         testBootToBasic(argv[1]);

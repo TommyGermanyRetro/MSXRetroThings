@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Settings of the MSX components (cartridge slot); builds on the chip settings. -->
+<!-- Settings of the MSX components (cartridge slot, USB2SLOT board); builds on the chip settings. -->
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildThisFileDirectory)..\chips\Common.props" />
   <PropertyGroup>
     <MsxRoot>$(MSBuildThisFileDirectory)</MsxRoot>
     <CartridgeInclude>$(MsxRoot)CARTRIDGE\include</CartridgeInclude>
+    <UsbSlotInclude>$(MsxRoot)USBSLOT\include</UsbSlotInclude>
   </PropertyGroup>
 </Project>

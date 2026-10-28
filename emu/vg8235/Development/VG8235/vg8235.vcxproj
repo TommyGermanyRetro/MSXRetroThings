@@ -40,7 +40,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>$(Vg8235Include);$(Z80CpuInclude);$(Ppi8255Include);$(Ay8910Include);$(V9938Include);$(Rp5c01Include);$(Wd2793Include);$(CartridgeInclude);$(PrinterInclude);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(Vg8235Include);$(Z80CpuInclude);$(Ppi8255Include);$(Ay8910Include);$(V9938Include);$(Rp5c01Include);$(Wd2793Include);$(CartridgeInclude);$(UsbSlotInclude);$(PrinterInclude);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>

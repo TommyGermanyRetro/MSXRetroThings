@@ -16,6 +16,10 @@
 #include <optional>
 #include <vector>
 
+namespace usbslot {
+class BoardSlot;
+} // namespace usbslot
+
 namespace vg8235 {
 
 inline constexpr std::size_t AddressSpaceSize = 0x10000;
@@ -60,6 +64,13 @@ public:
                                        std::optional<cartridge::Mapper> mapper = std::nullopt);
     void ejectCartridge(std::uint8_t primarySlot) noexcept;
     [[nodiscard]] const cartridge::Cartridge& cartridgeSlot(std::uint8_t primarySlot) const noexcept;
+    // Puts a slot of a USB2SLOT board into slot 1 or 2 in place of a module: the CPU then reads and
+    // writes the real cartridge there, one board cycle per bus cycle, and the I/O ports the board slot
+    // claims go to the board as well (a port the machine serves itself, like the mapper ports, reads the
+    // AND of both). A null board slot frees the slot. The board slot must stay alive while it is connected.
+    [[nodiscard]] bool connectBridgeSlot(std::uint8_t primarySlot, usbslot::BoardSlot* boardSlot);
+    // Slot of the board in slot 1 or 2, 0 when none is connected.
+    [[nodiscard]] std::uint8_t bridgeSlot(std::uint8_t primarySlot) const noexcept;
 
     // CPU view of memory and I/O, including the slot-3 secondary slot register at #FFFF.
     [[nodiscard]] std::uint8_t readMemory(std::uint16_t address) const noexcept;

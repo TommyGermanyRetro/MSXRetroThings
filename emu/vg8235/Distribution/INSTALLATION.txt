@@ -24,5 +24,5 @@ manual in the browser.
 
 ROMs: The setup without ROMs (VG8235-Setup-NoRoms.exe) contains no ROM images. It creates the
 empty folder Documents\VG-8235\ROM; place your own images (VG8235-ROM1 - Basic2.0.bin,
-VG8235-ROM2 - Basic2.0.bin, VG8235-ROM3 - DiskDD.bin) there and start the emulator again.
+VG8235-ROM2 - Basic2.0.bin, VG8235-ROM3 - Disc.rom) there and start the emulator again.
 Without ROM1 and ROM2 it does not start; without ROM3 the disk drive stays off.

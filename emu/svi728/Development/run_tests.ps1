@@ -27,6 +27,7 @@ $tests = @(
     @{ Name = 'tms9929a_tests';       Arguments = @();     Timeout = 60 },
     @{ Name = 'tms9918a_tests';       Arguments = @();     Timeout = 60 },
     @{ Name = 'cartridge_tests';      Arguments = @();     Timeout = 60 },
+    @{ Name = 'usbslot_tests';        Arguments = @();     Timeout = 60 },
     @{ Name = 'printer_tests';        Arguments = @();     Timeout = 60 },
     @{ Name = 'svi728_tests';         Arguments = @();     Timeout = 60 },
     @{ Name = 'cassette_bios_tests';  Arguments = @($rom); Timeout = 120 },

@@ -1,8 +1,10 @@
 #include "SVI728/SVI728.hpp"
 #include "SVI728/Keyboard.hpp"
 #include "SVI728/CassetteRecorder.hpp"
+#include "USBSLOT/BoardSlot.hpp"
 
 #include <algorithm>
+#include <deque>
 #include <cstdlib>
 #include <iostream>
 #include <vector>
@@ -590,6 +592,199 @@ void testCassetteFileNameSuggestion()
             "truncated tape headers cannot supply a filename");
 }
 
+// Board that answers every memory read with NOP and records the cycles it sees; port 40h reads 3Fh.
+class RecordingBoard final : public usbslot::Transport {
+public:
+    struct Cycle {
+        std::uint8_t slot;
+        std::uint16_t address;
+        bool m1;
+        std::uint8_t value;
+    };
+    std::vector<Cycle> reads;
+    std::vector<Cycle> blocks;
+    std::vector<Cycle> writes;
+    std::vector<Cycle> ioWrites;
+    int ioReads = 0;
+    int resets = 0;
+    std::uint32_t ioWaits = 0;
+    std::deque<std::uint8_t> interrupts;
+
+    bool memRead(std::uint8_t slot, std::uint16_t address, bool m1, std::uint8_t& data, std::uint32_t& waits) override
+    {
+        reads.push_back({slot, address, m1, 0});
+        data = 0x00;
+        waits = 0;
+        return true;
+    }
+    bool memReadBlock(std::uint8_t slot, std::uint16_t address, std::uint16_t count, std::vector<std::uint8_t>& data) override
+    {
+        blocks.push_back({slot, address, false, 0});
+        data.assign(count, 0x00);
+        return true;
+    }
+    bool memWrite(std::uint8_t slot, std::uint16_t address, std::uint8_t value) override
+    {
+        writes.push_back({slot, address, false, value});
+        return true;
+    }
+    bool ioRead(std::uint8_t port, std::uint8_t& data, std::uint32_t& waits) override
+    {
+        ++ioReads;
+        data = port == 0x40 ? 0x3F : 0xFF;
+        waits = ioWaits;
+        return true;
+    }
+    bool ioWrite(std::uint8_t port, std::uint8_t value, std::uint32_t& waits) override
+    {
+        ioWrites.push_back({0, port, false, value});
+        waits = 0;
+        return true;
+    }
+    bool reset() override
+    {
+        ++resets;
+        return true;
+    }
+    bool run() override { return true; }
+    bool sync(bool& running, std::uint8_t& intLevel) override
+    {
+        running = true;
+        intLevel = 1;
+        return true;
+    }
+    bool poll() override { return true; }
+    bool popInterrupt(std::uint8_t& level) override
+    {
+        if (interrupts.empty()) return false;
+        level = interrupts.front();
+        interrupts.pop_front();
+        return true;
+    }
+    std::string error() const override { return {}; }
+};
+
+// LD A,#82; OUT (#AB),A; LD A,#C0; OUT (#A8),A (page 3 = slot 3); LD (#C100),A; OUT (#40),A;
+// IN A,(#40); JP #C000
+std::vector<std::uint8_t> boardTestRom()
+{
+    const std::vector<std::uint8_t> program = {
+        0x3E, 0x82, 0xD3, 0xAB, 0x3E, 0xC0, 0xD3, 0xA8, 0x32, 0x00, 0xC1, 0xD3, 0x40, 0xDB, 0x40,
+        0xC3, 0x00, 0xC0};
+    std::vector<std::uint8_t> rom(svi728::MainRomSize, 0x76);
+    std::copy(program.begin(), program.end(), rom.begin());
+    return rom;
+}
+
+void testUsbSlotBridge()
+{
+    svi728::SVI728 machine;
+    require(machine.loadMainRom(boardTestRom()), "board test ROM loads");
+
+    auto transport = std::make_unique<RecordingBoard>();
+    auto* board = transport.get();
+    usbslot::Bridge bridge(std::move(transport));
+    usbslot::SlotConfig config;
+    config.rules[0].noCache(0xC000, 0x4000);
+    config.ioPorts = {0x40};
+    usbslot::BoardSlot boardSlot(bridge, 2, config);
+    require(machine.connectBridgeSlot(3, &boardSlot), "slot 2 of the board goes into slot 3");
+    require(!machine.connectBridgeSlot(1, &boardSlot), "only slots 2 and 3 take a board slot");
+    require(machine.bridgeSlot(3) == 2 && machine.bridgeSlot(2) == 0, "the machine reports the board slot");
+    machine.reset();
+    require(board->resets == 1, "a machine reset pulses /RESET on the board");
+
+    for (int tick = 0; tick < 2000 && board->reads.size() < 20; ++tick) (void)machine.tick();
+    require(board->writes.size() == 1 && board->writes[0].slot == 2 && board->writes[0].address == 0xC100 &&
+            board->writes[0].value == 0xC0,
+            "the CPU write to the board slot reaches the board once");
+    require(board->ioWrites.size() == 1 && board->ioWrites[0].address == 0x40 && board->ioReads == 1,
+            "a claimed I/O port reaches the board once per I/O cycle");
+    require(board->reads.size() == 20 && board->blocks.empty(), "the NOPs run from the uncached board slot");
+    for (std::size_t index = 0; index < board->reads.size(); ++index) {
+        const auto& read = board->reads[index];
+        require(read.slot == 2 && read.address == 0xC000 + index && read.m1,
+                "every opcode fetch reaches the board once, with /M1, despite the MSX wait state");
+    }
+    require(machine.connectBridgeSlot(3, nullptr) && machine.bridgeSlot(3) == 0, "the board slot can be freed");
+}
+
+void testUsbSlotCache()
+{
+    svi728::SVI728 machine;
+    require(machine.loadMainRom(boardTestRom()), "board test ROM loads");
+    auto transport = std::make_unique<RecordingBoard>();
+    auto* board = transport.get();
+    usbslot::Bridge bridge(std::move(transport));
+    usbslot::BoardSlot boardSlot(bridge, 1, usbslot::SlotConfig{});
+    require(machine.connectBridgeSlot(3, &boardSlot), "slot 1 of the board goes into slot 3");
+    machine.reset();
+    for (int tick = 0; tick < 1000; ++tick) (void)machine.tick();
+    require(board->blocks.size() == 1 && board->blocks[0].address == 0xC000 && board->reads.empty(),
+            "with the cache the NOPs cost one line fetch");
+    require(board->ioWrites.empty(), "ports the slot does not claim stay in the machine");
+    require(machine.readMemory(0xC010) == 0x00 && machine.readMemory(0xC200) == 0xFF,
+            "reads without a bus cycle show the cache");
+}
+
+// T-states from the opcode fetch at one address to the opcode fetch at another.
+std::uint64_t ticksBetweenFetches(svi728::SVI728& machine, std::uint16_t from, std::uint16_t to)
+{
+    std::uint64_t start = 0;
+    bool started = false;
+    bool previousFetch = false;
+    for (std::uint64_t tick = 0; tick < 1000; ++tick) {
+        const auto pins = machine.tick();
+        const bool fetch = pins.m1 && pins.memoryRequest && pins.read;
+        if (fetch && !previousFetch) {
+            if (!started && pins.address == from) {
+                start = tick;
+                started = true;
+            } else if (started && pins.address == to) {
+                return tick - start;
+            }
+        }
+        previousFetch = fetch;
+    }
+    return 0;
+}
+
+void testUsbSlotWaitAndInterrupt()
+{
+    // IN A,(#40); NOP; IM 1; EI; HALT; ... #38: HALT
+    std::vector<std::uint8_t> rom(svi728::MainRomSize, 0x00);
+    const std::vector<std::uint8_t> program = {0xDB, 0x40, 0x00, 0xED, 0x56, 0xFB, 0x76};
+    std::copy(program.begin(), program.end(), rom.begin());
+    rom[0x38] = 0x76;
+    svi728::SVI728 machine;
+    require(machine.loadMainRom(rom), "wait test ROM loads");
+    auto transport = std::make_unique<RecordingBoard>();
+    auto* board = transport.get();
+    usbslot::Bridge bridge(std::move(transport));
+    usbslot::SlotConfig config;
+    config.ioPorts = {0x40};
+    usbslot::BoardSlot boardSlot(bridge, 1, config);
+    require(machine.connectBridgeSlot(2, &boardSlot), "board slot connected");
+    board->ioWaits = 10;
+    machine.reset();
+    // IN A,(n): 11 T-states plus the M1 wait state of the machine, plus the 10 wait clocks of the cartridge
+    require(ticksBetweenFetches(machine, 0x0000, 0x0002) == 22, "/WAIT of the cartridge lengthens the I/O cycle");
+
+    bool interrupted = false;
+    for (int tick = 0; tick < 200; ++tick) {
+        const auto pins = machine.tick();
+        if (pins.m1 && pins.memoryRequest && pins.read && pins.address == 0x0038) interrupted = true;
+    }
+    require(!interrupted, "no interrupt while /INT of the board is inactive");
+    board->interrupts = {0};
+    bridge.heartbeat();
+    for (int tick = 0; tick < 200 && !interrupted; ++tick) {
+        const auto pins = machine.tick();
+        if (pins.m1 && pins.memoryRequest && pins.read && pins.address == 0x0038) interrupted = true;
+    }
+    require(interrupted, "/INT of the board interrupts the CPU");
+}
+
 } // namespace
 
 int main()
@@ -611,6 +806,9 @@ int main()
     testSnapshots();
     testCpuBusCycle();
     testM1WaitStates();
+    testUsbSlotBridge();
+    testUsbSlotCache();
+    testUsbSlotWaitAndInterrupt();
         testCassetteFileNameSuggestion();
     std::cout << "All SVI728 tests passed.\n";
 }

@@ -27,6 +27,7 @@ $tests = @(
     @{ Name = 'rp5c01_tests';         Arguments = @();     Timeout = 60 },
     @{ Name = 'wd2793_tests';         Arguments = @();     Timeout = 60 },
     @{ Name = 'cartridge_tests';      Arguments = @();     Timeout = 60 },
+    @{ Name = 'usbslot_tests';        Arguments = @();     Timeout = 60 },
     @{ Name = 'printer_tests';        Arguments = @();     Timeout = 60 },
     # The boot tests need the system ROMs; without them the test runs everything else.
     @{ Name = 'vg8235_tests';         Arguments = $(if (Test-Path -LiteralPath (Join-Path $romDir 'VG8235-ROM1 - Basic2.0.bin')) { @($romDir) } else { @() }); Timeout = 120 }

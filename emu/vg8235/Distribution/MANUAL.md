@@ -48,7 +48,7 @@ The emulator needs the three system ROMs below. It looks for each of them, by fi
 | --- | --- |
 | `VG8235-ROM1 - Basic2.0.bin` | BIOS with MSX BASIC 2.0 (32 KiB) |
 | `VG8235-ROM2 - Basic2.0.bin` | Sub-ROM (16 KiB) |
-| `VG8235-ROM3 - DiskDD.bin` | disk ROM (16 KiB) |
+| `VG8235-ROM3 - Disc.rom` | disk ROM (16 KiB) |
 
 **Where to find the ROM images.** The emulator does not come with them in its public setup. Files with the same content (same SHA1) are known under these names; the addresses are given as text on purpose:
 
@@ -56,7 +56,7 @@ The emulator needs the three system ROMs below. It looks for each of them, by fi
 | --- | --- | --- |
 | `VG8235-ROM1 - Basic2.0.bin` | `5e1a4bd6826b29302a1eb88c340477e7cbd0b50a` | openMSX machine `Philips_VG_8235-00`: `vg8235-00_basic-bios2.rom` |
 | `VG8235-ROM2 - Basic2.0.bin` | `c289dad246364e2dd716c457ca5eecf98e76c9ab` | openMSX machine `Philips_VG_8235-00`: `vg8235-00_msx2sub.rom` |
-| `VG8235-ROM3 - DiskDD.bin` | `c3efedda7ab947a06d9345f7b8261076fa7ceeef` | openMSX machines `Philips_NMS_8250-16` and `-19`: `nms8250_disk.rom`; blueMSX `Machines\Shared Roms`: `PHILIPSDISK.rom` (openMSX's `Philips_VG_8235-00` names a different disk ROM revision) |
+| `VG8235-ROM3 - Disc.rom` | `7ce255ab63ba79f81d8b83d66f1108062d0b61f1` | openMSX machine `Philips_VG_8235-00`: `vg8235-00_disk.rom` |
 
 The command line can name a disk image for drive A and, with `-state <file.sst>`, a snapshot to continue from:
 
@@ -437,7 +437,7 @@ Bank numbers wrap at the ROM size; reset selects bank 0 (banks 0-3 for the Konam
 | --- | --- | --- | --- |
 | `VG8235-ROM1 - Basic2.0.bin` | 32 KiB | `5e1a4bd6826b29302a1eb88c340477e7cbd0b50a` | BIOS and MSX BASIC 2.0 of the VG 8235/00 |
 | `VG8235-ROM2 - Basic2.0.bin` | 16 KiB | `c289dad246364e2dd716c457ca5eecf98e76c9ab` | Sub-ROM of the VG 8235/00 |
-| `VG8235-ROM3 - DiskDD.bin` | 16 KiB | `c3efedda7ab947a06d9345f7b8261076fa7ceeef` | disk ROM of the Philips NMS 8250, which uses the same disk interface |
+| `VG8235-ROM3 - Disc.rom` | 16 KiB | `7ce255ab63ba79f81d8b83d66f1108062d0b61f1` | disk ROM of the VG 8235/00 |
 
 ## Appendix B: Sources
 

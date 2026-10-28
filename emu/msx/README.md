@@ -12,3 +12,4 @@ builds on the settings of `chips`.
 | Component | Contents |
 | --- | --- |
 | [CARTRIDGE/](CARTRIDGE/README.md) | Cartridge slot: ROM modules without mapper and ASCII8, ASCII16, Konami and Konami SCC (without SCC sound), mapper detection |
+| [USBSLOT/](USBSLOT/README.md) | USB2SLOT board: real cartridges in a module slot, bus cycles over USB |

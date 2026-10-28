@@ -2742,32 +2742,45 @@ CORE10LOOP:   CALL I2CPCTRL         ; Test PIN Bit
               JR NZ,CORE10STOP      ; 0 = Slave Acknowledged
                                     ; 1 = No slave present, stop output
 
+              DEC B                 ; Data byte LEN-1 reached?
+              JR Z,CORE10END        ; Then prepare negative acknowledgement
+
               LD A,D                ; Read I2C data
-              OUT (ALE),A           
+              OUT (ALE),A
               IN A,(SWIO)           ; A contains dummy data at first time
               LD (HL),A             ; Set lower byte of buffer
-              
+
               LD A,B                ; First read? Discard data
-              SUB C
-              JP Z,CORE10GO
-                            
+              INC A
+              CP C
+              JR Z,CORE10LOOP
+
+              INC HL
+              LD A,#00              ; Set higher byte of buffer to 0
+              LD (HL),A
+              INC HL                ; HL points to next INT in buffer
+              JR CORE10LOOP
+
+CORE10END:    LD A,E                ; Set ACK bit S1 to 0 in preparation
+              OUT (ALE),A           ; for negative acknowledgement
+              LD A,#040
+              OUT (SWIO),A
+
+              LD A,D                ; Read I2C data
+              OUT (ALE),A
+              IN A,(SWIO)           ; A contains data byte LEN-1
+              LD (HL),A             ; (dummy data if LEN = 1)
+
+              LD A,C                ; LEN = 1? Then it was the dummy read
+              DEC A
+              JR Z,CORE10LAST
+
               INC HL
               LD A,#00              ; Set higher byte of buffer to 0
               LD (HL),A
               INC HL                ; HL points to next INT in buffer
 
-CORE10GO:     DJNZ CORE10LOOP
-
-CORE10END:    LD A,E                ; Set ACK bit S1 to 0 in preparation
-              OUT (ALE),A           ; for negative acknowledgement
-              LD A,#040
-              OUT (SWIO),A              
-
-              LD A,D                ; Read I2C data
-              OUT (ALE),A           
-              IN A,(SWIO)           ; A contains dummy data
-                       
-              CALL I2CPCTRL         ; Test PIN Bit
+CORE10LAST:   CALL I2CPCTRL         ; Test PIN Bit
 
 CORE10STOP:   LD A,E                ; Yes? Send STOP on I2C
               OUT (ALE),A
@@ -2898,9 +2911,10 @@ CORE11:       PUSH HL               ; Save BASIC Line-Pointer (if CALL is used)
 
               DI
 
-              LD D,C                ; A0 = 0
+              LD A,C                ; Get IO address of PCF8584
+              LD D,A                ; A0 = 0
               ADD A,#01
-              LD E,C                ; A0 = 1
+              LD E,A                ; A0 = 1
 
               CALL IOEN             ; Switched IO enabled
 

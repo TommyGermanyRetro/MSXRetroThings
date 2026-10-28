@@ -53,7 +53,7 @@
                                     ;* fires asynchronously. See        *
                                     ;* DRV/README.md.                   *
                                     ;************************************
-                                    ;* VERSION: 17/09/26                *
+                                    ;* VERSION: 28/10/26                *
                                     ;************************************
 
 ;*******************
@@ -545,10 +545,8 @@ UNDEFINED:
 ;===  Functions addresses table  ===
 ;===================================
 
-                                    ; Only 0/2/3/4/5-15/33-42/43-56/57-62
-                                    ; are real; every other slot is
-                                    ; UNDEFINED - add slots as the port
-                                    ; is extended
+                                    ; 0 and 2-62 as in RCXROM; 1 (help
+                                    ; screen of CALL RCX ?) is UNDEFINED
 
 FN_TABLE:
         DEFW    FN_INFO         ; 0  mandatory: API/implementation info
@@ -1367,21 +1365,24 @@ CORE10LOOP:   CALL  I2CPCTRL
 
               JR    NZ,CORE10STOP
 
+              DEC   B
+              JR    Z,CORE10END
+
               LD    A,D
               OUT   (ALE),A
               IN    A,(SWIO)
               LD    (HL),A
 
               LD    A,B
-              SUB   C
-              JP    Z,CORE10GO
+              INC   A
+              CP    C
+              JR    Z,CORE10LOOP
 
               INC   HL
               LD    A,#00
               LD    (HL),A
               INC   HL
-
-CORE10GO:     DJNZ  CORE10LOOP
+              JR    CORE10LOOP
 
 CORE10END:    LD    A,E
               OUT   (ALE),A
@@ -1391,8 +1392,18 @@ CORE10END:    LD    A,E
               LD    A,D
               OUT   (ALE),A
               IN    A,(SWIO)
+              LD    (HL),A
 
-              CALL  I2CPCTRL
+              LD    A,C
+              DEC   A
+              JR    Z,CORE10LAST
+
+              INC   HL
+              LD    A,#00
+              LD    (HL),A
+              INC   HL
+
+CORE10LAST:   CALL  I2CPCTRL
 
 CORE10STOP:   LD    A,E
               OUT   (ALE),A
@@ -1443,9 +1454,10 @@ CORE11:       PUSH  HL
 
               DI
 
-              LD    D,C
+              LD    A,C
+              LD    D,A
               ADD   A,#01
-              LD    E,C
+              LD    E,A
 
               CALL  IOEN
 

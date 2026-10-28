@@ -173,6 +173,6 @@ by the VDP, not by the PC, so the video runs at the speed of the real MSX. The s
 
 ## 9. License
 
-The parts in this folder follow the [license of this repository](../README.md#8-license): software
+The parts in this folder follow the [license of this repository](../README.md#9-license): software
 MIT, the card (schematic, layout, Gerber and drill files, bill of materials, GAL equations)
 CERN-OHL-S-2.0, documentation, photos and video CC BY-SA 4.0.

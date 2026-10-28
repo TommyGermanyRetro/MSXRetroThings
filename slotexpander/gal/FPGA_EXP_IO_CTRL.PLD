@@ -1,0 +1,46 @@
+Name     FPGA_EXP_IO_CTRL ;
+PartNo   00 ;
+Date     20.06.2019 ;
+Revision 01 ;
+Designer Engineer ;
+Company  Privat ;
+Assembly None ;
+Location None ;
+Device   g16v8 ;
+
+/* *************** INPUT PINS ******************************************/
+
+PIN 2   =   WR                   ; /*                                 */ 
+PIN 3   =   RD                   ; /*                                 */ 
+PIN 4   =   SLTSL                ; /*                                 */ 
+PIN 6   =   LA                   ; /*                                 */ 
+PIN 7   =   HA                   ; /*                                 */ 
+PIN 8   =   Y2                   ; /*                                 */ 
+PIN 9   =   Y1                   ; /*                                 */ 
+
+/* *************** OUTPUT PINS *****************************************/
+
+PIN 18  =   SL                   ; /*                                 */ 
+PIN 17  =   EXP3                 ; /*                                 */ 
+PIN 16  =   EXP2                 ; /*                                 */ 
+PIN 15  =   EXP1                 ; /*                                 */ 
+PIN 14  =   EXP0                 ; /*                                 */ 
+PIN 13  =   EXPWR                ; /*                                 */ 
+PIN 12  =   EXPRD                ; /*                                 */ 
+
+/* *************** LOGIC ***********************************************/
+ 
+!ERD = !RD & !LA & !HA & !SLTSL;
+!EWR = !WR & !LA & !HA & !SLTSL;
+
+EXPRD = !RD & !LA & !HA & !SLTSL;
+EXPWR = !WR & !LA & !HA & !SLTSL;
+
+EXPSL = !SLTSL & ERD & EWR;
+
+!EXP0 = EXPSL & !Y1 & !Y2;  
+!EXP1 = EXPSL & !Y1 &  Y2; 
+!EXP2 = EXPSL &  Y1 & !Y2; 
+!EXP3 = EXPSL &  Y1 &  Y2; 
+
+!SL = !RD & !SLTSL;

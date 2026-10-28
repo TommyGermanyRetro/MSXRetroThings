@@ -1,0 +1,3 @@
+Qty,Reference,Value,Package,Description
+1,SLOT101,MSX card,MSXCARD,"MSX cartridge edge connector, 50 pins (2 x 25), 2.54 mm pitch, part of the board"
+1,SLOT102,Box header 2x25,MSXSLOT-ML,"Box header 50 pins (2 x 25), 2.54 mm, for the ribbon cable to the expander"

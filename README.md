@@ -24,7 +24,8 @@ Thomas
 + [5. Emulators](#5-msxretrothings---emulators)
 + [6. USB2SLOT, real MSX cartridges in openMSX](#6-msxretrothings---usb2slot-real-msx-cartridges-in-openmsx)
 + [7. TMS9918A, the MSX1 picture on the PC screen](#7-msxretrothings---tms9918a-the-msx1-picture-on-the-pc-screen)
-+ [8. License](#8-license)
++ [8. Slot expander, four cartridge slots for one MSX slot](#8-msxretrothings---slot-expander-four-cartridge-slots-for-one-msx-slot)
++ [9. License](#9-license)
 
 
 ## 1. MSXRetroThings - The XIO cartridge
@@ -533,7 +534,39 @@ Pico firmware (source and ready-to-flash UF2), the emulator (source and ready-to
 
 [↑ Contents](#contents)
 
-## 8. License
+## 8. MSXRetroThings - Slot expander, four cartridge slots for one MSX slot
+
+#### <b>8.1 The slot expander provides:</b>
+
++ Four cartridge slots behind one primary slot of the MSX, as subslots 0-3 with the standard subslot register at FFFFh
+
++ A DIP switch to take each subslot in or out, and a trimmer per slot for the sound level of each cartridge
+
++ Its own 5 V supply over USB with power switch, and +12 V / -12 V for the slots from a DC-DC converter
+
++ A 50-wire ribbon cable to the MSX: straight to a Spectravideo SVI-728, or to any other MSX through the Slot2Bus adapter in a cartridge slot
+
++ 3D-printable enclosures for the expander and the adapter as FreeCAD files
+
++ Tested on a Spectravideo SVI-728; it also carries the cards in the [TMS9918A](#7-msxretrothings---tms9918a-the-msx1-picture-on-the-pc-screen) pictures
+
+#### <b>8.2 Impressions:</b>
+
+The Slot2Bus adapter in its cartridge-shaped enclosure (left), the ribbon cable and the expander with its four slots (right)
+
+![Slot expander with the Slot2Bus adapter](slotexpander/media/slotexpander_setup.jpg)
+
+#### <b>8.3 Hardware:</b>
+
+Eagle schematics and layouts, Gerber and drill files and bills of materials of the expander and the adapter: [slotexpander/pcb](slotexpander/pcb); GAL equations: [slotexpander/gal](slotexpander/gal); enclosures as FreeCAD files: [slotexpander/case](slotexpander/case); notes in [slotexpander/README.md](slotexpander/README.md#2-hardware).
+
+#### <b>8.4 Software:</b>
+
+None needed: the subslots are switched by the BIOS of the MSX through the register at FFFFh, like with any standard slot expander.
+
+[↑ Contents](#contents)
+
+## 9. License
 
 Except where explicitly stated otherwise, this repository is licensed as follows (details in [LICENSE.txt](LICENSE.txt)):
 

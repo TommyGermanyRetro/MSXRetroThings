@@ -41,6 +41,24 @@ Content classify(Bridge& bridge, std::uint8_t slot)
     return rom ? Content::Rom : (data ? Content::Data : Content::Empty);
 }
 
+// SD Mapper/Megaram 512K: Nextor driver header in ROM bank 7 of subslot 1 - "NEXTOR_DRIVER" at 4100h and the
+// driver name "SDMapper Driver" at 4110h. Selects subslot 1 for page 1 and bank 7 for the check, then the
+// reset values again (bank 0, expander register 00h).
+bool hasSdMapperDriver(Bridge& bridge, std::uint8_t slot)
+{
+    static constexpr char Signature[] = "NEXTOR_DRIVER";
+    static constexpr char Name[] = "SDMapper Driver";
+    bridge.writeMemory(slot, 0xFFFF, 0x04);
+    bridge.writeMemory(slot, 0x6000, 0x07);
+    std::vector<std::uint8_t> header;
+    const bool read = bridge.readBlock(slot, 0x4100, 0x20, header);
+    bridge.writeMemory(slot, 0x6000, 0x00);
+    bridge.writeMemory(slot, 0xFFFF, 0x00);
+    if (!read) return false;
+    return std::equal(Signature, Signature + sizeof Signature, header.begin()) &&
+           std::equal(Name, Name + sizeof Name - 1, header.begin() + 0x10);
+}
+
 } // namespace
 
 void Rules::noCache(std::uint16_t base, std::uint32_t size)
@@ -50,11 +68,19 @@ void Rules::noCache(std::uint16_t base, std::uint32_t size)
     for (std::uint32_t line = base / LineSize; line <= last / LineSize; ++line) uncached.set(line);
 }
 
+void Rules::noCacheWhenSwitched(std::uint16_t base, std::uint32_t size)
+{
+    if (size == 0) return;
+    const std::uint32_t last = std::min<std::uint32_t>(base + size - 1, 0xFFFF);
+    for (std::uint32_t line = base / LineSize; line <= last / LineSize; ++line) switchedUncached.set(line);
+}
+
 Detection detectBoard(Bridge& bridge)
 {
     Detection detection;
     bridge.reset();
     std::array<bool, 2> expander{};
+    std::array<bool, 2> sdMapper{};
     std::array<std::array<Content, 4>, 2> contents{};
     for (std::uint8_t slot = 1; slot <= 2; ++slot) {
         std::uint32_t waits = 0;
@@ -67,6 +93,8 @@ Detection detectBoard(Bridge& bridge)
                 contents[slot - 1][sub] = classify(bridge, slot);
             }
             bridge.writeMemory(slot, 0xFFFF, 0x00);
+            sdMapper[slot - 1] = contents[slot - 1][1] == Content::Rom && contents[slot - 1][3] == Content::Data &&
+                                 hasSdMapperDriver(bridge, slot);
         } else {
             bridge.writeMemory(slot, 0xFFFF, old);
             contents[slot - 1][0] = classify(bridge, slot);
@@ -91,14 +119,21 @@ Detection detectBoard(Bridge& bridge)
         if (!expander[index]) {
             if (sub[0] == Content::Empty) continue;
             config.description = "Cartridge";
-        } else if (sub[1] == Content::Rom && sub[3] == Content::Data) {
-            // SD Mapper/Megaram 512K: Nextor ROM with its bank register at 6000h and the SD card
-            // interface at 4000h-4800h in subslot 1, 512 KiB RAM in subslot 3
+        } else if (sdMapper[index]) {
+            // SD Mapper/Megaram 512K: Nextor ROM with its bank register at 6000h in subslot 1; a write
+            // to 6001h (bit 0) switches 4000h-47FFh and 4800h to the SPI port of the SD cards. Its driver
+            // reads a sector with LD HL,4000h and 512 LDI (18 clocks each on the MSX): the read of 4001h
+            // starts the rest of the sector, 511 reads 24 clocks apart (one SPI byte takes about 19
+            // clocks). 512 KiB RAM in subslot 3.
             config.expander = true;
             config.rules[1].bankPage = 1;
             config.rules[1].bankAddress = 0x6000;
             config.rules[1].bankMask = 0x07;
-            config.rules[1].noCache(0x4000, 0x0801);
+            config.rules[1].switchAddress = 0x6001;
+            config.rules[1].noCacheWhenSwitched(0x4000, 0x0801);
+            config.rules[1].spiBlockStart = 0x4001;
+            config.rules[1].spiBlockEnd = 0x41FF;
+            config.rules[1].spiBlockGap = 24;
             if (mapperAnswers) {
                 config.rules[3].mapper = true;
                 config.rules[3].mapperPort = 0xFC;
@@ -188,7 +223,10 @@ BoardSlot::WindowCache& BoardSlot::image(unsigned window)
 
 bool BoardSlot::isUncached(std::uint16_t address) const noexcept
 {
-    return settings.rules[subslotOf(address / PageSize)].uncached.test(address / LineSize);
+    const unsigned sub = subslotOf(address / PageSize);
+    const Rules& rules = settings.rules[sub];
+    const unsigned line = address / LineSize;
+    return rules.uncached.test(line) || (switchedOn[sub] && rules.switchedUncached.test(line));
 }
 
 bool BoardSlot::fetchLine(WindowCache& cache, std::uint16_t address)
@@ -214,8 +252,39 @@ std::uint8_t BoardSlot::read(std::uint16_t address, bool m1, std::uint32_t& wait
 {
     waits = 0;
     if (!board.connected()) return 0xFF;
+    if (m1) {
+        lastFetch = address;
+        fetched = true;
+    }
     if (settings.expander && address == 0xFFFF) return static_cast<std::uint8_t>(~expanderRegister);
-    if (isUncached(address)) return readCycle(address, m1, waits);
+    if (isUncached(address)) {
+        if (!spiBuffer.empty()) {
+            if (!m1 && address == spiNext) {
+                const auto value = spiBuffer[spiPosition++];
+                ++spiNext;
+                if (spiPosition == spiBuffer.size()) spiBuffer.clear();
+                return value;
+            }
+            ++spiErrorCount;
+            dropSpiBlock();
+        }
+        const unsigned sub = subslotOf(address / PageSize);
+        const Rules& rules = settings.rules[sub];
+        const unsigned count = (!m1 && switchedOn[sub] && rules.spiBlockStart == static_cast<int>(address))
+            ? ldiChainLength(address, rules.spiBlockEnd - address + 1u) : 0u;
+        if (count > 1) {
+            std::vector<std::uint8_t> block;
+            if (board.readBlockSpaced(slotNumber, address, static_cast<std::uint16_t>(count), rules.spiBlockGap, block)) {
+                ++spiBlockCount;
+                spiBuffer = std::move(block);
+                spiPosition = 1;
+                spiNext = static_cast<std::uint16_t>(address + 1);
+                return spiBuffer[0];
+            }
+            if (!board.connected()) return 0xFF;
+        }
+        return readCycle(address, m1, waits);
+    }
     WindowCache& cache = image(address / WindowSize);
     const unsigned offset = address % WindowSize;
     const unsigned line = offset / LineSize;
@@ -247,6 +316,17 @@ void BoardSlot::write(std::uint16_t address, std::uint8_t value)
         bank[sub] = static_cast<std::uint8_t>(value & rules.bankMask);
         return;
     }
+    if (!spiBuffer.empty() && (isUncached(address) || (rules.switchAddress >= 0 && address == rules.switchAddress))) {
+        // The sector read was broken off: the board has clocked bytes the CPU will not read
+        ++spiErrorCount;
+        dropSpiBlock();
+    }
+    if (rules.switchAddress >= 0 && address == rules.switchAddress) {
+        switchedOn[sub] = (value & 1) != 0;
+        return;
+    }
+    // A write to a line read on the board (registers, the SPI port) leaves the cache alone.
+    if (isUncached(address)) return;
     if (rules.megaram && !megaramWrite) {
         // Bank switching mode: every write sets the bank register selected by A14-A13
         megaramBank[(address >> 13) & 3] = static_cast<std::uint8_t>(value & 0x3F);
@@ -315,9 +395,55 @@ void BoardSlot::reset()
     images.clear();
     expanderRegister = 0;
     bank.fill(0);
+    switchedOn.fill(false);
+    fetched = false;
+    dropSpiBlock();
     segment = {0, 1, 2, 3};
     megaramBank = {0, 1, 2, 3};
     megaramWrite = false;
+}
+
+void BoardSlot::dropSpiBlock()
+{
+    spiBuffer.clear();
+    spiPosition = 0;
+}
+
+int BoardSlot::cachedByte(std::uint16_t address)
+{
+    if (isUncached(address) || (settings.expander && address == 0xFFFF)) return -1;
+    WindowCache& cache = image(address / WindowSize);
+    const unsigned offset = address % WindowSize;
+    if (!cache.valid.test(offset / LineSize) && !fetchLine(cache, address)) return -1;
+    if (cache.stale.test(offset)) return -1;
+    return cache.data[offset];
+}
+
+// The instruction that reads now is the LDI whose second opcode byte (A0h) was the last fetch from this slot;
+// every further ED A0 directly behind it reads the next byte. Anything else (no LDI, code not readable from
+// the cache) gives 1: only this byte.
+unsigned BoardSlot::ldiChainLength(std::uint16_t address, unsigned limit)
+{
+    (void)address;
+    if (!fetched || lastFetch == 0) return 1;
+    if (cachedByte(static_cast<std::uint16_t>(lastFetch - 1)) != 0xED || cachedByte(lastFetch) != 0xA0) return 1;
+    unsigned count = 1;
+    std::uint16_t next = static_cast<std::uint16_t>(lastFetch + 1);
+    while (count < limit && cachedByte(next) == 0xED && cachedByte(static_cast<std::uint16_t>(next + 1)) == 0xA0) {
+        ++count;
+        next = static_cast<std::uint16_t>(next + 2);
+    }
+    return count;
+}
+
+unsigned long BoardSlot::spiBlocks() const noexcept
+{
+    return spiBlockCount;
+}
+
+unsigned long BoardSlot::spiBlockErrors() const noexcept
+{
+    return spiErrorCount;
 }
 
 } // namespace usbslot

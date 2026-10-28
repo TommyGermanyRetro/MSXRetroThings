@@ -11,7 +11,9 @@ namespace usbslot {
 
 namespace {
 
-constexpr std::uint8_t ProtocolVersion = 2;
+// Protocol 3 adds spaced block reads (MRDNG); with protocol 2 they are refused.
+constexpr std::uint8_t OldestProtocol = 2;
+constexpr std::uint8_t SpacedProtocol = 3;
 constexpr auto HeartbeatInterval = std::chrono::milliseconds(20);
 // Half the time limit of the board (200 ms): a longer gap may have switched the cartridges off.
 constexpr auto OffCheckGap = std::chrono::milliseconds(100);
@@ -30,10 +32,11 @@ public:
         }
         std::uint8_t version = 0;
         std::uint16_t maxBlock = 0;
-        if (!link.hello(version, maxBlock) || version != ProtocolVersion) {
+        if (!link.hello(version, maxBlock) || version < OldestProtocol || version > SpacedProtocol) {
             error = "unsupported protocol version " + std::to_string(version) + " on " + port;
             return false;
         }
+        protocol = version;
         return link.run();
     }
 
@@ -58,6 +61,18 @@ public:
         std::uint16_t waits = 0;
         std::uint8_t status = 0;
         if (!link.memReadBlock(slot, address, count, data, waits, status)) return false;
+        if (status != slotlink::StOk) data.clear();
+        return true;
+    }
+
+    bool memReadBlockSpaced(std::uint8_t slot, std::uint16_t address, std::uint16_t count, std::uint8_t gap,
+                            std::vector<std::uint8_t>& data) override
+    {
+        data.clear();
+        if (protocol < SpacedProtocol) return true;
+        std::uint16_t waits = 0;
+        std::uint8_t status = 0;
+        if (!link.memReadBlock(slot, address, count, data, waits, status, gap)) return false;
         if (status != slotlink::StOk) data.clear();
         return true;
     }
@@ -107,6 +122,7 @@ public:
 
 private:
     slotlink::Link link;
+    std::uint8_t protocol = OldestProtocol;
 };
 
 } // namespace
@@ -205,6 +221,21 @@ bool Bridge::readBlock(std::uint8_t slot, std::uint16_t address, std::uint16_t c
     if (failed) return false;
     keepAlive();
     if (!failed && !transport->memReadBlock(slot, address, count, data)) fail();
+    if (!failed) takeInterrupts();
+    if (failed || data.size() != count) {
+        data.clear();
+        return false;
+    }
+    return true;
+}
+
+bool Bridge::readBlockSpaced(std::uint8_t slot, std::uint16_t address, std::uint16_t count, std::uint8_t gap,
+                             std::vector<std::uint8_t>& data)
+{
+    data.clear();
+    if (failed) return false;
+    keepAlive();
+    if (!failed && !transport->memReadBlockSpaced(slot, address, count, gap, data)) fail();
     if (!failed) takeInterrupts();
     if (failed || data.size() != count) {
         data.clear();

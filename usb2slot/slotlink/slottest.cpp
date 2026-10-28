@@ -24,7 +24,7 @@
 //***************************************************************************************************
 //* MSX (c) 2026 by Dr.-Ing. Thomas Wiesner
 //***************************************************************************************************
-//* VERSION: 21/10/26
+//* VERSION: 28/10/26
 //***************************************************************************************************
 
 #define _CRT_SECURE_NO_WARNINGS
@@ -34,6 +34,7 @@
 #include <cstdarg>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <string>
 
 using namespace slotlink;
@@ -87,7 +88,7 @@ static void selftest(Link &link)
     printf("Selbsttest Binaerprotokoll\n");
 
     check(link.hello(version, maxBlock), "HELLO beantwortet");
-    checkf(version == 2 && maxBlock == 1024, "Version %u, groesster Block %u (Soll 2, 1024)", version,
+    checkf(version == 3 && maxBlock == 1024, "Version %u, groesster Block %u (Soll 3, 1024)", version,
            maxBlock);
 
     check(link.sync(sy), "SYNC beantwortet");
@@ -307,12 +308,38 @@ static void scan(Link &link)
         printf("SLOT %u EXPANDER %u\n", slot, expander ? 1 : 0);
         if (expander)
         {
+            const char *kind[4] = {};
             for (unsigned sub = 0; sub < 4; sub++)
             {
                 link.memWrite(slot, 0xFFFF, static_cast<uint8_t>(sub * 0x55));
-                printf("SUB %u %u %s\n", slot, sub, classify(slot));
+                kind[sub] = classify(slot);
+                printf("SUB %u %u %s\n", slot, sub, kind[sub]);
             }
             link.memWrite(slot, 0xFFFF, 0x00);
+            // Nextor-Treiber eines SD Mappers: Kopf in ROM-Bank 7 von Unterslot 1 ("NEXTOR_DRIVER" bei 4100h,
+            // Treibername bei 4110h); danach wieder Bank 0 und Expander-Register 00h
+            if (strcmp(kind[1], "ROM") == 0 && strcmp(kind[3], "DATA") == 0)
+            {
+                link.memWrite(slot, 0xFFFF, 0x04);
+                link.memWrite(slot, 0x6000, 0x07);
+                std::vector<uint8_t> head;
+                uint16_t waits = 0;
+                uint8_t status = 0;
+                bool ok = link.memReadBlock(slot, 0x4100, 0x30, head, waits, status) && status == StOk &&
+                          head.size() == 0x30 && memcmp(head.data(), "NEXTOR_DRIVER", 14) == 0;
+                link.memWrite(slot, 0x6000, 0x00);
+                link.memWrite(slot, 0xFFFF, 0x00);
+                std::string name;
+                if (ok)
+                {
+                    name.assign(reinterpret_cast<const char *>(head.data() + 0x10), 32);
+                    while (!name.empty() && name.back() == ' ')
+                    {
+                        name.pop_back();
+                    }
+                }
+                printf("DRIVER %u %s\n", slot, name.empty() ? "-" : name.c_str());
+            }
         }
         else
         {

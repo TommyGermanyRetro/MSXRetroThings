@@ -25,6 +25,18 @@ public:
     // when the board refused the block. False only when the transfer failed.
     [[nodiscard]] virtual bool memReadBlock(std::uint8_t slot, std::uint16_t address, std::uint16_t count,
                                             std::vector<std::uint8_t>& data) = 0;
+    // The same with gap clocks from the start of one read cycle to the next (protocol 3, for ports that
+    // need time per byte). A board without it refuses: data stays empty, the result is true.
+    [[nodiscard]] virtual bool memReadBlockSpaced(std::uint8_t slot, std::uint16_t address, std::uint16_t count,
+                                                  std::uint8_t gap, std::vector<std::uint8_t>& data)
+    {
+        (void)slot;
+        (void)address;
+        (void)count;
+        (void)gap;
+        data.clear();
+        return true;
+    }
     [[nodiscard]] virtual bool ioRead(std::uint8_t port, std::uint8_t& data, std::uint32_t& waits) = 0;
     // I/O write cycle, sent at once and answered with the wait clocks.
     [[nodiscard]] virtual bool ioWrite(std::uint8_t port, std::uint8_t value, std::uint32_t& waits) = 0;
@@ -65,6 +77,9 @@ public:
     // or the transfer failed.
     [[nodiscard]] bool readBlock(std::uint8_t slot, std::uint16_t address, std::uint16_t count,
                                  std::vector<std::uint8_t>& data);
+    // The same with gap clocks between the read cycles; false also when the board cannot do it.
+    [[nodiscard]] bool readBlockSpaced(std::uint8_t slot, std::uint16_t address, std::uint16_t count,
+                                       std::uint8_t gap, std::vector<std::uint8_t>& data);
     [[nodiscard]] std::uint8_t readIo(std::uint8_t port, std::uint32_t& waits);
     void writeIo(std::uint8_t port, std::uint8_t value, std::uint32_t& waits);
 

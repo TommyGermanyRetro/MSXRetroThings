@@ -36,6 +36,14 @@ struct USBSlotLink;
   * either directly below the device (no slot expander) or per <subslot id="0..3"> when the
   * cartridge contains its own slot expander (<expander>true</expander>, register FFFFh):
   *   <nocache base=".." size=".."/>         always read from the cartridge (registers, ports)
+  *   <nocacheswitch address="0x6001" base="0x4000" size="0x0801"/>
+  *                                          read from the cartridge only while bit 0 of the last
+  *                                          write to the address is set (SD Mapper: SPI port
+  *                                          instead of the Nextor ROM)
+  *   <spiblock start="0x4001" end="0x41FF" gap="24"/>
+  *                                          when an LDI of this device reads start through the
+  *                                          switched port, the LDI behind it in the code are read
+  *                                          in one block, gap clocks per byte (bridge protocol 3)
   *   <bank page="1" address="0x6000" mask="0x07"/>
   *                                          a write to the address selects the ROM bank of the page
   *   <mapper port="0xFC" mask="0x1F"/>      memory mapper RAM, segments set by the ports
@@ -76,6 +84,11 @@ private:
 	// Switching rules of one subslot (or of the whole slot without expander)
 	struct Rules {
 		std::bitset<0x10000 / LINE_SIZE> uncached;
+		std::bitset<0x10000 / LINE_SIZE> switchedUncached;
+		int switchAddress = -1;
+		int spiBlockStart = -1;
+		uint16_t spiBlockEnd = 0;
+		byte spiBlockGap = 0;
 		int bankPage = -1;
 		uint16_t bankAddress = 0;
 		byte bankMask = 0xFF;
@@ -113,6 +126,9 @@ private:
 	byte readCycle(uint16_t address, EmuTime time);
 	void invalidatePage(unsigned page);
 	void invalidateWindow(unsigned window);
+	void spiBroken();
+	int cachedByte(uint16_t address);
+	unsigned ldiChainLength(unsigned limit);
 
 	struct SyncRun final : Schedulable {
 		explicit SyncRun(USBSlot& owner_, Scheduler& s)
@@ -134,6 +150,11 @@ private:
 	std::array<byte, 4> segment = {0, 1, 2, 3};
 	std::array<byte, 4> megaramBank = {0, 1, 2, 3};
 	bool megaramWrite = false;
+	std::array<bool, 4> switchedOn = {};
+	std::vector<byte> spiBuffer;
+	size_t spiPosition = 0;
+	uint16_t spiNext = 0;
+	unsigned long spiBreaks = 0;
 	std::map<uint32_t, std::unique_ptr<WindowCache>> images;
 };
 

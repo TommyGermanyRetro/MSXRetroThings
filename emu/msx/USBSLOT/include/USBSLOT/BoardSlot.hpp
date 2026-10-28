@@ -22,6 +22,18 @@ inline constexpr unsigned LinesPerWindow = WindowSize / LineSize;
 struct Rules {
     // Lines of 256 bytes that are always read on the board (registers, status, ports).
     std::bitset<0x10000 / LineSize> uncached;
+    // Lines that are read on the board only while bit 0 of the last write to switchAddress is set (SD
+    // Mapper: 6001h switches 4000h-47FFh and 4800h from the Nextor ROM to the SPI port); -1: no switch.
+    std::bitset<0x10000 / LineSize> switchedUncached;
+    int switchAddress = -1;
+    // Reads through a port that needs time per byte, done by an unrolled chain of LDI in the ROM of the
+    // cartridge (SD Mapper: LD HL,4000h and 16 or 512 LDI). When the LDI fetched from this slot reads
+    // spiBlockStart with the switch on, the LDI that follow it in the code give the number of bytes still
+    // to come: they are read in one block with spiBlockGap clocks per byte (at most up to spiBlockEnd), and
+    // the reads in order come from it; -1: none.
+    int spiBlockStart = -1;
+    std::uint16_t spiBlockEnd = 0;
+    std::uint8_t spiBlockGap = 0;
     // A write to bankAddress selects the ROM bank of bankPage (-1: no ROM bank).
     int bankPage = -1;
     std::uint16_t bankAddress = 0;
@@ -36,6 +48,7 @@ struct Rules {
     std::uint8_t megaramPort = 0x8E;
 
     void noCache(std::uint16_t base, std::uint32_t size);
+    void noCacheWhenSwitched(std::uint16_t base, std::uint32_t size);
 };
 
 struct SlotConfig {
@@ -85,6 +98,10 @@ public:
     // Clears the cache and the switching state, as after power-on of the cartridge.
     void reset();
 
+    // Sector reads served by one spaced block, and those broken off by an unexpected access.
+    [[nodiscard]] unsigned long spiBlocks() const noexcept;
+    [[nodiscard]] unsigned long spiBlockErrors() const noexcept;
+
 private:
     struct WindowCache {
         std::array<std::uint8_t, WindowSize> data{};
@@ -100,6 +117,11 @@ private:
     [[nodiscard]] bool isUncached(std::uint16_t address) const noexcept;
     bool fetchLine(WindowCache& cache, std::uint16_t address);
     std::uint8_t readCycle(std::uint16_t address, bool m1, std::uint32_t& waits);
+    void dropSpiBlock();
+    // Byte of a cacheable area through the cache (fetching its line), -1 when it cannot be read that way.
+    int cachedByte(std::uint16_t address);
+    // Number of bytes the LDI chain around the last instruction fetch will read from address on.
+    unsigned ldiChainLength(std::uint16_t address, unsigned limit);
 
     Bridge& board;
     std::uint8_t slotNumber;
@@ -110,6 +132,14 @@ private:
     std::array<std::uint8_t, 4> segment{0, 1, 2, 3};
     std::array<std::uint8_t, 4> megaramBank{0, 1, 2, 3};
     bool megaramWrite = false;
+    std::array<bool, 4> switchedOn{};
+    std::uint16_t lastFetch = 0;
+    bool fetched = false;
+    std::vector<std::uint8_t> spiBuffer;
+    std::size_t spiPosition = 0;
+    std::uint16_t spiNext = 0;
+    unsigned long spiBlockCount = 0;
+    unsigned long spiErrorCount = 0;
 };
 
 } // namespace usbslot

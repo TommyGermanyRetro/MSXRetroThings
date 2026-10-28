@@ -20,7 +20,8 @@
           <expander>true</expander>
           <subslot id="1">
             <bank page="1" address="0x6000" mask="0x07"/>
-            <nocache base="0x4000" size="0x0801"/>
+            <nocacheswitch address="0x6001" base="0x4000" size="0x0801"/>
+            <spiblock start="0x4001" end="0x41FF" gap="24"/>
           </subslot>
           <subslot id="3">
             <megaram port="0x8E"/>

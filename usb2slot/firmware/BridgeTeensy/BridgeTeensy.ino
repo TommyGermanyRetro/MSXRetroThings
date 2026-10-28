@@ -12,9 +12,10 @@
 //* Zyklus, hoechstens um 100 ms. Mit Ueberwachung des Herzschlags gibt die Bridge zwischen den     *
 //* Zyklen Leerlauf-Refresh aus und geht ohne Herzschlag nach AUS (wie ein stromloser MSX).         *
 //*                                                                                                 *
-//* Betrieb ueber das Binaerprotokoll Version 2 (Textkommando b, siehe ANALYSE.md Abschnitt 4.3):   *
-//* HELLO, MRD, MWR, IORD, IOWR, IOWRW, MRDN, RESET, RUN, SYNC, CFG, TEST; jede Aenderung von /INT  *
-//* meldet die Bridge mit C0h und Pegel.                                                            *
+//* Betrieb ueber das Binaerprotokoll Version 3 (Textkommando b, siehe ANALYSE.md Abschnitt 4.3):   *
+//* HELLO, MRD, MWR, IORD, IOWR, IOWRW, MRDN, MRDNG, RESET, RUN, SYNC, CFG, TEST; jede Aenderung    *
+//* von /INT meldet die Bridge mit C0h und Pegel. MRDNG liest wie MRDN fortlaufende Adressen, mit   *
+//* einem festen Abstand in Takten von Zyklusbeginn zu Zyklusbeginn (SPI-Fenster mit Zeitbedarf).   *
 //*                                                                                                 *
 //* Textkommandos fuer Tests (eine Zeile, Abschluss LF oder CR, Zahlen hexadezimal):                *
 //*   r<slot> <adr>          Speicher lesen           m<slot> <adr>        Opcode-Fetch (M1)        *
@@ -40,7 +41,7 @@
 //***************************************************************************************************
 //* MSX (c) 2026 by Dr.-Ing. Thomas Wiesner                                                         *
 //***************************************************************************************************
-//* VERSION: 23/10/26                                                                               *
+//* VERSION: 28/10/26                                                                               *
 //***************************************************************************************************
 
 #include <Arduino.h>
@@ -125,7 +126,7 @@ static const uint32_t MAX_WAIT_T   = 358000;            // hoechste Zahl eingefu
 static const uint32_t MAX_TEST_WAITS = 64;              // hoechste Zahl Wartetakte im Testmodus (t <n>)
 static const size_t   LINE_SIZE    = 48;
 static const uint32_t RESET_MS     = 10;                // Vorgabe fuer die Laenge des /RESET-Impulses
-static const uint8_t  PROTOCOL_VERSION = 2;             // Version des Binaerprotokolls
+static const uint8_t  PROTOCOL_VERSION = 3;             // Version des Binaerprotokolls
 static const uint16_t MAX_BLOCK    = 1024;              // hoechste Zahl Lesezyklen je MRDN
 static const uint32_t BINARY_SUPERVISE_MS = 200;        // Zeitgrenze fuer RUN nach dem Wechsel ins Binaerprotokoll
 static const uint32_t REFRESH_DUE_US = 12;              // spaetestens so oft ein Refresh-Zyklus (128 Zeilen in 2 ms)
@@ -948,6 +949,7 @@ static const uint8_t OP_SYNC  = 0x09;
 static const uint8_t OP_CFG   = 0x0B;                   // Zeitgrenze in ms (2)
 static const uint8_t OP_TEST  = 0x0C;                   // Testleitung TEST: 0 = LOW, 1 = HIGH
 static const uint8_t OP_IOWRW = 0x0D;                   // port, wert; Antwort mit Wartetakten (4)
+static const uint8_t OP_MRDNG = 0x0E;                   // slot, adr (2), anzahl (2), abstand in Takten
 
 static const uint8_t ST_OK    = 0;
 static const uint8_t ST_OFF   = 1;                      // Zustand AUS
@@ -975,6 +977,7 @@ static size_t frameLength(uint8_t op)
     case OP_CFG:   return 3;
     case OP_TEST:  return 2;
     case OP_IOWRW: return 3;
+    case OP_MRDNG: return 7;
     default:       return 0;
     }
 }
@@ -1118,7 +1121,7 @@ static void handleFrame(const uint8_t *f)
     // Buszyklen; ein Wechsel von /INT, den der Zyklus ausloest, wird noch vor seiner Antwort gemeldet
     uint8_t slot = f[1];
     uint16_t addr = (uint16_t)(f[2] | (f[3] << 8));
-    bool memory = (op == OP_MRD || op == OP_MWR || op == OP_MRDN);
+    bool memory = (op == OP_MRD || op == OP_MWR || op == OP_MRDN || op == OP_MRDNG);
 
     if (!busOn)
     {
@@ -1135,7 +1138,7 @@ static void handleFrame(const uint8_t *f)
         {
             postedErrors++;
         }
-        else if (op == OP_MRDN)
+        else if (op == OP_MRDN || op == OP_MRDNG)
         {
             uint16_t n = (uint16_t)(f[4] | (f[5] << 8));
 
@@ -1223,9 +1226,10 @@ static void handleFrame(const uint8_t *f)
         checkInt();
         replyWrite(op, clockFailed ? ST_CLOCK : ST_OK, r.waits);
     }
-    else if (op == OP_MRDN)
+    else if (op == OP_MRDN || op == OP_MRDNG)
     {
         uint16_t n = (uint16_t)(f[4] | (f[5] << 8));
+        uint8_t gap = (op == OP_MRDNG) ? f[6] : 0;      // Takte von Zyklusbeginn zu Zyklusbeginn
         uint32_t waits = 0;
 
         if (n == 0 || n > MAX_BLOCK)
@@ -1240,6 +1244,11 @@ static void handleFrame(const uint8_t *f)
             noInterrupts();
             refreshIfDue();
             CycleResult r = memRead(slot, (uint16_t)(addr + i));
+            // Lesezyklus = 3 Takte + Wartetakte; den Rest des Abstands im Leerlauf abwarten
+            for (uint32_t used = 3 + r.waits; used < gap && i + 1 < n && !clockFailed; used++)
+            {
+                waitRising();
+            }
             interrupts();
             blockBuf[2 + i] = r.data;
             waits += r.waits;

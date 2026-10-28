@@ -490,7 +490,7 @@ At work: the SD Mapper/Megaram 512K cartridge and, over the ribbon cable, the RC
 
 ![USB2SLOT at work](usb2slot/pcb/usb2slot_setup.jpg)
 
-**Videos: booting Nextor from a real cartridge.** Both machines are emulated by openMSX, the cartridge is real: the SD Mapper/Megaram 512K sits in slot 2 of the board, and openMSX reaches it only over USB. From power-on, the machine scans its slots, finds the Nextor ROM of the cartridge, loads NEXTOR.SYS and COMMAND2.COM from the SD card of the cartridge and stops at the `A:\>` prompt. The videos were recorded in emulated time, so they run at the speed of a real MSX; on the PC the start takes about twice as long, because every SD card access is a round trip over USB. Click a picture to open the video.
+**Videos: booting Nextor from a real cartridge.** Both machines are emulated by openMSX, the cartridge is real: the SD Mapper/Megaram 512K sits in slot 2 of the board, and openMSX reaches it only over USB. From power-on, the machine scans its slots, finds the Nextor ROM of the cartridge, loads NEXTOR.SYS and COMMAND2.COM from the SD card of the cartridge and stops at the `A:\>` prompt. The videos were recorded in emulated time, so they run at the speed of a real MSX. With firmware protocol 3 the PC is faster than that: openMSX reaches the prompt of the VG-8235 after about 6 seconds, because the SD card sectors come over USB in one block each (see [usb2slot/CARTRIDGE_PROFILES.md](usb2slot/CARTRIDGE_PROFILES.md)). Click a picture to open the video.
 
 Philips VG-8235 (MSX2), prompt after 18 seconds
 

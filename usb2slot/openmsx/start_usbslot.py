@@ -7,8 +7,9 @@ Switched-I/O-Kennung C0h an Port 40h (RCX/XIO) und die Mapper-Ports FCh-FFh. Dar
 Benutzerverzeichnis von openMSX:
 
   USBSlotAuto1.xml, USBSlotAuto2.xml  je belegter Bridge-Slot
-      - SD Mapper/Megaram 512K (Expander, ROM in Unterslot 1, Daten in Unterslot 3): Nextor-Bank in
-        Unterslot 1, Unterslot 3 als Memory Mapper (Ports FCh-FFh antworten mit E0h..) oder MegaRAM
+      - SD Mapper/Megaram 512K (Expander, ROM in Unterslot 1, Daten in Unterslot 3 und in ROM-Bank 7 der
+        Nextor-Treiber "SDMapper Driver"): Nextor-Bank und SPI-Schalter 6001h in Unterslot 1 mit Sektorblock
+        (Bridge-Protokoll 3), Unterslot 3 als Memory Mapper (Ports FCh-FFh antworten mit E0h..) oder MegaRAM
       - anderer Expander: <expander>true</expander> ohne weitere Regeln
       - ohne Expander: einfache Cartridge
       - leerer Slot: keine Erweiterung
@@ -37,6 +38,7 @@ BUILD_OPENMSX = r"D:\openMSX_build\openMSX-21.0\derived\x64-VC-Release\install\o
 BUILD_SHARE = r"C:\Program Files\openMSX\share"
 USER_EXT = os.path.join(os.path.expanduser("~"), "Documents", "openMSX", "share", "extensions")
 PORT = os.environ.get("USBSLOT_PORT", "COM16")
+OHNE_FENSTER = getattr(subprocess, "CREATE_NO_WINDOW", 0)       # slottest ohne eigenes Konsolenfenster
 
 KOPF = """<?xml version="1.0" ?>
 <!DOCTYPE msxconfig SYSTEM 'msxconfig2.dtd'>
@@ -71,8 +73,9 @@ def openmsx_pfade():
 
 def scan():
     """Fuehrt slottest scan aus und liefert (slots, swio, mapperports)."""
-    ausgabe = subprocess.run([SLOTTEST, PORT, "scan"], capture_output=True, text=True, check=False).stdout
-    slots = {1: {"expander": False, "sub": {}}, 2: {"expander": False, "sub": {}}}
+    ausgabe = subprocess.run([SLOTTEST, PORT, "scan"], capture_output=True, text=True, check=False,
+                             creationflags=OHNE_FENSTER).stdout
+    slots = {1: {"expander": False, "sub": {}, "treiber": ""}, 2: {"expander": False, "sub": {}, "treiber": ""}}
     swio = False
     mapperports = []
     for zeile in ausgabe.splitlines():
@@ -83,6 +86,8 @@ def scan():
             slots[int(teile[1])]["expander"] = teile[3] == "1"
         elif teile[0] == "SUB":
             slots[int(teile[1])]["sub"][int(teile[2])] = teile[3]
+        elif teile[0] == "DRIVER":
+            slots[int(teile[1])]["treiber"] = " ".join(teile[2:])
         elif teile[0] == "SWIO":
             swio = teile[1] == "1"
         elif teile[0] == "MAPPERPORTS":
@@ -108,10 +113,11 @@ def erweiterung_slot(nr, info, mapper_aktiv):
         if sub.get(0) == "EMPTY":
             return None
         return "Cartridge", geraet(nr, "")
-    if sub.get(1) == "ROM" and sub.get(3) == "DATA":
+    if sub.get(1) == "ROM" and sub.get(3) == "DATA" and info["treiber"] == "SDMapper Driver":
         nextor = ("          <subslot id=\"1\">\n"
                   "            <bank page=\"1\" address=\"0x6000\" mask=\"0x07\"/>\n"
-                  "            <nocache base=\"0x4000\" size=\"0x0801\"/>\n"
+                  "            <nocacheswitch address=\"0x6001\" base=\"0x4000\" size=\"0x0801\"/>\n"
+                  "            <spiblock start=\"0x4001\" end=\"0x41FF\" gap=\"24\"/>\n"
                   "          </subslot>\n")
         if mapper_aktiv:
             regeln = ("          <expander>true</expander>\n" + nextor +
@@ -202,5 +208,20 @@ def main():
     return subprocess.call(befehl)
 
 
+def ohne_konsole():
+    """True beim Start mit pythonw.exe (Desktop-Verknuepfung): keine Konsole, Ausgaben gehen ins Leere."""
+    return sys.stdout is None or sys.executable.lower().endswith("pythonw.exe")
+
+
 if __name__ == "__main__":
-    sys.exit(main())
+    if not ohne_konsole():
+        sys.exit(main())
+    sys.stdout = sys.stderr = open(os.devnull, "w")
+    try:
+        sys.exit(main())
+    except SystemExit:
+        raise
+    except Exception as fehler:
+        import ctypes
+        ctypes.windll.user32.MessageBoxW(None, str(fehler), "openMSX USB2SLOT", 0x10)
+        sys.exit(1)

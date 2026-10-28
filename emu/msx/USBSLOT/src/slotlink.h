@@ -12,7 +12,7 @@
 //***************************************************************************************************
 //* MSX (c) 2026 by Dr.-Ing. Thomas Wiesner
 //***************************************************************************************************
-//* VERSION: 21/10/26
+//* VERSION: 28/10/26
 //***************************************************************************************************
 
 #pragma once
@@ -46,6 +46,7 @@ enum Op : uint8_t
     OpCfg   = 0x0B,
     OpTest  = 0x0C,
     OpIowrw = 0x0D,
+    OpMrdng = 0x0E,                                     // ab Protokoll 3
     EvInt   = 0xC0
 };
 
@@ -240,18 +241,24 @@ public:
         return true;
     }
 
-    // n aufeinanderfolgende Lesezyklen ab addr (n = 1 bis maxBlock)
+    // n aufeinanderfolgende Lesezyklen ab addr (n = 1 bis maxBlock); mit gap > 0 (ab Protokoll 3) liegen
+    // gap Takte zwischen den Zyklusanfaengen
     bool memReadBlock(uint8_t slot, uint16_t addr, uint16_t n, std::vector<uint8_t> &out, uint16_t &waits,
-                      uint8_t &status)
+                      uint8_t &status, uint8_t gap = 0)
     {
-        tx_.insert(tx_.end(), { OpMrdn, slot, lo(addr), hi(addr), lo(n), hi(n) });
+        const uint8_t op = gap ? OpMrdng : OpMrdn;
+        tx_.insert(tx_.end(), { op, slot, lo(addr), hi(addr), lo(n), hi(n) });
+        if (gap)
+        {
+            tx_.push_back(gap);
+        }
         if (!flush())
         {
             return false;
         }
 
         uint8_t head[2];
-        if (!readReply(OpMrdn, head, 2))
+        if (!readReply(op, head, 2))
         {
             return false;
         }

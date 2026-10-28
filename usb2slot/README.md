@@ -12,7 +12,7 @@ cartridges (I/O, /INT and /WAIT), on emulated Spectravideo SVI-728 and Philips V
 
 ![USB2SLOT at work](pcb/usb2slot_setup.jpg)
 
-**Videos: booting Nextor from a real cartridge.** Both machines are emulated by openMSX, the cartridge is real: the SD Mapper/Megaram 512K sits in slot 2 of the board, and openMSX reaches it only over USB. From power-on, the machine scans its slots, finds the Nextor ROM of the cartridge, loads NEXTOR.SYS and COMMAND2.COM from the SD card of the cartridge and stops at the `A:\>` prompt. The videos were recorded in emulated time, so they run at the speed of a real MSX; on the PC the start takes about twice as long, because every SD card access is a round trip over USB. Click a picture to open the video.
+**Videos: booting Nextor from a real cartridge.** Both machines are emulated by openMSX, the cartridge is real: the SD Mapper/Megaram 512K sits in slot 2 of the board, and openMSX reaches it only over USB. From power-on, the machine scans its slots, finds the Nextor ROM of the cartridge, loads NEXTOR.SYS and COMMAND2.COM from the SD card of the cartridge and stops at the `A:\>` prompt. The videos were recorded in emulated time, so they run at the speed of a real MSX. With firmware protocol 3 the PC is faster than that: openMSX reaches the prompt of the VG-8235 after about 6 seconds, because the SD card sectors come over USB in one block each (see [CARTRIDGE_PROFILES.md](CARTRIDGE_PROFILES.md)). Click a picture to open the video.
 
 Philips VG-8235 (MSX2), prompt after 18 seconds
 
@@ -33,6 +33,7 @@ Spectravideo SVI-728 (MSX1), prompt after 17 seconds
 | [slotlink](slotlink) | PC library `slotlink.h` (Win32) and the test tool `slottest.exe` with its source |
 | [openmsx](openmsx) | The `USBSlot` device (`USBSlot.cc/.hh`), start script, extensions, build scripts |
 | [media](media) | Videos: start of a VG-8235 and an SVI-728 to the Nextor prompt |
+| [CARTRIDGE_PROFILES.md](CARTRIDGE_PROFILES.md) | Recipe for cartridges with their own logic (slot expander, bank registers, SPI ports): detection, cache rules, block reads, measuring; worked example SD Mapper |
 | [openmsx/bin](openmsx/bin) | Ready-to-run openMSX 21.0 for Windows x64 with the `USBSlot` device built in |
 
 ## 1. Hardware
@@ -79,13 +80,17 @@ The firmware runs on a Teensy 4.1 (USB type "Serial", CPU speed 600 MHz).
 After flashing, the Teensy appears as a serial port (COM port). Look up its number in the Windows Device Manager;
 all examples below use `COM16`.
 
+The firmware speaks binary protocol version 3 (spaced block reads `MRDNG` for ports that need time per byte).
+openMSX and `slottest` of this folder also accept a board with protocol 2; then the SD card of the SD Mapper is
+read byte by byte, as before, and much slower. After an update of this folder, flash the new `.hex` as well.
+
 ## 3. Check the board
 
 `slotlink/slottest.exe` talks to the board directly (rebuild it with `slotlink/build.cmd`, Visual Studio 2022):
 
 ```text
 slottest COM16 hello       version and state of the board
-slottest COM16 scan        what is plugged in: slot expander, ROM/data/empty per subslot, I/O ports
+slottest COM16 scan        what is plugged in: slot expander, ROM/data/empty per subslot, Nextor driver name, I/O ports
 slottest COM16 selftest    protocol self test
 slottest COM16 dump 1 4000 4000 rom.bin    read 16 KB from slot 1, address 4000h, into rom.bin
 ```
@@ -108,7 +113,8 @@ The script first asks the board what is plugged in (`slottest scan`), writes mat
 
 - a cartridge without slot expander,
 - a cartridge with its own slot expander (contents of each subslot),
-- the SD Mapper/Megaram 512K cartridge, either as Memory Mapper (ports FCh-FFh) or as MegaRAM (ports 8Eh/8Fh),
+- the SD Mapper/Megaram 512K cartridge, either as Memory Mapper (ports FCh-FFh) or as MegaRAM (ports 8Eh/8Fh);
+  only when ROM bank 7 holds the Nextor driver "SDMapper Driver", otherwise it counts as a plain slot expander,
 - RCX/XIO cartridges with switched I/O on ports 40h-47h.
 
 Examples:
@@ -163,6 +169,9 @@ The cartridges themselves need no ROM files: their ROMs sit on the real cartridg
 
 - Every slot access of the emulated CPU goes to the real cartridge. A read cache keeps ROM contents on the PC, so
   ROM software runs in real time; I/O ports and areas marked `<nocache>` are always accessed directly.
+- SD Mapper: the Nextor ROM is cached as long as the SPI port of the SD cards is switched off (6001h). The driver
+  reads a sector with 512 `LDI` (a card register with 16); the bridge reads the bytes that chain will take in one
+  block, 24 clocks apart, as the SPI logic of the cartridge needs it.
 - /INT of the cartridges reaches the emulated CPU. /WAIT of memory reads and of I/O cycles is added to the
   emulated time.
 - While openMSX runs, it sends a heartbeat to the board. When the emulation stops for more than 200 ms (pause,
@@ -191,6 +200,8 @@ Rules inside `<USBSlot>` that tell the read cache how the cartridge switches its
 | --- | --- |
 | `<expander>true</expander>` | the cartridge has its own slot expander (register FFFFh); rules per subslot in `<subslot id="0..3">` |
 | `<nocache base=".." size=".."/>` | area is always read directly (registers, status, ports) |
+| `<nocacheswitch address="0x6001" base="0x4000" size="0x0801"/>` | area is read directly only while bit 0 of the last write to the address is set (SD Mapper: SPI port instead of the Nextor ROM) |
+| `<spiblock start="0x4001" end="0x41FF" gap="24"/>` | when an `LDI` of the cartridge's ROM reads `start` through the switched port, the bytes of the `LDI` that follow it in the code (at most up to `end`) are read in one block, `gap` clocks per byte (protocol 3) |
 | `<bank page="1" address="0x6000" mask="0x07"/>` | a write to the address selects the ROM bank of the page |
 | `<mapper port="0xFC" mask="0x1F"/>` | Memory Mapper RAM, segments selected by ports FCh-FFh |
 | `<megaram port="0x8E"/>` | MegaRAM with four 8 KB bank registers, switched by ports 8Eh/8Fh |
@@ -222,8 +233,10 @@ python <this folder>\openmsx\apply.py C:\openMSX-21.0
 - /WAIT during memory writes is not added to the emulated time (no cartridge known to need it).
 - Cartridges with an unknown slot expander or mapper run without switching rules; the cache then may show stale
   contents after a bank switch. Add matching rules to the extension.
-- Uncached accesses take a USB round trip of a few hundred microseconds. Loading from the SD card of the SD Mapper
-  cartridge runs about 2.5 times slower than real time; cached ROM code runs in real time.
+- Uncached accesses take a USB round trip of about 100 microseconds. With firmware protocol 3 the SD card of the SD
+  Mapper is about as fast as on a real MSX (`dir` in openMSX 4 s instead of 15 s byte by byte); cached ROM code runs in real
+  time. Other cartridges with ports that need time per byte need their own profile, see
+  [CARTRIDGE_PROFILES.md](CARTRIDGE_PROFILES.md).
 - Not tested yet: game cartridges with their own mapper (Konami, ASCII, SCC), FM-PAC.
 
 ## 8. License

@@ -25,7 +25,13 @@ module slot to the board, so the CPU reads and writes the real cartridge.
 - `detectBoard()` probes the board like the start script of the USB2SLOT project: slot expander, ROM, data or
   empty per (sub)slot, switched I/O ID C0h at port 40h, Memory Mapper answers at FCh-FFh. It returns the rules,
   the I/O ports to forward and a description per slot. Known profile: the SD Mapper/Megaram 512K (Nextor bank
-  register at 6000h, SD interface 4000h-4800h without cache, Memory Mapper or MegaRAM in subslot 3).
+  register at 6000h; 4000h-47FFh and 4800h are read on the board only while bit 0 of the last write to 6001h
+  switches them to the SPI port of the SD cards, otherwise the Nextor ROM there is cached; Memory Mapper or
+  MegaRAM in subslot 3). It is only given when ROM bank 7 holds the Nextor driver header "NEXTOR_DRIVER"
+  with the name "SDMapper Driver"; otherwise the cartridge is a plain slot expander.
+- With bridge protocol 3 the SD Mapper reads a sector or card register in one spaced block: when the LDI
+  fetched from the slot reads 4001h through the SPI port, the LDI behind it in the code give the number of
+  bytes to come, read 24 clocks apart (`Rules::spiBlock*`, `BoardSlot::spiBlocks()`/`spiBlockErrors()`).
 
 The serial implementation uses `slotlink.h`, the PC library of the USB2SLOT project, unchanged (Win32 API only).
 

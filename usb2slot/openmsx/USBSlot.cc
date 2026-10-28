@@ -5,7 +5,9 @@
 #include "DeviceConfig.hh"
 #include "MSXCliComm.hh"
 #include "EmuDuration.hh"
+#include "CPURegs.hh"
 #include "MSXCPU.hh"
+#include "MSXCPUInterface.hh"
 #include "MSXException.hh"
 #include "Timer.hh"
 #include "XMLElement.hh"
@@ -38,6 +40,7 @@ struct USBSlotLink {
 	bool resetDone = false;
 	bool intLow = false;                // /INT is one wired-OR line for the whole bridge
 	const USBSlot* irqOwner = nullptr;  // the device that raises it as an IRQ
+	uint8_t protocol = 2;               // 3: spaced block reads (MRDNG)
 };
 
 static std::mutex registryMutex;
@@ -55,9 +58,10 @@ static std::string connect(USBSlotLink& l)
 	}
 	uint8_t version = 0;
 	uint16_t maxBlock = 0;
-	if (!l.link.hello(version, maxBlock) || version != 2) {
+	if (!l.link.hello(version, maxBlock) || version < 2 || version > 3) {
 		return strCat("unsupported bridge protocol version ", static_cast<int>(version));
 	}
+	l.protocol = version;
 	l.link.run();
 	l.lastRunReal = Timer::getTime();
 	l.failed = false;
@@ -126,6 +130,28 @@ void USBSlot::parseRules(const XMLElement& element, Rules& r)
 		}
 		for (unsigned line = base / LINE_SIZE; line <= (base + size - 1) / LINE_SIZE; ++line) {
 			r.uncached.set(line);
+		}
+	}
+	if (const auto* n = element.findChild("nocacheswitch")) {
+		unsigned base = n->getAttributeValueAsInt("base", 0);
+		unsigned size = n->getAttributeValueAsInt("size", 0);
+		if (size == 0 || base >= 0x10000 || base + size > 0x10000) {
+			throw MSXException("USBSlot: <nocacheswitch> must lie in [0x0000,0x10000)");
+		}
+		r.switchAddress = n->getAttributeValueAsInt("address", -1);
+		if (r.switchAddress < 0 || r.switchAddress > 0xFFFF) {
+			throw MSXException("USBSlot: <nocacheswitch address=\"0x0000..0xFFFF\">");
+		}
+		for (unsigned line = base / LINE_SIZE; line <= (base + size - 1) / LINE_SIZE; ++line) {
+			r.switchedUncached.set(line);
+		}
+	}
+	if (const auto* s = element.findChild("spiblock")) {
+		r.spiBlockStart = s->getAttributeValueAsInt("start", -1);
+		r.spiBlockEnd = static_cast<uint16_t>(s->getAttributeValueAsInt("end", 0));
+		r.spiBlockGap = static_cast<byte>(s->getAttributeValueAsInt("gap", 0));
+		if (r.spiBlockStart < 0 || r.spiBlockStart > r.spiBlockEnd || r.spiBlockGap == 0) {
+			throw MSXException("USBSlot: <spiblock start=\"..\" end=\"..\" gap=\"..\"> with start <= end and gap > 0");
 		}
 	}
 	if (const auto* b = element.findChild("bank")) {
@@ -260,7 +286,9 @@ USBSlot::WindowCache& USBSlot::image(unsigned window)
 
 bool USBSlot::isUncached(uint16_t address) const
 {
-	return rules[subslotOf(address / PAGE_SIZE)].uncached.test(address / LINE_SIZE);
+	unsigned sub = subslotOf(address / PAGE_SIZE);
+	unsigned line = address / LINE_SIZE;
+	return rules[sub].uncached.test(line) || (switchedOn[sub] && rules[sub].switchedUncached.test(line));
 }
 
 void USBSlot::invalidatePage(unsigned page)
@@ -310,6 +338,51 @@ void USBSlot::resetState()
 	segment = {0, 1, 2, 3};
 	megaramBank = {0, 1, 2, 3};
 	megaramWrite = false;
+	switchedOn.fill(false);
+	spiBuffer.clear();
+}
+
+// The sector read was broken off: the bridge has clocked bytes the CPU will not read
+void USBSlot::spiBroken()
+{
+	spiBuffer.clear();
+	if (spiBreaks++ == 0) {
+		getCliComm().printWarning("USBSlot: a block read of the cartridge port was broken off");
+	}
+}
+
+// Byte of a cacheable area through the cache (fetching its line), -1 when it cannot be read that way
+int USBSlot::cachedByte(uint16_t address)
+{
+	if (isUncached(address) || (expander && address == 0xFFFF)) {
+		return -1;
+	}
+	WindowCache& wc = image(address / WINDOW_SIZE);
+	unsigned offset = address % WINDOW_SIZE;
+	if (!wc.valid.test(offset / LINE_SIZE) && !fetchLine(wc, address)) {
+		return -1;
+	}
+	return wc.stale.test(offset) ? -1 : wc.data[offset];
+}
+
+// During the memory access of an LDI the PC of openMSX still points to its second opcode byte (A0h). The
+// instruction that reads now is an LDI of this device when ED A0 stands at PC-1 in a page shown by this device;
+// every further ED A0 directly behind it reads the next byte. Anything else gives 1: only this byte.
+unsigned USBSlot::ldiChainLength(unsigned limit)
+{
+	uint16_t pc = getCPU().getRegisters().getPC();
+	if (getCPUInterface().getVisibleMSXDevice(((pc - 1) & 0xFFFF) / PAGE_SIZE) != this ||
+	    cachedByte(pc - 1) != 0xED || cachedByte(pc) != 0xA0) {
+		return 1;
+	}
+	pc += 1;
+	unsigned count = 1;
+	while (count < limit && getCPUInterface().getVisibleMSXDevice(((pc + 1) & 0xFFFF) / PAGE_SIZE) == this &&
+	       cachedByte(pc) == 0xED && cachedByte(pc + 1) == 0xA0) {
+		++count;
+		pc += 2;
+	}
+	return count;
 }
 
 const byte* USBSlot::getReadCacheLine(uint16_t start) const
@@ -392,6 +465,41 @@ byte USBSlot::readMem(uint16_t address, EmuTime time)
 		return static_cast<byte>(~expanderReg);
 	}
 	if (isUncached(address)) {
+		if (!spiBuffer.empty()) {
+			if (address == spiNext && !getCPU().isM1Cycle(address)) {
+				byte value = spiBuffer[spiPosition++];
+				++spiNext;
+				if (spiPosition == spiBuffer.size()) {
+					spiBuffer.clear();
+				}
+				return value;
+			}
+			spiBroken();
+		}
+		unsigned sub = subslotOf(address / PAGE_SIZE);
+		const Rules& r = rules[sub];
+		if (switchedOn[sub] && r.spiBlockStart == address && link->protocol >= 3 &&
+		    !getCPU().isM1Cycle(address)) {
+			unsigned count = ldiChainLength(r.spiBlockEnd - address + 1);
+			if (count > 1) {
+				std::vector<uint8_t> block;
+				uint16_t waits = 0;
+				uint8_t status = 0;
+				if (!link->link.memReadBlock(static_cast<uint8_t>(slotNumber), address,
+				                             static_cast<uint16_t>(count), block, waits, status,
+				                             r.spiBlockGap)) {
+					linkFailed();
+					return 0xFF;
+				}
+				if (status == slotlink::StOk && block.size() == count) {
+					spiBuffer = std::move(block);
+					spiPosition = 1;
+					spiNext = address + 1;
+					pollInt();
+					return spiBuffer[0];
+				}
+			}
+		}
 		return readCycle(address, time);
 	}
 	WindowCache& wc = image(address / WINDOW_SIZE);
@@ -456,6 +564,27 @@ void USBSlot::writeMem(uint16_t address, byte value, EmuTime /*time*/)
 		if (subslotOf(r.bankPage) == sub) {
 			invalidatePage(r.bankPage);
 		}
+		return;
+	}
+	if (!spiBuffer.empty() && (isUncached(address) || (r.switchAddress >= 0 && address == r.switchAddress))) {
+		spiBroken();
+	}
+	if (r.switchAddress >= 0 && address == r.switchAddress) {
+		bool on = (value & 1) != 0;
+		if (on && !switchedOn[sub]) {
+			// The switched lines now belong to the cartridge port: the CPU must not read them from
+			// its cache any more
+			for (unsigned line = 0; line < 0x10000 / LINE_SIZE; ++line) {
+				if (r.switchedUncached.test(line) && subslotOf(line * LINE_SIZE / PAGE_SIZE) == sub) {
+					invalidateDeviceRCache(line * LINE_SIZE, LINE_SIZE);
+				}
+			}
+		}
+		switchedOn[sub] = on;
+		return;
+	}
+	// A write to a line read from the cartridge (registers, the SPI port) leaves the cache alone
+	if (isUncached(address)) {
 		return;
 	}
 	if (r.megaram && !megaramWrite) {

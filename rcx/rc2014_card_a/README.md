@@ -136,6 +136,6 @@ Commands implemented in ROM:
 + [com/](com/README.md) - `.COM` tools (UNAPI/EXTBIOS)
 + [sdcc/](sdcc/README.md) - SDCC tools
 + [tsr/](tsr/README.md) - MemMan TSR
-+ [pcb/](pcb/) - schematics and PCB
++ [pcb/](pcb/) - schematics, PCB, Gerber and drill files, bill of materials
 
 [↑ Main README](../../README.md#a-rc2014-card-with-pcf8584-i2c-controller-3-ports-via-seeed-and-pcf8583-battery-buffered-rtc)

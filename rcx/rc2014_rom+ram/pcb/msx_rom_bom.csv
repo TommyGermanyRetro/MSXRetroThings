@@ -1,0 +1,9 @@
+Qty,Reference,Value,Package,Description
+1,SLOT101,MSX card,MSXCARD,"MSX cartridge edge connector, 50 pins (2 x 25), 2.54 mm pitch, part of the board"
+1,ZX101,ZIF 28,228-1277-00-0602J,"ZIF socket 28 pins, 0.6 inch (3M Textool 228-1277-00-0602J)"
+1,-,AT28C256,DIL28,"EEPROM 32 KB (AT28C256 or compatible) in the ZIF socket, flashed with rom/RCXROM.hex"
+1,IC101,74HCT32N,DIL14,Quad OR
+1,C101,100n,C025-025X050,"Ceramic capacitor 100 nF, 2.5 mm pitch"
+1,R101,10k,0207/10,"Resistor 10 kOhm, axial, 10 mm pitch: pull-up /WE"
+1,S1,PROG,TL3XPO,Slide or toggle switch 1 x changeover: write enable of the EEPROM
+1,JP101,2X03,2X03,"Pin header 2 x 3, 2.54 mm, with jumper: ROM area /CS1, /CS2 or /CS12"

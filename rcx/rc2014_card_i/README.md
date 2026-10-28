@@ -11,6 +11,6 @@ Details coming soon.
 + [basic/](basic/) - BASIC test programs
 + [com/](com/) - `.COM` tools (UNAPI/EXTBIOS)
 + [atmel/](atmel/) - ATMEGA8 firmware
-+ [pcb/](pcb/) - schematics and PCB
++ [pcb/](pcb/) - schematics, PCB, Gerber and drill files, bill of materials
 
 [↑ Main README](../../README.md#i-rc2014-card-with-mcp4822-4-channel-12-bit-da-converter-via-atmega8)

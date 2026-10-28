@@ -1,0 +1,19 @@
+Qty,Reference,Value,Package,Description
+1,SLOT101,MSX card,MSXCARD,"MSX cartridge edge connector, 50 pins (2 x 25), 2.54 mm pitch, part of the board"
+1,IC102,82C59A,DIL28-6,"Programmable interrupt controller, CMOS (Intel/Harris 82C59A)"
+1,IC107,AT28C256,DIL28-6,"EEPROM 32 KB (AT28C256 or compatible), flashed with rom/XIOROM.hex"
+1,IC103,GAL22V10,DIL24-3,"GAL22V10, programmed with gal/msx_io_expander_addr_decoder/MSX_IO_EXPANDER_ADDR_DECODER.jed"
+1,IC105,GAL22V10,DIL24-3,"GAL22V10, programmed with gal/msx_io_expander_0x40_ID/MSX_IO_EXPANDER_0X40_ID.jed"
+1,IC109,GAL22V10,DIL24-3,"GAL22V10, programmed with gal/msx_io_expander_glue/MSX_IO_EXPANDER_GLUE.jed"
+2,"IC104, IC106",74HCT245N,DIL20,Octal bus transceiver
+1,IC101,74HCT640N,DIL20,"Octal bus transceiver, inverting"
+1,IC110,74HCT574N,DIL20,Octal D flip-flop
+1,IC108,74HCT00N,DIL14,Quad NAND
+4,"C101, C102, C103, C104",100n,C025-025X050,"Ceramic capacitor 100 nF, 2.5 mm pitch"
+2,"D101, D102",1N4148,DO35-10,Signal diode
+3,"R101, R102, R103",10k,0207/10,"Resistor 10 kOhm, axial, 10 mm pitch"
+1,RN101,4k7,SIL9,"Resistor network 8 x 4.7 kOhm, common pin, SIL9"
+1,S101,PROG,TL3XPO,Slide or toggle switch 1 x changeover: write enable of the EEPROM
+2,"LED101, LED102",GN,LED3MM,"LED 3 mm with built-in resistor for 5 V, green (LED101 MSX powered, LED102 switched IO enabled)"
+1,LED103,GB,LED3MM,"LED 3 mm with built-in resistor for 5 V, yellow (interrupts enabled)"
+1,SV101,Box header 2x17,3M_34L,"Box header 34 pins (2 x 17), 2.54 mm, for the ribbon cable to the RC2014 adapter"

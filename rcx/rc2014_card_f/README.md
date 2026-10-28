@@ -116,6 +116,6 @@ Commands implemented in ROM:
 + [com/](com/README.md) - `.COM` tools (UNAPI/EXTBIOS)
 + [sdcc/](sdcc/README.md) - SDCC tools
 + [atmel/](atmel/README.md) - ATMEGA8 firmware
-+ [pcb/](pcb/) - schematics and PCB
++ [pcb/](pcb/) - schematics, PCB, Gerber and drill files, bill of materials
 
 [↑ Main README](../../README.md#f-rc2014-card-with-4x-spi-bus-up-to-2-mhz-via-atmega8)

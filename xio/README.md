@@ -108,6 +108,6 @@ Commands implemented in ROM/LIB:
 + [com/](com/README.md) - `.COM` tools (UNAPI/EXTBIOS)
 + [sdcc/](sdcc/README.md) - SDCC tools
 + [gal/](gal/) - GAL equations
-+ [pcb/](pcb/) - schematics and PCB
++ [pcb/](pcb/) - schematics, PCB, Gerber and drill files, bill of materials
 
 [↑ Main README](../README.md#1-msxretrothings---the-xio-cartridge)

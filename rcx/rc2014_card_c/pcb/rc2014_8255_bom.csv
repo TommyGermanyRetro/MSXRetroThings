@@ -1,0 +1,12 @@
+Qty,Reference,Value,Package,Description
+1,RC101,RC2014,RC2014-STECKER,"RC2014 enhanced bus connector, pin header 2 x 40, 2.54 mm, angled"
+1,IC103,82C55A,DIL40,"Programmable peripheral interface, CMOS (Intel/Harris 82C55A)"
+1,IC102,74HCT688N,DIL20,8-bit comparator: card address against the DIP switch
+1,IC104,74HCT00N,DIL14,Quad NAND
+1,IC101,74HCT06N,DIL14,"Hex inverter, open collector: interrupt outputs"
+3,"C101, C102, C103",100n,C025-025X050,"Ceramic capacitor 100 nF, 2.5 mm pitch"
+1,RN101,10k,SIL9,"Resistor network 8 x 10 kOhm, common pin, SIL9"
+1,S101,ADDR,DS-08,DIP switch 8 positions: card address
+3,"SV1, SV2, SV3",Box header 2x5,ML10L,"Box header 10 pins (2 x 5), 2.54 mm: ports A, B, C with +5 V and GND"
+1,JP105,2X08,2X08,"Pin header 2 x 8, 2.54 mm, with jumper: selects the interrupt line /INT0-/INT7 of the XIO PIC (/INTA)"
+1,JP104,1X08,1X08,"Pin header 1 x 8, 2.54 mm: second interrupt source /INTB"

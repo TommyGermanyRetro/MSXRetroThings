@@ -1,0 +1,20 @@
+Qty,Reference,Value,Package,Description
+1,RC101,RC2014,RC2014-STECKER,"RC2014 enhanced bus connector, pin header 2 x 40, 2.54 mm, angled"
+1,IC102,SJA1000,DIL28,"Stand-alone CAN controller (NXP SJA1000), DIL28"
+1,IC104,PCA82C250,DIL08,CAN transceiver (NXP PCA82C250)
+1,IC103,74HCT688N,DIL20,8-bit comparator: card address against the DIP switch
+1,IC105,74HCT138N,DIL16,3-to-8 decoder
+1,IC101,74HCT32N,DIL14,Quad OR
+1,IC106,74HCT04N,DIL14,Hex inverter
+1,OK101,PC814,DIL04,Optocoupler with AC input (Sharp PC814)
+1,Q101,24MHz,QS,Crystal 24 MHz
+2,"C101, C102",15p,C025-025X050,"Ceramic capacitor 15 pF, 2.5 mm pitch"
+3,"C103, C104, C105",100n,C025-025X050,"Ceramic capacitor 100 nF, 2.5 mm pitch"
+1,R101,6k8,0207/10,"Resistor 6k8, axial, 10 mm pitch"
+1,R102,3k6,0207/10,"Resistor 3k6, axial, 10 mm pitch"
+1,R104,120R,0207/10,"Resistor 120 Ohm, axial, 10 mm pitch: CAN termination"
+1,R105,390R,0207/10,"Resistor 390 Ohm, axial, 10 mm pitch"
+1,RN101,100k,SIL9,"Resistor network 8 x 100 kOhm, common pin, SIL9"
+1,S1,ADDR,DS-08,DIP switch 8 positions: card address
+2,"X101, X102",RJ45,0446200002,"RJ45 socket, shielded (Molex 44620-0002): CAN bus in and out"
+1,JP1,2X08,2X08,"Pin header 2 x 8, 2.54 mm, with jumper: selects the interrupt line /INT0-/INT7 of the XIO PIC"

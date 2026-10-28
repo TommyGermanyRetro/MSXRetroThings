@@ -143,6 +143,6 @@ Commands implemented in ROM:
 + [basic/](basic/README.md) - BASIC test programs
 + [com/](com/README.md) - `.COM` tools (UNAPI/EXTBIOS)
 + [sdcc/](sdcc/README.md) - SDCC tools
-+ [pcb/](pcb/) - schematics and PCB
++ [pcb/](pcb/) - schematics, PCB, Gerber and drill files, bill of materials
 
 [↑ Main README](../../README.md#d-rc2014-card-with-8254a-ctr)

@@ -1,0 +1,20 @@
+Qty,Reference,Value,Package,Description
+1,RC101,RC2014,RC2014-STECKER,"RC2014 enhanced bus connector, pin header 2 x 40, 2.54 mm, angled"
+1,IC104,PCF8584P,DIL20,I2C bus controller (NXP PCF8584)
+1,IC101,PCF8583P,DIL08,"Clock/calendar with 240 bytes RAM, I2C (NXP PCF8583)"
+1,IC102,74HCT688N,DIL20,8-bit comparator: card address against the DIP switch
+1,IC103,74HCT138N,DIL16,3-to-8 decoder
+1,QG101,8MHz,DIL14S,"Crystal oscillator 8 MHz, DIL14 footprint"
+1,Q101,32.768kHz,TC26H,"Watch crystal 32.768 kHz, cylindrical 2 x 6 mm"
+1,C101,27p,CTRIM3050.504,Trimmer capacitor about 27 pF: clock adjustment
+1,C102,4u7,"E2,5-6","Electrolytic capacitor 4.7 uF, radial, 2.5 mm pitch"
+1,G101,B2430UNI,B2430UNI,Holder for coin cell CR2430: battery backup of the clock
+1,D101,1N4148,DO35-7,Signal diode
+1,D102,BAT85,DO34-7,Schottky diode
+4,"R101, R102, R105, R106",82R,0207/10,"Resistor 82 Ohm, axial, 10 mm pitch"
+2,"R103, R104",3k3,0207/10,"Resistor 3k3, axial, 10 mm pitch: I2C pull-ups"
+1,RN101,100k,SIL9,"Resistor network 8 x 100 kOhm, common pin, SIL9"
+1,S101,ADDR,DS-08,DIP switch 8 positions: card address
+3,"CON101, CON102, CON103",I2C,JST-04-ST90,"I2C socket 4 pins (SCL, SDA, +5 V, GND), JST, angled"
+1,JP101,2X08,2X08,"Pin header 2 x 8, 2.54 mm, with jumper: selects the interrupt line /INT0-/INT7 of the XIO PIC"
+1,JP102,1X08,1X08,"Pin header 1 x 8, 2.54 mm: second interrupt source /INT1*"

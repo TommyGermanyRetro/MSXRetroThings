@@ -59,6 +59,8 @@ The schematics of XIO is strictly build up in non smd method to enable people wi
 
 ![XIO system](rcx/rc2014_adapter/pcb/rc2014_adapter.png)
 
+PCB files: Eagle schematics and layouts, Gerber and drill files (also as zip for the PCB maker) and bills of materials of the XIO cartridge in [xio/pcb](xio/pcb) and of the RC2014 adapter in [rcx/rc2014_adapter/pcb](rcx/rc2014_adapter/pcb); GAL equations in [xio/gal](xio/gal).
+
 The XIO OUT/IN functions work without installing the XIO card. If the XIO card is installed correctly, the green LED shows that alle 16 interrupt channels are ready to use. A blinking yellow LED shows activities to the switched IO addresses. It signals, that the switched IO is selected via &H40 of the original MSX IO bus. The red LED shows a working supply.
 
 #### <b>1.4 Software:</b>
@@ -116,6 +118,8 @@ Boot message from BIOS ROM
 
 ![RCX schematics](rcx/rc2014_rom+ram/pcb/msx_rom.png)
 
+PCB files: Eagle schematic and layout, Gerber and drill files (also as zip for the PCB maker) and bill of materials in [rcx/rc2014_rom+ram/pcb](rcx/rc2014_rom+ram/pcb).
+
 #### <b>2.4 Software:</b>
 
 The BIOS for the card functions is provided in the on board ROM (EEPROM). It contains the additional BASIC commands and an instance of UNAPI.
@@ -148,6 +152,8 @@ RC2014 card on backplane contacted via BASIC to get TIME and DATE
 #### <b>A.2 Hardware:</b>
 
 ![RCX schematics](rcx/rc2014_card_a/pcb/rc2014_i2c_base.png)
+
+PCB files: Eagle schematic and layout, Gerber and drill files (also as zip for the PCB maker) and bill of materials in [rcx/rc2014_card_a/pcb](rcx/rc2014_card_a/pcb).
 
 #### <b>A.3 Software:</b>
 
@@ -193,6 +199,8 @@ RC2014 card on backplane
 
 ![RCX schematics](rcx/rc2014_card_c/pcb/rc2014_8255.png)
 
+PCB files: Eagle schematic and layout, Gerber and drill files (also as zip for the PCB maker) and bill of materials in [rcx/rc2014_card_c/pcb](rcx/rc2014_card_c/pcb).
+
 #### <b>C.3 Software:</b>
 
 The BIOS for the card functions is provided in the RCX slot ROM. It contains the additional BASIC commands (`PPI INIT`, `PPI A/B/C RD/WR`, `PPI CTRL`, `PPI SET/RESET`) and an instance of UNAPI, so the same functions are callable directly via UNAPI/EXTBIOS from a `.COM` program without the BASIC interpreter. A second test program runs Port B in Mode 1 (strobed input), where the 82C55 itself raises `INTR B` on PC0 - reported through XIO's standard interrupt handler, no custom service routine needed.
@@ -214,6 +222,8 @@ RC2014 card on backplane
 #### <b>D.2 Hardware:</b>
 
 ![RCX schematics](rcx/rc2014_card_d/pcb/rc2014_8254.png)
+
+PCB files: Eagle schematic and layout, Gerber and drill files (also as zip for the PCB maker) and bill of materials in [rcx/rc2014_card_d/pcb](rcx/rc2014_card_d/pcb).
 
 #### <b>D.3 Software:</b>
 
@@ -239,6 +249,8 @@ RC2014 card on backplane
 
 ![RCX schematics](rcx/rc2014_card_e/pcb/rc2014_sja1000.png)
 
+PCB files: Eagle schematic and layout, Gerber and drill files (also as zip for the PCB maker) and bill of materials in [rcx/rc2014_card_e/pcb](rcx/rc2014_card_e/pcb).
+
 #### <b>E.3 Software:</b>
 
 The BIOS for the card functions is provided in the RCX slot ROM. It contains the additional BASIC commands (`CAN INIT`, `CAN WR/RD`, `CAN CHECK/RX/TX`, `CAN GET ADDR`) and an instance of UNAPI, so the same functions are callable directly via UNAPI/EXTBIOS from a `.COM` program without the BASIC interpreter. The test program receives and sends CAN messages interrupt-driven, e.g. for a Maerklin CS3 bus, by registering the ROM's own CAN service routine (returned by `CAN GET ADDR`) directly through `XIO SET ADDR` - no custom interrupt code needed.
@@ -261,6 +273,8 @@ RC2014 card on backplane
 
 ![RCX schematics](rcx/rc2014_card_f/pcb/rc2014_spi.png)
 
+PCB files: Eagle schematic and layout, Gerber and drill files (also as zip for the PCB maker) and bill of materials in [rcx/rc2014_card_f/pcb](rcx/rc2014_card_f/pcb).
+
 #### <b>F.3 Software:</b>
 
 The BIOS for the card functions is provided in the RCX slot ROM. It contains the additional BASIC commands (`SPI INIT/MODE`, `SPI WR/WRB/RD/RDB/RDH`) and an instance of UNAPI, so the same functions are callable directly via UNAPI/EXTBIOS from a `.COM` program without the BASIC interpreter. Up to 4 independent SPI busses are addressable per card; the test program exercises a MCP23S17 GPIO expander as a Port A/B loopback test.
@@ -282,6 +296,8 @@ RC2014 card on backplane
 #### <b>G.2 Hardware:</b>
 
 ![RCX schematics](rcx/rc2014_card_g/pcb/rc2014_ads1220.png)
+
+PCB files: Eagle schematic and layout, Gerber and drill files (also as zip for the PCB maker) and bill of materials in [rcx/rc2014_card_g/pcb](rcx/rc2014_card_g/pcb).
 
 #### <b>G.3 Software:</b>
 
@@ -312,6 +328,8 @@ RC2014 card with 2x MCP4822. Up to 16 cards are possible. The interrupt pin of A
 #### <b>I.1 Hardware:</b>
 
 ![RCX schematics](rcx/rc2014_card_i/pcb/rc2014_mcp4822.png)
+
+PCB files: Eagle schematic and layout, Gerber and drill files (also as zip for the PCB maker) and bill of materials in [rcx/rc2014_card_i/pcb](rcx/rc2014_card_i/pcb).
 
 Details coming soon. Card page: [rcx/rc2014_card_i/README.md](rcx/rc2014_card_i/README.md)
 

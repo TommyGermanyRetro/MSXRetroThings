@@ -96,6 +96,6 @@ Commands implemented in ROM:
 + [com/](com/README.md) - `.COM` tools (UNAPI/EXTBIOS)
 + [sdcc/](sdcc/README.md) - SDCC tools
 + [atmel/](atmel/README.md) - ATMEGA8 firmware
-+ [pcb/](pcb/) - schematics and PCB
++ [pcb/](pcb/) - schematics, PCB, Gerber and drill files, bill of materials
 
 [↑ Main README](../../README.md#g-rc2014-card-with-ads1220-4-channel-24-bit-ad-converter-via-atmega8)

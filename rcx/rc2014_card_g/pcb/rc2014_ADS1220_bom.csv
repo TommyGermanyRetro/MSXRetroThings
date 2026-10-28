@@ -1,0 +1,20 @@
+Qty,Reference,Value,Package,Description
+1,RC101,RC2014,RC2014-STECKER,"RC2014 enhanced bus connector, pin header 2 x 40, 2.54 mm, angled"
+1,AD101,ADS1220 module,ADS1220-MOD,"ADS1220 breakout module (24-bit A/D converter, 4 inputs, SPI) on pin headers"
+1,IC103,ATmega8,DIL28-3,"Microcontroller ATmega8, flashed with atmel/MSXADS1220/MSXADS1220.ino"
+1,IC102,74HCT688N,DIL20,8-bit comparator: card address against the DIP switch
+1,IC101,74LS123N,DIL16,Dual monostable multivibrator
+1,IC104,74LS06N,DIL14,"Hex inverter, open collector"
+1,Q101,16MHz,HC49U-V,"Crystal 16 MHz, HC49/U"
+2,"C104, C105",27p,C025-025X050,"Ceramic capacitor 27 pF, 2.5 mm pitch"
+3,"C101, C103, C106",100n,C025-025X050,"Ceramic capacitor 100 nF, 2.5 mm pitch"
+1,C102,680p,C025-025X050,"Ceramic capacitor 680 pF, 2.5 mm pitch"
+3,"D101, D102, D103",1N4148,DO35-10,Signal diode
+1,R101,24k,0207/10,"Resistor 24 kOhm, axial, 10 mm pitch"
+2,"R102, R103",10k,0207/10,"Resistor 10 kOhm, axial, 10 mm pitch"
+1,RN101,10k,SIL9,"Resistor network 8 x 10 kOhm, common pin, SIL9"
+1,S101,ADDR,DS-08,DIP switch 8 positions: card address
+1,SV101,Box header 2x3,ML6L,"Box header 6 pins (2 x 3), 2.54 mm: ISP connector of the ATmega8"
+1,X101,AKL182-2,AKL182-2,"Pluggable terminal block 2 pins, 3.5 mm: reference input"
+1,X102,AKL182-6,AKL182-6,"Pluggable terminal block 6 pins, 3.5 mm: analog inputs AIN0-AIN3 with +5 V and GND"
+1,JP101,2X08,2X08,"Pin header 2 x 8, 2.54 mm, with jumper: selects the interrupt line /INT0-/INT7 of the XIO PIC"

@@ -26,7 +26,8 @@ Spectravideo SVI-728 (MSX1), prompt after 17 seconds
 
 | Folder | Content |
 | --- | --- |
-| [pcb](pcb) | Eagle project of the board: schematic `msx_usb2slot.sch`, layout `msx_usb2slot.brd`; photos |
+| [pcb](pcb) | Eagle project of the board: schematic `msx_usb2slot.sch`, layout `msx_usb2slot.brd`; bill of materials `msx_usb2slot_bom.csv`; photos |
+| [pcb/gerber](pcb/gerber) | Gerber RS-274X and Excellon drill files of the two-layer board, also as `msx_usb2slot_gerber.zip` for the PCB maker |
 | [firmware](firmware) | Teensy firmware `BridgeTeensy/BridgeTeensy.ino` and the ready-to-flash `BridgeTeensy.ino.hex` |
 | [slotlink](slotlink) | PC library `slotlink.h` (Win32) and the test tool `slottest.exe` with its source |
 | [openmsx](openmsx) | The `USBSlot` device (`USBSlot.cc/.hh`), start script, extensions, build scripts |
@@ -45,6 +46,9 @@ Spectravideo SVI-728 (MSX1), prompt after 17 seconds
 - Jumper JP201: open for normal use. 1-2 connects the Teensy test line to /WAIT, 3-4 to /INT; both are only for
   the self test of the board (see section 3).
 - No hot plug, just like a real MSX: change cartridges only with the board switched off.
+- To order the board, upload `pcb/gerber/msx_usb2slot_gerber.zip` to the PCB maker. Check the layers in a Gerber
+  viewer (for example the online viewer of the PCB maker) before you order. The parts are listed in
+  `pcb/msx_usb2slot_bom.csv`.
 
 ## 2. Firmware
 

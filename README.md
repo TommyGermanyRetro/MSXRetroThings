@@ -502,4 +502,6 @@ Except where explicitly stated otherwise, this repository is licensed as follows
 
 Third-party components keep their own licenses (listed in [LICENSE.txt](LICENSE.txt)). Original ROM images and third-party software images are not part of this repository.
 
+**Disclaimer:** Everything in this repository is provided "as is", without warranty of any kind. Building, connecting and using the hardware and software is at your own risk. To the maximum extent permitted by law, the author accepts no liability for any damage to computers, cartridges, other equipment or data, or for any other loss resulting from their use. The disclaimers in [LICENSE.txt](LICENSE.txt) and [LICENSE-CERN-OHL-S-2.0.txt](LICENSE-CERN-OHL-S-2.0.txt) apply in full.
+
 [↑ Contents](#contents)

@@ -1,0 +1,16 @@
+Qty,Reference,Value,Package,Description
+1,IC101,Teensy 4.1,TEENSY4-1,Teensy 4.1 microcontroller board (PJRC) with pin headers
+5,"IC201, IC202, IC203, IC205, IC206",74HCT245N,DIL20,"Octal bus transceiver, Teensy to slot (3.3 V in, 5 V out)"
+2,"IC204, IC207",74LVC245,DIL20,"Octal bus transceiver, slot to Teensy (5 V tolerant in, 3.3 V out)"
+2,"SLOT201, SLOT202",MSX slot,MSXSLOT,"MSX cartridge slot, 50 pins (2 x 25), 2.54 mm pitch"
+1,DC101,NMA0512,NMA,"DC-DC converter 5 V to +12 V / -12 V (Murata NMA0512SC)"
+1,X101,PN61729-S,PN61729-S,"USB type B socket (FCI/Berg PN61729-S), 5 V power input"
+1,SW101,TS-13P,TS-13-P,Power switch
+1,R101,Ferrite bead,0207/10,"Ferrite bead in the 5 V input, axial, 10 mm pitch"
+1,D101,1N5818,DO41-10,"Schottky diode, slot supply to Teensy VIN"
+2,"LED101, LED102",GR-5V,LED3MM,"LED 3 mm green with built-in resistor for 5 V (LED101 Teensy VIN, LED102 +5 V)"
+2,"C107, C111",470u/16V,E3.5-8,"Electrolytic capacitor 470 uF 16 V, radial, 3.5 mm pitch, 8 mm diameter"
+11,"C101, C102, C103, C104, C105, C106, C108, C109, C110, C112, C113",100n,C025-025X050,"Ceramic capacitor 100 nF, 2.5 mm pitch"
+4,"R201, R202, R203, R204",10k,0207/10,"Resistor 10 kOhm, axial, 10 mm pitch"
+2,"RN201, RN202",10k,SIL9,"Resistor network 8 x 10 kOhm, common pin, SIL9"
+1,JP201,TEST,2X02,"Pin header 2 x 2, 2.54 mm, with jumper (open for normal use)"

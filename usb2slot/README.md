@@ -27,6 +27,7 @@ Spectravideo SVI-728 (MSX1), prompt after 17 seconds
 | Folder | Content |
 | --- | --- |
 | [pcb](pcb) | Eagle project of the board: schematic `msx_usb2slot.sch`, layout `msx_usb2slot.brd`; bill of materials `msx_usb2slot_bom.csv`; photos |
+| [case](case) | 3D-printable enclosure, bottom and top part as FreeCAD files `MSX_USB2SLOT_BOTTOM.FCStd` and `MSX_USB2SLOT_TOP.FCStd` |
 | [pcb/gerber](pcb/gerber) | Gerber RS-274X and Excellon drill files of the two-layer board, also as `msx_usb2slot_gerber.zip` for the PCB maker |
 | [firmware](firmware) | Teensy firmware `BridgeTeensy/BridgeTeensy.ino` and the ready-to-flash `BridgeTeensy.ino.hex` |
 | [slotlink](slotlink) | PC library `slotlink.h` (Win32) and the test tool `slottest.exe` with its source |
@@ -49,6 +50,18 @@ Spectravideo SVI-728 (MSX1), prompt after 17 seconds
 - To order the board, upload `pcb/gerber/msx_usb2slot_gerber.zip` to the PCB maker. Check the layers in a Gerber
   viewer (for example the online viewer of the PCB maker) before you order. The parts are listed in
   `pcb/msx_usb2slot_bom.csv`.
+
+### Enclosure
+
+`case` holds a two-part enclosure for the board (outside 150 x 115 mm; bottom part 10 mm, top part
+30 mm high) as FreeCAD files, built with FreeCAD 1.0 (PartDesign: sketches, pads, pockets). Only the
+design files are included, no STL or G-code, so the enclosure can be adapted, for example to other
+cartridges, a different supply socket or another printer, before printing:
+
+1. Open `MSX_USB2SLOT_BOTTOM.FCStd` and `MSX_USB2SLOT_TOP.FCStd` in FreeCAD 1.0 or newer and change the
+   sketches as needed; the following features update automatically.
+2. Select the body and export it as STL or 3MF (File > Export).
+3. Slice the file for your printer as usual.
 
 ## 2. Firmware
 
@@ -216,7 +229,7 @@ python <this folder>\openmsx\apply.py C:\openMSX-21.0
 ## 8. License
 
 The parts in this folder follow the [license of this repository](../README.md#8-license): software MIT, the board
-CERN-OHL-S-2.0, documentation CC BY-SA 4.0.
+and the enclosure CERN-OHL-S-2.0, documentation CC BY-SA 4.0.
 
 `openmsx/bin` is openMSX 21.0 (GNU General Public License version 2, see `openmsx/bin/doc/GPL.txt`) with the
 `USBSlot` device built in, including C-BIOS (see `openmsx/bin/doc/cbios.txt`). Its complete source is openMSX

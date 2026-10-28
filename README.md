@@ -483,7 +483,7 @@ Spectravideo SVI-728 (MSX1), prompt after 17 seconds
 
 #### <b>6.3 Hardware:</b>
 
-Eagle schematic and layout, Teensy 4.1, 74HCT245/74LVC245 level shifters, external 5 V supply: [usb2slot/pcb](usb2slot/pcb), notes in [usb2slot/README.md](usb2slot/README.md#1-hardware).
+Eagle schematic and layout, Teensy 4.1, 74HCT245/74LVC245 level shifters, external 5 V supply: [usb2slot/pcb](usb2slot/pcb), a 3D-printable enclosure as FreeCAD files: [usb2slot/case](usb2slot/case), notes in [usb2slot/README.md](usb2slot/README.md#1-hardware).
 
 #### <b>6.4 Software:</b>
 
@@ -540,7 +540,7 @@ Except where explicitly stated otherwise, this repository is licensed as follows
 | Content | License |
 | --- | --- |
 | Software: source code, build scripts, firmware | [MIT](LICENSE.txt) |
-| Hardware designs: schematics, PCB layouts, Gerber and drill files, bills of materials, GAL equations | [CERN-OHL-S-2.0](LICENSE-CERN-OHL-S-2.0.txt) |
+| Hardware designs: schematics, PCB layouts, Gerber and drill files, bills of materials, GAL equations, 3D models of enclosures (FreeCAD) | [CERN-OHL-S-2.0](LICENSE-CERN-OHL-S-2.0.txt) |
 | Documentation and images: READMEs, manuals, photos, screenshots, videos | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/legalcode) |
 
 Third-party components keep their own licenses (listed in [LICENSE.txt](LICENSE.txt)). Original ROM images and third-party software images are not part of this repository.

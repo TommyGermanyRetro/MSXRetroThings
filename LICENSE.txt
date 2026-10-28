@@ -27,8 +27,8 @@ licensed as follows.
 
 
 2. Hardware designs (schematics, PCB layouts, Gerber and drill files, bills of
-   materials, GAL equations): CERN Open Hardware Licence Version 2 - Strongly
-   Reciprocal (CERN-OHL-S-2.0).
+   materials, GAL equations, 3D models of enclosures): CERN Open Hardware
+   Licence Version 2 - Strongly Reciprocal (CERN-OHL-S-2.0).
 
    Full licence text: LICENSE-CERN-OHL-S-2.0.txt in this repository.
 

@@ -348,7 +348,7 @@ Details coming soon. Card page: [rcx/rc2014_card_i/README.md](rcx/rc2014_card_i/
 
 + Registers itself on the CS2/CS3 CAN bus exactly like a real Connect6021 and answers the config-channel walk (SW version, central-station-type mapping, keyboard base address, I2C clock)
 
-+ Simulates up to 16 Keyboard-6040 keyboards, one CU6021 control unit, and up to 8 Control80f control units, all as one switchable on-screen panel (carousel, `SPACE` to switch)
++ Simulates up to 16 Keyboard-6040 keyboards, one CU6021 control unit, up to 8 Control80f control units, and up to 4 Memory-6043 route memories (record and play back accessory routes, stored in `MBC89R.CFG`), all as one switchable on-screen panel (carousel, `SPACE` to switch)
 
 + Bidirectional CAN wiring on every panel: a button press sends a real CAN message, an incoming CAN message updates the panel's LEDs/knob live
 

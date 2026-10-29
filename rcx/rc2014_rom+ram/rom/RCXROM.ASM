@@ -9,7 +9,7 @@
                                     ;* https://www.msx.org              *
                                     ;* Assembled with pasmo.            *
                                     ;************************************
-                                    ;* VERSION: 28/10/26                *
+                                    ;* VERSION: 29/10/26                *
                                     ;************************************
 
               ORG    #04000
@@ -6274,7 +6274,7 @@ CANRELRXBUF:  EQU #0004             ; Release RX Buffer
 
                                     ; Bits in CANSTAREG
 
-CANTXOK:      EQU #0008             ; Transmission completed
+CANTXFREE:    EQU #0004             ; Transmit buffer released
 
                                     ; Bits in CANIERREG
 
@@ -7749,7 +7749,20 @@ CORE49:       PUSH HL               ; Save BASIC Line-Pointer (if CALL is used)
               ADD A,#01             ; Set Addr to Data transfer 
               OUT (ALE),A           ; Set Data transfer to SJA1000
               IN A,(SWIO)
-                             
+
+                                    ; Wait till TX buffer is free
+
+              LD A,C                ; C contains IO addr
+              OUT (ALE),A           ; Set ALE to SJA1000
+              LD A,CANSTAREG        ; D contains SJA1000 Register addr
+              OUT (SWIO),A          ; Write ALE to SJA1000   
+              LD A,C                ; C contains IO addr
+              ADD A,#01             ; Set Addr to Data transfer 
+              OUT (ALE),A           ; Set Data transfer to SJA1000
+CORE49L0:     IN A,(SWIO)
+              AND CANTXFREE
+              JP Z,CORE49L0         ; Wait for released TX buffer
+
               LD H,CANTXBUFREG
               LD B,#0D              ; Set loop for 13 bytes
 
@@ -7779,20 +7792,6 @@ CORE49L1:     LD A,C                ; C contains IO addr
               OUT (ALE),A           ; Set Data transfer to SJA1000
               LD A,CANTXREQ         ; E contains value
               OUT (SWIO),A          ; Write value to SJA1000
-
-                                    ; Wait till TX is ready
-
-              LD A,C                ; C contains IO addr
-              OUT (ALE),A           ; Set ALE to SJA1000
-              LD A,CANSTAREG        ; D contains SJA1000 Register addr
-              OUT (SWIO),A          ; Write ALE to SJA1000   
-              LD A,C                ; C contains IO addr
-              ADD A,#01             ; Set Addr to Data transfer 
-              OUT (ALE),A           ; Set Data transfer to SJA1000
-CORE49L2:     IN A,(SWIO)
-              AND CANTXOK
-              CP CANTXOK            
-              JP Z,CORE49L2         ; Wait for completed 
 
               CALL IODIS            ; Switched IO disabled
 

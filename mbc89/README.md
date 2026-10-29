@@ -13,8 +13,8 @@ below.
 
 The module registers itself on the CS2/CS3 CAN bus exactly like a real Connect6021, answers the
 config-channel walk (SW version, central-station-type mapping, keyboard base address, I2C clock),
-and simulates up to 16 Keyboard-6040 keyboards, one CU6021 control unit, and up to 8 Control80f
-control units - all as one switchable on-screen panel, driven by the MSX keyboard and the real CAN
+and simulates up to 16 Keyboard-6040 keyboards, one CU6021 control unit, up to 8 Control80f
+control units, and up to 4 Memory-6043 route memories - all as one switchable on-screen panel, driven by the MSX keyboard and the real CAN
 bus at the same time (a button press sends a real CAN message; an incoming CAN message updates the
 panel's LEDs/knob live).
 
@@ -50,7 +50,7 @@ A full startup-to-panel video is included: [`images/startup.mp4`](images/startup
 
 ## Panels
 
-All three panel types share one carousel (two triangle sprites, `SPACE` switches between instances)
+All four panel types share one carousel (two triangle sprites, `SPACE` switches between instances)
 and the same bidirectional CAN wiring:
 
 - **Keyboard-6040** (up to 16 instances, one CS2 address block of 16 per instance): a grid of
@@ -58,13 +58,19 @@ and the same bidirectional CAN wiring:
   (0x16) on press and updates its LEDs live from incoming messages for the same address range.
 - **CU6021** (1 instance): loco speed/direction/F0-F4 control, `CAN_ID_LOK_*` (0x08/0x0A/0x0C).
 - **Control80f** (up to 8 instances): same loco control as CU6021, addressed per instance.
+- **Memory-6043** (up to 4 instances, 24 routes A1-C8 each): records Keyboard-6040 presses as a
+  route (`in`, route button, keyboard presses, `end`; `clr` during recording removes the last
+  command, `in`+`clr`+route button deletes the whole route) and plays a route back as a burst of
+  `CAN_ID_ZUBEHOER_SCHALTEN` (0x16) messages. Routes are stored in `MBC89R.CFG` (one 128-byte
+  record per route) and survive a restart. Interlocking and S88-triggered automatic routes are not
+  implemented yet.
 
-Startup configuration (`IO`/`INT`/`INT_MODE`/`KEYB`/`C80F`) is read from environment variables via
+Startup configuration (`IO`/`INT`/`KEYB`/`C80F`/`MEMB`) is read from environment variables via
 a raw BDOS `GENV` call (function 6Bh) - a MSX-DOS 2 extension with no MSX-DOS 1 equivalent, so this
 is the module's actual compatibility floor (see "Compatibility" below), not the machine generation.
 Config values changed via ParaCenter or a real CS2/CS3 central station (SW version,
 central-station-type mapping, keyboard base address, I2C clock, module name, GUiD/PC database
-number) are persisted to `MBC89.CFG` on the boot disk via the FCB-based file functions (MSX-DOS 1
+number) are persisted to `MBC89.CFG` on the current drive via the FCB-based file functions (MSX-DOS 1
 compatible, and just as usable under MSX-DOS 2), and reloaded on every startup - see
 `mbc89_store.c`.
 
@@ -88,10 +94,11 @@ compatible, and just as usable under MSX-DOS 2), and reloaded on every startup -
   handshake, loco database, Stopp/Go, loco speed/direction/function handling).
 - `mbc89_can.c`/`.h` - conversion between the logical 13-byte Maerklin CAN message and the raw PeliCAN
   SJA1000 TX/RX register format `rcx_io.h` expects.
-- `mbc89_gui.c`/`.h` - SCREEN2 panel rendering and interaction (Keyboard-6040/CU6021/Control80f
-  carousel).
+- `mbc89_gui.c`/`.h` - SCREEN2 panel rendering and interaction (Keyboard-6040/CU6021/Control80f/
+  Memory-6043 carousel).
 - `mbc89_sim.c`/`.h` - simulated plug/voltage/temperature sensor values (`P`/arrow keys).
 - `mbc89_store.c`/`.h` - `MBC89.CFG` file-based persistence (FCB, MSX-DOS 1 compatible).
+- `mbc89_memory.c`/`.h` - Memory-6043 route recording/playback, `MBC89R.CFG` (FCB random block I/O).
 - `content/` - embedded panel graphics/sprite data (RLE-packed screen data, generated content
   headers).
 

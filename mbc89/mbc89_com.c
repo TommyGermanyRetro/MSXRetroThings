@@ -11,6 +11,7 @@
 #include "mbc89_can.h"
 #include "mbc89_base.h"
 #include "mbc89_store.h"
+#include "mbc89_memory.h"
 #include "rcx_io.h"
 
 #define CAN_ID_SYSTEM_BEFEHLE       0x00
@@ -688,6 +689,13 @@ void McCom_HandleKeyboardEvent(u8 kbIndex, u8 col, bool green)
 {
 	u16 addr = (u16)(KeyboardBaseAddr(kbIndex) + col);
 	SendZubehoerSchalten(addr, green ? 1 : 0, TRUE);
+	McMem_TapKeyboardCommand(addr, green);
+}
+
+//---------------------------------------------------------------------------------------------------
+void McCom_SendZubehoer(u16 addr, u8 richtung)
+{
+	SendZubehoerSchalten(addr, richtung, TRUE);
 }
 
 //---------------------------------------------------------------------------------------------------

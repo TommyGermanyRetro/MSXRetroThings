@@ -1,7 +1,7 @@
 //***************************************************************************************************
 //* HEADER - mbc89.c - MSX/SDCC mbc89 (Connect6021-CAN-Interface) main program                        *
 //***************************************************************************************************
-//* Reads the startup configuration from MSX-DOS 2 environment variables (IO/INT/KEYB/C80F), shows a   *
+//* Reads the startup configuration from MSX-DOS 2 environment variables (IO/INT/KEYB/C80F/MEMB), shows *
 //* splash screen and a boot info screen (startup config, persisted config, discovery/init results),   *
 //* then discovers and initializes the XIO_IO_EXPANDER and RCX_INTERFACE UNAPI drivers and the CAN     *
 //* adapter, before handing control to the GUI (mbc89_gui.c).                                          *
@@ -25,6 +25,7 @@
 #include "mbc89_com.h"
 #include "mbc89_gui.h"
 #include "mbc89_store.h"
+#include "mbc89_memory.h"
 
 #include "font/font_mgl_sample6.h"
 
@@ -83,12 +84,18 @@ static const c8 s_MsgEnvIo[]   = "SET IO=0..254 (CAN card IO address) missing or
 static const c8 s_MsgEnvInt[]  = "SET INT=0..7 (PIC interrupt channel) missing or invalid.\r\n$";
 static const c8 s_MsgEnvKeyb[] = "SET KEYB=0..16 (Keyboard-6040 count) missing or invalid.\r\n$";
 static const c8 s_MsgEnvC80f[] = "SET C80F=0..8 (Control80f count) missing or invalid.\r\n$";
+static const c8 s_MsgEnvMemb[] = "SET MEMB=0..4 (Memory-6043 count) missing or invalid.\r\n$";
 
 // Number of simulated Keyboard-6040/Control80f panel instances (0..KEYBOARD_COUNT_MAX/
 // 0..C80F_COUNT_MAX), read from the KEYB/C80F environment variables. Shared with mbc89_com.c and
 // mbc89_gui.c via extern declarations in their own headers.
 u8 g_KeyboardCount;
 u8 g_C80fCount;
+
+// Number of simulated Memory-6043 panel instances (0..MEMORY_COUNT_MAX), read from the MEMB
+// environment variable - same convention as g_KeyboardCount/g_C80fCount above. Shared with
+// mbc89_gui.c via mbc89_memory.h's extern declaration.
+u8 g_MemoryCount;
 
 //===================================================================================================
 // HELPER FUNCTIONS
@@ -189,6 +196,7 @@ void main(void)
 	if (!GetEnvDecimal("INT", 7, &canChan))                          { DOS_StringOutput(s_MsgEnvInt);  DOS_Exit0(); }
 	if (!GetEnvDecimal("KEYB", KEYBOARD_COUNT_MAX, &g_KeyboardCount)) { DOS_StringOutput(s_MsgEnvKeyb); DOS_Exit0(); }
 	if (!GetEnvDecimal("C80F", C80F_COUNT_MAX, &g_C80fCount))         { DOS_StringOutput(s_MsgEnvC80f); DOS_Exit0(); }
+	if (!GetEnvDecimal("MEMB", MEMORY_COUNT_MAX, &g_MemoryCount))     { DOS_StringOutput(s_MsgEnvMemb); DOS_Exit0(); }
 
 	// Splash screen - its own standalone SCREEN2 excursion, shown before anything else visible, only
 	// reachable once all 4 env vars are valid.
@@ -199,6 +207,7 @@ void main(void)
 	McBase_Init();
 	McCom_Init();
 	Store_Load();
+	McMem_Init();
 
 	// PatternOffset=0 (not 1): this font's CharFirst is 0, so offset 0 keeps Print_*'s pattern-table
 	// index equal to the raw ASCII code, matching what BDOS's own console driver writes unshifted.
@@ -231,7 +240,7 @@ void main(void)
 		name[i] = 0;
 
 		Print_SetPosition(0, s_Row++);
-		Print_DrawFormat("IO=%u INT=%u KEYB=%u C80F=%u", g_CanAddr, canChan, g_KeyboardCount, g_C80fCount);
+		Print_DrawFormat("IO=%u INT=%u KEYB=%u C80F=%u MEMB=%u", g_CanAddr, canChan, g_KeyboardCount, g_C80fCount, g_MemoryCount);
 
 		Print_SetPosition(0, s_Row++);
 		Print_DrawFormat("GUiD=%2x%2x%2x%2x CS2GER=%2x", guid[0], guid[1], guid[2], guid[3], cs2Ger);

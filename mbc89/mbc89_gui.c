@@ -11,9 +11,11 @@
 #include "mbc89_can.h"
 #include "mbc89_base.h"
 #include "mbc89_com.h"
+#include "mbc89_memory.h"
 #include "rcx_io.h"
 #include "content/panel_keyboard.h"
 #include "content/panel_cu.h"
+#include "content/panel_memory.h"
 #include "content/knob_sprite.h"
 #include "content/ui_frame.h"
 #include "content/ui_tri_left.h"
@@ -38,9 +40,11 @@
 #define PANEL_KEYBOARD 0
 #define PANEL_CU6021   1
 #define PANEL_C80F     2
+#define PANEL_MEMORY   3
 
 #define TBL_KEYBOARD 0
 #define TBL_CU6021   1
+#define TBL_MEMORY   2
 
 // Device inventory - MAX how many of each type the carousel can ever hold (compile-time array
 // sizing only). KEYBOARD_COUNT_MAX is defined in mbc89_com.h (shared with
@@ -78,19 +82,36 @@ static const u8 s_Cu6021D[] = {7,8,9,10,11,12,13,14,15,16,255,255,255,255,255,18
 // Triangles (21/22) and the knob (20) are bridged out of the neighbor graph on purpose. L(17)/F(19)
 // likewise unimplemented (see s_DigitForHotspot below).
 
-// Per-table lookup arrays, indexed by s_TableId (TBL_KEYBOARD/TBL_CU6021).
-static const u8* const s_HotX[2] = { s_KeyboardX, s_Cu6021X };
-static const u8* const s_HotY[2] = { s_KeyboardY, s_Cu6021Y };
-static const u8* const s_HotL[2] = { s_KeyboardL, s_Cu6021L };
-static const u8* const s_HotR[2] = { s_KeyboardR, s_Cu6021R };
-static const u8* const s_HotU[2] = { s_KeyboardU, s_Cu6021U };
-static const u8* const s_HotD[2] = { s_KeyboardD, s_Cu6021D };
-static const u8 s_TriL[2]           = { KEYBOARD_TRI_L, CU6021_TRI_L };
-static const u8 s_TriR[2]           = { KEYBOARD_TRI_R, CU6021_TRI_R };
+// Memory 6043: NOT a copy of Keyboard's button content - same shared 8-column/4-row master grid
+// (identical X/Y to every other panel), filled with the real device's own 5 function buttons
+// (extern/off/input/end/clear, abbreviated "ex"/"off"/"in"/"end"/"clr" - row-group 0, columns
+// 0/1/3/4/7) and 24 route buttons (A1-A8/B1-B8/C1-C8, row-groups 1-3, all 8 columns). Every one of
+// the 29 buttons has its own LED (explicit instruction). Index order: 0-4 = ex/off/in/end/clr,
+// 5-12 = A1-A8, 13-20 = B1-B8, 21-28 = C1-C8, 29/30 = triangles (lead back to A1/A8, like
+// Keyboard/CU6021 into their second row). Ported from the hardware-confirmed DevicePanel prototype.
+#define MEMORY_COUNT 31
+#define MEMORY_TRI_L 29
+#define MEMORY_TRI_R 30
+static const u8 s_MemoryX[] = {65,83,119,137,191,65,83,101,119,137,155,173,191,65,83,101,119,137,155,173,191,65,83,101,119,137,155,173,191,20,236};
+static const u8 s_MemoryY[] = {73,73,73,73,73,101,101,101,101,101,101,101,101,129,129,129,129,129,129,129,129,157,157,157,157,157,157,157,157,88,88};
+static const u8 s_MemoryL[] = {29,0,1,2,3,29,5,6,7,8,9,10,11,29,13,14,15,16,17,18,19,29,21,22,23,24,25,26,27,255,12};
+static const u8 s_MemoryR[] = {1,2,3,4,30,6,7,8,9,10,11,12,30,14,15,16,17,18,19,20,30,22,23,24,25,26,27,28,30,5,255};
+static const u8 s_MemoryU[] = {255,255,255,255,255,0,1,255,2,3,255,255,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,255,255};
+static const u8 s_MemoryD[] = {5,6,8,9,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,255,255,255,255,255,255,255,255,255,255};
+
+// Per-table lookup arrays, indexed by s_TableId (TBL_KEYBOARD/TBL_CU6021/TBL_MEMORY).
+static const u8* const s_HotX[3] = { s_KeyboardX, s_Cu6021X, s_MemoryX };
+static const u8* const s_HotY[3] = { s_KeyboardY, s_Cu6021Y, s_MemoryY };
+static const u8* const s_HotL[3] = { s_KeyboardL, s_Cu6021L, s_MemoryL };
+static const u8* const s_HotR[3] = { s_KeyboardR, s_Cu6021R, s_MemoryR };
+static const u8* const s_HotU[3] = { s_KeyboardU, s_Cu6021U, s_MemoryU };
+static const u8* const s_HotD[3] = { s_KeyboardD, s_Cu6021D, s_MemoryD };
+static const u8 s_TriL[3]           = { KEYBOARD_TRI_L, CU6021_TRI_L, MEMORY_TRI_L };
+static const u8 s_TriR[3]           = { KEYBOARD_TRI_R, CU6021_TRI_R, MEMORY_TRI_R };
 // Landing hotspot when a triangle switches to a NEW panel: arriving from the panel that was to its
 // right (slot index decreased, own right edge) vs. from the one that was to its left (slot increased).
-static const u8 s_EnterFromRight[2] = { 15, 13 };
-static const u8 s_EnterFromLeft[2]  = { 8, 7 };
+static const u8 s_EnterFromRight[3] = { 15, 13, 12 };
+static const u8 s_EnterFromLeft[3]  = { 8, 7, 5 };
 
 static const u8 s_KnobX[KNOB_FRAME_COUNT] = {136,137,137,138,139,140,141,142,143,144,145,147,148,149,150,151,153,154,155,156,157,158,159,160,161,161,162};
 static const u8 s_KnobY[KNOB_FRAME_COUNT] = {144,143,143,142,141,140,139,139,138,138,137,137,137,137,137,137,137,138,138,139,139,140,141,142,143,143,144};
@@ -165,6 +186,16 @@ static const u8  s_LedPatchCount[6]   = {8,5,8,5,5,10};
 #define LED_F0   4
 #define LED_GO   5
 
+// Memory 6043: unlike SetKeyboardLed() (color-only toggle on an always-lit baked dot), each of the 29
+// LEDs here has its own real pattern-table patch (drawn, not baked pre-lit). Per-button entry count is
+// NOT uniformly 4 - grid columns 0/3/4/7 (x=65/119/137/191) sit exactly on an 8px cell boundary, so
+// their LED's 4-pixel width straddles TWO pattern-table cells (6 entries); columns 1/2/5/6 fit in one
+// cell (4 entries). Ported byte-for-byte from the hardware-confirmed DevicePanel prototype.
+static const u16 s_MemLedPatchOffset[148] = {1863,2104,2112,2105,2113,2114,1879,2128,2129,2130,1911,2160,2168,2161,2169,2162,1935,2176,2184,2177,2185,2186,1983,2232,2240,2233,2241,2234,2883,2876,2884,2877,2885,2886,2899,2900,2901,2902,2915,2916,2917,2918,2931,2932,2940,2933,2941,2934,2955,2948,2956,2949,2957,2958,2971,2972,2973,2974,2987,2988,2989,2990,3003,3004,3012,3005,3013,3006,3655,3896,3904,3897,3905,3906,3671,3920,3921,3922,3687,3936,3937,3938,3703,3952,3960,3953,3961,3954,3727,3968,3976,3969,3977,3978,3743,3992,3993,3994,3759,4008,4009,4010,3775,4024,4032,4025,4033,4026,4675,4668,4676,4669,4677,4678,4691,4692,4693,4694,4707,4708,4709,4710,4723,4724,4732,4725,4733,4726,4747,4740,4748,4741,4749,4750,4763,4764,4765,4766,4779,4780,4781,4782,4795,4796,4804,4797,4805,4798};
+static const u8  s_MemLedPatchOnByte[148] = {192,1,224,1,224,192,48,120,120,48,3,7,128,7,128,3,192,1,224,1,224,192,3,7,128,7,128,3,192,1,224,1,224,192,48,120,120,48,12,30,30,12,3,7,128,7,128,3,192,1,224,1,224,192,48,120,120,48,12,30,30,12,3,7,128,7,128,3,192,1,224,1,224,192,48,120,120,48,12,30,30,12,3,7,128,7,128,3,192,1,224,1,224,192,48,120,120,48,12,30,30,12,3,7,128,7,128,3,192,1,224,1,224,192,48,120,120,48,12,30,30,12,3,7,128,7,128,3,192,1,224,1,224,192,48,120,120,48,12,30,30,12,3,7,128,7,128,3};
+static const u16 s_MemLedPatchStart[29]  = {0,6,10,16,22,28,34,38,42,48,54,58,62,68,74,78,82,88,94,98,102,108,114,118,122,128,134,138,142};
+static const u8  s_MemLedPatchCount[29]  = {6,4,6,6,6,6,4,4,6,6,4,4,6,6,4,4,6,6,4,4,6,6,4,4,6,6,4,4,6};
+
 static const u16 s_DirUpOffset[9]   = {857,858,859,860,861,862,868,869,870};
 static const u8  s_DirUpOnByte[9]   = {2,7,7,15,15,31,128,128,192};
 static const u16 s_DirDownOffset[9] = {1112,1113,1114,1115,1116,1117,1120,1121,1122};
@@ -187,7 +218,7 @@ static const u8 s_DigitForHotspot[21] = {1,2,3,255,255,255,255,4,5,6,255,255,255
 // VARIABLES
 //===================================================================================================
 
-static u8  s_UnpackBuf[6144]; // one GM2 pattern OR color bank's worth - reused, never both at once
+static u8  s_RleChunk[128];   // one decoded RLEp chunk (max 64 bytes, type 2 doubles to 128)
 
 static i8  s_SlotIndex = 0;   // negative = Keyboard pool, 0 = CU6021, positive = Control80f pool
 static u8  s_PanelType = PANEL_CU6021;
@@ -250,8 +281,9 @@ static bool s_AddrBlinkOn = TRUE;
 //---------------------------------------------------------------------------------------------------
 // MSXimg's own -compress rlep encoder has a real bug for runs >=64 bytes, so this decoder matches a
 // separate encoder used to build the content/panel_*.h files, not MSXgl's own (incompatible)
-// RLEp_UnpackToRAM().
-static void UnpackRLEp(const u8* src, u16 srcSize, u8* dst)
+// RLEp_UnpackToRAM(). Decodes chunk by chunk into s_RleChunk and streams each chunk straight to
+// VRAM - a full 6144-byte RAM bank buffer would push _DATA over the fixed page-3 block at 0xC000.
+static void UnpackRLEp(const u8* src, u16 srcSize, u16 vram)
 {
 	const u8* srcEnd = src + srcSize;
 	while (src < srcEnd)
@@ -262,35 +294,48 @@ static void UnpackRLEp(const u8* src, u16 srcSize, u8* dst)
 		src++;
 		if (type == 0) // Chunk of zeros
 		{
-			for (i = 0; i < count; i++) dst[i] = 0;
+			for (i = 0; i < count; i++) s_RleChunk[i] = 0;
 		}
 		else if (type == 1) // Chunk of same byte
 		{
-			for (i = 0; i < count; i++) dst[i] = *src;
+			for (i = 0; i < count; i++) s_RleChunk[i] = *src;
 			src++;
 		}
 		else if (type == 2) // Chunk of same 2 bytes
 		{
 			count = (u8)(count << 1);
-			for (i = 0; i < count; i++) dst[i] = src[i & 1];
+			for (i = 0; i < count; i++) s_RleChunk[i] = src[i & 1];
 			src += 2;
 		}
 		else // type == 3, uncompressed data
 		{
-			for (i = 0; i < count; i++) dst[i] = src[i];
+			for (i = 0; i < count; i++) s_RleChunk[i] = src[i];
 			src += count;
 		}
-		dst += count;
+		VDP_WriteVRAM(s_RleChunk, vram, 0, count);
+		vram += count;
+	}
+}
+
+//---------------------------------------------------------------------------------------------------
+// SCREEN2 identity name table (cell i shows pattern i&0xFF, all 3 banks), built 128 bytes at a time
+// in s_RleChunk instead of a full 768-byte RAM copy.
+static void WriteIdentityNameTable(void)
+{
+	u8 block;
+	u8 i;
+	for (block = 0; block < 6; block++)
+	{
+		for (i = 0; i < 128; i++) s_RleChunk[i] = (u8)(((block & 1) << 7) | i);
+		VDP_WriteVRAM(s_RleChunk, g_ScreenLayoutLow + (u16)block * 128, g_ScreenLayoutHigh, 128);
 	}
 }
 
 //---------------------------------------------------------------------------------------------------
 static void ShowPanel(const u8* patterns, u16 patternsSize, const u8* colors, u16 colorsSize)
 {
-	UnpackRLEp(patterns, patternsSize, s_UnpackBuf);
-	VDP_WriteVRAM(s_UnpackBuf, VDP_GetPatternTable_GM2(0), 0, sizeof(s_UnpackBuf));
-	UnpackRLEp(colors, colorsSize, s_UnpackBuf);
-	VDP_WriteVRAM(s_UnpackBuf, VDP_GetColorTable_GM2(0), 0, sizeof(s_UnpackBuf));
+	UnpackRLEp(patterns, patternsSize, VDP_GetPatternTable_GM2(0));
+	UnpackRLEp(colors, colorsSize, VDP_GetColorTable_GM2(0));
 }
 
 //---------------------------------------------------------------------------------------------------
@@ -299,6 +344,7 @@ static void ShowCurrentPanel(void)
 	switch (s_PanelType)
 	{
 		case PANEL_KEYBOARD: ShowPanel(g_PanelKeyboard_Patterns, sizeof(g_PanelKeyboard_Patterns), g_PanelKeyboard_Colors, sizeof(g_PanelKeyboard_Colors)); break;
+		case PANEL_MEMORY:   ShowPanel(g_PanelMemory_Patterns, sizeof(g_PanelMemory_Patterns), g_PanelMemory_Colors, sizeof(g_PanelMemory_Colors)); break;
 		case PANEL_CU6021:
 		case PANEL_C80F:     ShowPanel(g_PanelCu_Patterns, sizeof(g_PanelCu_Patterns), g_PanelCu_Colors, sizeof(g_PanelCu_Colors)); break;
 		default: break;
@@ -423,6 +469,45 @@ static void ApplyIncomingKeyboardMessage(const u8* msg)
 	else       s_KbColStatus[kbIndex] = (u16)(s_KbColStatus[kbIndex] & ~mask);
 	if ((s_PanelType == PANEL_KEYBOARD) && (kbIndex == (u8)(s_SlotNumber - 1)))
 		SetKeyboardLed(col, green);
+}
+
+//===================================================================================================
+// HELPER FUNCTIONS - Memory 6043
+//===================================================================================================
+
+//---------------------------------------------------------------------------------------------------
+// Unlike SetKeyboardLed() (color-only toggle on an always-lit baked dot), each of the 29 LEDs here has
+// its own real pattern-table patch (drawn, not baked pre-lit) - see s_MemLedPatchOffset's comment.
+static void SetMemoryLed(u8 idx, bool on)
+{
+	VADDR base = VDP_GetPatternTable_GM2(0);
+	u16 start = s_MemLedPatchStart[idx];
+	u8 count = s_MemLedPatchCount[idx];
+	u8 i;
+	for (i = 0; i < count; i++)
+		VDP_Poke(on ? s_MemLedPatchOnByte[start + i] : 0, base + s_MemLedPatchOffset[start + i], 0);
+}
+
+//---------------------------------------------------------------------------------------------------
+// Repaints all 29 Memory LEDs for the given (1-based slot -> 0-based) instance from mbc89_memory.c's
+// own McMem_LedOn() - unlike Keyboard/CU6021's local bitmask state, Memory's state lives entirely in
+// mbc89_memory.c (route valid/active bits + recording state), this is purely the VRAM side.
+static void RefreshMemoryLeds(u8 instance)
+{
+	u8 i;
+	for (i = 0; i < 29; i++)
+		SetMemoryLed(i, McMem_LedOn(instance, i));
+}
+
+//---------------------------------------------------------------------------------------------------
+// Dispatches a SPACE press on the currently focused Memory hotspot (0-28) to mbc89_memory.c, then
+// repaints this instance's LEDs - McMem_HandlePress() may have changed recording state, fired a route
+// (CAN burst via McCom_SendZubehoer()), or deleted one, any of which can change several LEDs at once.
+static void HandleMemoryPress(void)
+{
+	u8 instance = (u8)(s_SlotNumber - 1);
+	McMem_HandlePress(instance, s_Hotspot);
+	RefreshMemoryLeds(instance);
 }
 
 //===================================================================================================
@@ -670,10 +755,20 @@ static void RecomputePanelFromSlot(void)
 	}
 	else if (s_SlotIndex < 0)
 	{
-		s_PanelType  = PANEL_KEYBOARD;
-		s_TableId    = TBL_KEYBOARD;
-		s_SlotNumber = (u8)(-s_SlotIndex);               // 1..g_KeyboardCount
-		s_CurKb = &s_KbColStatus[s_SlotNumber - 1];
+		u8 n = (u8)(-s_SlotIndex);
+		if (n <= g_KeyboardCount)
+		{
+			s_PanelType  = PANEL_KEYBOARD;
+			s_TableId    = TBL_KEYBOARD;
+			s_SlotNumber = n;                                // 1..g_KeyboardCount
+			s_CurKb = &s_KbColStatus[s_SlotNumber - 1];
+		}
+		else
+		{
+			s_PanelType  = PANEL_MEMORY;
+			s_TableId    = TBL_MEMORY; // own hotspot table - real button content, not Keyboard's
+			s_SlotNumber = (u8)(n - g_KeyboardCount);        // 1..g_MemoryCount
+		}
 	}
 	else
 	{
@@ -693,13 +788,18 @@ static void RecomputePanelFromSlot(void)
 // digit shape in this table depends on both.
 static void UpdateSlotDisplay(void)
 {
-	if (s_PanelType == PANEL_KEYBOARD)
+	if ((s_PanelType == PANEL_KEYBOARD) || (s_PanelType == PANEL_MEMORY))
 	{
+		// Memory's slot number is rendered in yellow (0xB1) instead of Keyboard's white (0xF1) - the
+		// one visual difference between the two panels besides the content itself, per explicit
+		// instruction, so the two panel families stay distinguishable at a glance from the number alone.
+		u8 numberColor = (s_PanelType == PANEL_MEMORY) ? 0xB1 : 0xF1;
 		VDP_WriteVRAM(&s_DigitPattern[s_SlotNumber - 1][0],  VDP_GetPatternTable_GM2(0) + DIGIT_CELL_OFF_ROW0, 0, 32);
 		VDP_WriteVRAM(&s_DigitPattern[s_SlotNumber - 1][32], VDP_GetPatternTable_GM2(0) + DIGIT_CELL_OFF_ROW1, 0, 32);
-		VDP_FillVRAM(0xF1, VDP_GetColorTable_GM2(0) + DIGIT_CELL_OFF_ROW0, 0, 32);
-		VDP_FillVRAM(0xF1, VDP_GetColorTable_GM2(0) + DIGIT_CELL_OFF_ROW1, 0, 32);
-		RefreshKeyboardLeds();
+		VDP_FillVRAM(numberColor, VDP_GetColorTable_GM2(0) + DIGIT_CELL_OFF_ROW0, 0, 32);
+		VDP_FillVRAM(numberColor, VDP_GetColorTable_GM2(0) + DIGIT_CELL_OFF_ROW1, 0, 32);
+		if (s_PanelType == PANEL_MEMORY) RefreshMemoryLeds((u8)(s_SlotNumber - 1));
+		else                             RefreshKeyboardLeds();
 	}
 	else if ((s_PanelType == PANEL_CU6021) || (s_PanelType == PANEL_C80F))
 	{
@@ -776,13 +876,11 @@ static void SwitchToPanel(void)
 //---------------------------------------------------------------------------------------------------
 // A standalone SCREEN2 excursion shown before the IO/INT prompt (still SCREEN0), not part of the
 // later Gui_Init()/Gui_Run() SCREEN2 session. No fade in/out - just the final color table (see
-// panel_splash.h's own comment). Reuses UnpackRLEp()/s_UnpackBuf, the same identity name-table
+// panel_splash.h's own comment). Reuses UnpackRLEp(), the same identity name-table
 // pattern, and g_ScreenLayoutLow/High that Gui_Init() also uses below - both are independent,
 // self-contained SCREEN2 setups, neither depends on the other having run first.
 void Gui_ShowSplash(void)
 {
-	static u8 nameTable[768];
-	u16 i;
 	u16 target;
 
 	VDP_SetMode(VDP_MODE_SCREEN2);
@@ -791,14 +889,10 @@ void Gui_ShowSplash(void)
 	// margin) - main() switches back to its own SCREEN0 setup right after this returns.
 	VDP_SetColor(COLOR_BLACK);
 
-	for (i = 0; i < 768; i++) nameTable[i] = (u8)(i & 0xFF);
-	VDP_WriteVRAM(nameTable, g_ScreenLayoutLow, g_ScreenLayoutHigh, 768);
+	WriteIdentityNameTable();
 
-	UnpackRLEp(g_PanelSplash_Patterns, sizeof(g_PanelSplash_Patterns), s_UnpackBuf);
-	VDP_WriteVRAM(s_UnpackBuf, VDP_GetPatternTable_GM2(0), 0, sizeof(s_UnpackBuf));
-
-	UnpackRLEp(g_PanelSplash_Colors2, sizeof(g_PanelSplash_Colors2), s_UnpackBuf);
-	VDP_WriteVRAM(s_UnpackBuf, VDP_GetColorTable_GM2(0), 0, sizeof(s_UnpackBuf));
+	UnpackRLEp(g_PanelSplash_Patterns, sizeof(g_PanelSplash_Patterns), VDP_GetPatternTable_GM2(0));
+	UnpackRLEp(g_PanelSplash_Colors2, sizeof(g_PanelSplash_Colors2), VDP_GetColorTable_GM2(0));
 
 	VDP_EnableDisplay(TRUE);
 
@@ -813,14 +907,13 @@ void Gui_ShowSplash(void)
 //---------------------------------------------------------------------------------------------------
 void Gui_Init(void)
 {
-	static u8 nameTable[768];
 	u16 i;
 
 	// Derived once, together, from the runtime instance counts (g_KeyboardCount/g_C80fCount, set in
 	// main() from the KEYB/C80F env vars before this runs) - both the carousel navigation bound AND
 	// the array-index safety of s_KbColStatus[]/s_DigitPattern[]/s_CuState[] depend on the SAME
 	// underlying counts staying in sync, so they're computed here, in one place.
-	s_SlotLeftMin  = -(i8)g_KeyboardCount;
+	s_SlotLeftMin  = -(i8)(g_KeyboardCount + g_MemoryCount);
 	s_SlotRightMax = (i8)g_C80fCount;
 
 	// MSXgl's crt0 never calls SDCC's GSINIT - a struct/global with a "plain" initializer (even one
@@ -853,8 +946,7 @@ void Gui_Init(void)
 
 	// Identity Name Table - matches how MSXimg's --tilesUnique output is addressed: each of the 768
 	// GM2 cells maps to its own unique pattern/color 1:1.
-	for (i = 0; i < 768; i++) nameTable[i] = (u8)(i & 0xFF);
-	VDP_WriteVRAM(nameTable, g_ScreenLayoutLow, g_ScreenLayoutHigh, 768);
+	WriteIdentityNameTable();
 
 	VDP_SetSpriteFlag(VDP_SPRITE_SIZE_16);
 	VDP_LoadSpritePattern(g_UiFrame,    FRAME_PATTERN, 1 * 4);
@@ -961,6 +1053,10 @@ void Gui_Run(void)
 			else if ((s_TableId == TBL_KEYBOARD) && (s_Hotspot < KEYBOARD_TRI_L))
 			{
 				HandleKeyboardPress();
+			}
+			else if ((s_TableId == TBL_MEMORY) && (s_Hotspot < MEMORY_TRI_L))
+			{
+				HandleMemoryPress();
 			}
 		}
 		prevSpace = curSpace;

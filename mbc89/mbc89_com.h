@@ -74,6 +74,11 @@ void McCom_HandleKeyboardEvent(u8 kbIndex, u8 col, bool green);
 // touching the screen if it happens to be the visible one.
 bool McCom_DecodeKeyboardEvent(const u8* msg, u8* kbIndex, u8* col, bool* green);
 
+// Low-level Zubehoer-Schalten-Versand, fuer mbc89_memory.c's Fahrstraßen-Wiedergabe exportiert (CAN-ID
+// 0x16, DLC 6, Strom=an) - gleiches Drahtformat wie McCom_HandleKeyboardEvent()'s eigener Versand, nur
+// direkt adressiert statt ueber eine Keyboard-Spalte.
+void McCom_SendZubehoer(u16 addr, u8 richtung);
+
 // --- CU6021 loco control ---
 // addr is the display convention (1..80, 80 maps to array index 0). All loco-control functions
 // below are gated by McCom_IsLokControllable() internally (no-op if not mapped/INFRA-owned) EXCEPT

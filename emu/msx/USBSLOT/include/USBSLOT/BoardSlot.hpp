@@ -66,8 +66,29 @@ struct Detection {
     std::array<bool, 2> occupied{};
     std::array<SlotConfig, 2> slots{};
     bool switchedIo = false;
+    // RCX ROM ("RCX_INTERFACE" at 4010h) in a board slot or one of its subslots.
+    bool rcxRom = false;
 };
 [[nodiscard]] Detection detectBoard(Bridge& bridge);
+
+// Time and date for the clock of card A; year with four digits.
+struct ClockTime {
+    int year = 2000;
+    int month = 1;
+    int day = 1;
+    int hour = 0;
+    int minute = 0;
+    int second = 0;
+};
+
+enum class ClockResult : std::uint8_t { Set, NoSwitchedIo, NoRcxRom, NoController, NoClock };
+
+// Sets the PCF8583 clock of RC2014 card A (PCF8584 at cardAddress) over the switched I/O of the RCX card,
+// with the registers of CALL SET TIME and CALL SET DATE of the RCX ROM (registers 0-6, year in RAM 10h).
+// Writes nothing unless switched I/O and the RCX ROM were found, the PCF8584 is idle after its
+// initialisation (PIN = 1, BB = 1) and the PCF8583 acknowledges its address A0h.
+[[nodiscard]] ClockResult setCardClock(Bridge& bridge, const Detection& detection, std::uint8_t cardAddress,
+                                       const ClockTime& time);
 
 // Slot 1 or 2 of the board as a module slot of the machine, with a read cache of 8 KiB windows: the
 // first read of a 256-byte line fetches the whole line, further reads cost no USB transfer. A write

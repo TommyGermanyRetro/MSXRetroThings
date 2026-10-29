@@ -59,6 +59,80 @@ bool hasSdMapperDriver(Bridge& bridge, std::uint8_t slot)
            std::equal(Name, Name + sizeof Name - 1, header.begin() + 0x10);
 }
 
+// RCX ROM: UNAPI specification identifier "RCX_INTERFACE" right behind the cartridge header at 4010h, in the
+// slot or subslot selected now.
+bool hasRcxRom(Bridge& bridge, std::uint8_t slot)
+{
+    static constexpr char Signature[] = "RCX_INTERFACE";
+    std::vector<std::uint8_t> header;
+    if (!bridge.readBlock(slot, 0x4010, sizeof Signature, header)) return false;
+    return std::equal(Signature, Signature + sizeof Signature, header.begin());
+}
+
+// Switched I/O of the RCX card: 40h enables it with the ID C0h; 46h latches the address of an RC2014
+// card register, 47h reads or writes it.
+constexpr std::uint8_t SwitchedIoPort = 0x40;
+constexpr std::uint8_t SwitchedIoId = 0xC0;
+constexpr std::uint8_t AddressLatch = 0x46;
+constexpr std::uint8_t DataPort = 0x47;
+
+// PCF8584 registers S0 (A0 = 0) and S1 (A0 = 1) behind the switched I/O.
+class Pcf8584 {
+public:
+    Pcf8584(Bridge& bridge, std::uint8_t address) : bridge_(bridge), s0_(address), s1_(static_cast<std::uint8_t>(address + 1)) {}
+
+    void write(bool s1, std::uint8_t value)
+    {
+        bridge_.writeIo(AddressLatch, s1 ? s1_ : s0_, waits_);
+        bridge_.writeIo(DataPort, value, waits_);
+    }
+    std::uint8_t status()
+    {
+        bridge_.writeIo(AddressLatch, s1_, waits_);
+        return bridge_.readIo(DataPort, waits_);
+    }
+    // Up to 255 reads of S1 until the bits in mask match wanted, like I2CBCTRL and I2CPCTRL of the RCX ROM.
+    bool waitStatus(std::uint8_t mask, std::uint8_t wanted, std::uint8_t& value)
+    {
+        for (int count = 0; count < 255; ++count) {
+            value = status();
+            if ((value & mask) == wanted) return true;
+        }
+        return false;
+    }
+    // I2C write of a block like CORE8 of the RCX ROM: START with the chip address, the bytes, STOP. False
+    // when the bus stays busy, a transfer does not complete or a byte is not acknowledged.
+    bool writeBlock(std::uint8_t chip, const std::vector<std::uint8_t>& bytes)
+    {
+        std::uint8_t value = 0;
+        if (!waitStatus(0x01, 0x01, value)) return false;
+        write(false, chip);
+        write(true, 0xC5);
+        bool acknowledged = true;
+        for (std::size_t index = 0;; ++index) {
+            if (!waitStatus(0x80, 0x00, value) || (value & 0x08) != 0) {
+                acknowledged = false;
+                break;
+            }
+            if (index == bytes.size()) break;
+            write(false, bytes[index]);
+        }
+        write(true, 0xC3);
+        return acknowledged;
+    }
+
+private:
+    Bridge& bridge_;
+    std::uint8_t s0_;
+    std::uint8_t s1_;
+    std::uint32_t waits_ = 0;
+};
+
+std::uint8_t bcd(int value) noexcept
+{
+    return static_cast<std::uint8_t>((((value / 10) % 10) << 4) | (value % 10));
+}
+
 } // namespace
 
 void Rules::noCache(std::uint16_t base, std::uint32_t size)
@@ -91,6 +165,7 @@ Detection detectBoard(Bridge& bridge)
             for (unsigned sub = 0; sub < 4; ++sub) {
                 bridge.writeMemory(slot, 0xFFFF, static_cast<std::uint8_t>(sub * 0x55));
                 contents[slot - 1][sub] = classify(bridge, slot);
+                if (contents[slot - 1][sub] == Content::Rom && hasRcxRom(bridge, slot)) detection.rcxRom = true;
             }
             bridge.writeMemory(slot, 0xFFFF, 0x00);
             sdMapper[slot - 1] = contents[slot - 1][1] == Content::Rom && contents[slot - 1][3] == Content::Data &&
@@ -98,6 +173,7 @@ Detection detectBoard(Bridge& bridge)
         } else {
             bridge.writeMemory(slot, 0xFFFF, old);
             contents[slot - 1][0] = classify(bridge, slot);
+            if (contents[slot - 1][0] == Content::Rom && hasRcxRom(bridge, slot)) detection.rcxRom = true;
         }
     }
 
@@ -159,6 +235,34 @@ Detection detectBoard(Bridge& bridge)
         detection.occupied[index] = true;
     }
     return detection;
+}
+
+ClockResult setCardClock(Bridge& bridge, const Detection& detection, std::uint8_t cardAddress, const ClockTime& time)
+{
+    if (!detection.switchedIo) return ClockResult::NoSwitchedIo;
+    if (!detection.rcxRom) return ClockResult::NoRcxRom;
+    std::uint32_t waits = 0;
+    bridge.writeIo(SwitchedIoPort, SwitchedIoId, waits);
+    Pcf8584 controller(bridge, cardAddress);
+    // Initialisation like CORE6 (CALL I2C INIT): own address 55h, clock 8 MHz / SCL 90 kHz, bus idle.
+    controller.write(true, 0x80);
+    controller.write(false, 0x55);
+    controller.write(true, 0xA0);
+    controller.write(false, 0x18);
+    controller.write(true, 0xC1);
+    auto result = ClockResult::Set;
+    if ((controller.status() & 0x81) != 0x81) {
+        result = ClockResult::NoController;
+    } else if (!controller.writeBlock(0xA0, {0x00, 0x00, 0x00, bcd(time.second), bcd(time.minute), bcd(time.hour)})) {
+        // CALL SET TIME: from register 0 control, hundredths, seconds, minutes, hours.
+        result = ClockResult::NoClock;
+    } else if (!controller.writeBlock(0xA0, {0x05, bcd(time.day), bcd(time.month)}) ||
+               !controller.writeBlock(0xA0, {0x10, bcd(time.year % 100)})) {
+        // CALL SET DATE: day in register 5, month in register 6, year in RAM 10h.
+        result = ClockResult::NoClock;
+    }
+    bridge.writeIo(SwitchedIoPort, 0x00, waits);
+    return result;
 }
 
 BoardSlot::BoardSlot(Bridge& bridge, std::uint8_t number, SlotConfig config)

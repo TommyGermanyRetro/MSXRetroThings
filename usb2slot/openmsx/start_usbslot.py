@@ -20,8 +20,14 @@ werden VOR den Bridge-Erweiterungen uebergeben. openMSX vergibt dann zuerst die 
 Bridge-Erweiterungen (slot="any") bekommen die uebrigen freien Slots. Mit --bridge 1, 2 oder 12 werden nur
 diese Bridge-Slots eingebunden, damit ein Slot der Maschine fuer emulierte Cartridges frei bleibt.
 
-Aufruf:   python start_usbslot.py [maschine] [--port COMx] [--bridge 1|2|12] [weitere openMSX-Parameter]
-Vorgabe:  Maschine C-BIOS_MSX2+_JP, alle belegten Bridge-Slots, Port COM16 (oder Umgebungsvariable USBSLOT_PORT)
+Uhr der RC2014-Karte A: Mit --clock [adresse] stellt `slottest <port> clock <adresse>` vor dem Start die Uhr
+PCF8583 auf die PC-Ortszeit (PCF8584 an der IO-Adresse, dezimal wie CALL I2C INIT, Vorgabe 0). Nur bei MSX1-
+Maschinen (<type>MSX</type> in der Maschinenbeschreibung) und nur, wenn alle Pruefungen von slottest bestehen.
+
+Aufruf:   python start_usbslot.py [maschine] [--port COMx] [--bridge 1|2|12] [--clock [adresse]]
+                                  [weitere openMSX-Parameter]
+Vorgabe:  Maschine C-BIOS_MSX2+_JP, alle belegten Bridge-Slots, Port COM16 (oder Umgebungsvariable USBSLOT_PORT),
+          Uhr nicht stellen
 
 openMSX: bin\\openmsx.exe neben diesem Skript (mit eigenem share-Ordner), sonst der selbst gebaute openMSX unter
 D:\\openMSX_build mit den Systemdaten aus C:\\Program Files\\openMSX\\share. Die Umgebungsvariablen
@@ -38,6 +44,7 @@ BUILD_OPENMSX = r"D:\openMSX_build\openMSX-21.0\derived\x64-VC-Release\install\o
 BUILD_SHARE = r"C:\Program Files\openMSX\share"
 USER_EXT = os.path.join(os.path.expanduser("~"), "Documents", "openMSX", "share", "extensions")
 PORT = os.environ.get("USBSLOT_PORT", "COM16")
+CLOCK = None                                                    # IO-Adresse fuer --clock, None = Uhr nicht stellen
 OHNE_FENSTER = getattr(subprocess, "CREATE_NO_WINDOW", 0)       # slottest ohne eigenes Konsolenfenster
 
 KOPF = """<?xml version="1.0" ?>
@@ -139,8 +146,17 @@ def schreiben(name, titel, beschreibung, inhalt):
 def argumente(args):
     """Liefert (maschine, auswahl, weitere): die Maschine ist das erste Argument, wenn es nicht mit '-' beginnt,
     --bridge und --port duerfen an beliebiger Stelle stehen."""
-    global PORT
+    global PORT, CLOCK
     args = list(args)
+    if "--clock" in args:
+        i = args.index("--clock")
+        CLOCK = 0
+        if i + 1 < len(args) and args[i + 1].isdigit():
+            CLOCK = int(args[i + 1])
+            del args[i + 1]
+        if CLOCK > 254:
+            raise SystemExit("--clock erwartet eine IO-Adresse von 0 bis 254")
+        del args[i]
     if "--port" in args:
         i = args.index("--port")
         if i + 1 >= len(args):
@@ -167,10 +183,37 @@ def mapper_antwortet(mapperports):
     return all(w != 0xFF and (w & 0xE0) == 0xE0 for w in mapperports)
 
 
+def ist_msx1(maschine, share):
+    """True, wenn die Maschinenbeschreibung (Benutzer- oder Systemdaten) <type>MSX</type> angibt."""
+    ordner = [os.path.join(os.path.dirname(USER_EXT), "machines")]
+    if share:
+        ordner.append(os.path.join(share, "machines"))
+    for o in ordner:
+        datei = os.path.join(o, maschine + ".xml")
+        if os.path.isfile(datei):
+            with open(datei, encoding="utf-8", errors="replace") as f:
+                text = f.read()
+            anfang = text.find("<type>")
+            return anfang >= 0 and text[anfang + 6:text.find("</type>", anfang)].strip() == "MSX"
+    return False
+
+
+def uhr_stellen():
+    """Stellt die Uhr der Karte A ueber slottest clock; slottest schreibt nur, wenn alle Pruefungen bestehen."""
+    ausgabe = subprocess.run([SLOTTEST, PORT, "clock", str(CLOCK)], capture_output=True, text=True, check=False,
+                             creationflags=OHNE_FENSTER).stdout.strip()
+    print("Uhr Karte A (Adresse {}): {}".format(CLOCK, ausgabe or "keine Antwort von slottest"))
+
+
 def main():
     maschine, auswahl, weitere = argumente(sys.argv[1:])
 
     slots, swio, mapperports = scan()
+    if CLOCK is not None:
+        if ist_msx1(maschine, openmsx_pfade()[1] or os.path.join(os.path.dirname(openmsx_pfade()[0]), "share")):
+            uhr_stellen()
+        else:
+            print("Uhr Karte A: nicht gestellt, {} ist keine MSX1-Maschine".format(maschine))
     mapper_aktiv = mapper_antwortet(mapperports)
     os.makedirs(USER_EXT, exist_ok=True)
 

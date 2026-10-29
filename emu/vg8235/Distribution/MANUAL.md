@@ -1,6 +1,6 @@
 # VG-8235 Emulator – User Manual
 
-This manual describes the Philips VG 8235/00 emulator `vg8235.exe`: what it emulates, how to start it, and how to use the keyboard, joysticks, disks, cassettes, modules, the clock and the printer. The VG 8235 is Philips' MSX2 computer with a built-in 3.5" disk drive. The program's menus and messages are in English; **System > Deutsch** switches them to German and **System > English** back, and the choice is kept in the settings. This manual names the English menu items.
+This manual describes the Philips VG 8235/00 emulator `vg8235.exe`: what it emulates, how to start it, and how to use the keyboard, joysticks, disks, cassettes, modules, real cartridges on the USB2SLOT board, the clock and the printer. The VG 8235 is Philips' MSX2 computer with a built-in 3.5" disk drive. The program's menus and messages are in English; **Settings > Deutsch** switches them to German and **Settings > English** back, and the choice is kept in the settings. This manual names the English menu items.
 
 ## Contents
 
@@ -9,7 +9,7 @@ This manual describes the Philips VG 8235/00 emulator `vg8235.exe`: what it emul
 3. [The Window](#3-the-window)
 4. [Keyboard](#4-keyboard)
 5. [Joysticks](#5-joysticks)
-6. [System Menu](#6-system-menu)
+6. [System and Settings Menus](#6-system-and-settings-menus)
 7. [Disk](#7-disk)
 8. [Cassette](#8-cassette)
 9. [Modules](#9-modules)
@@ -36,6 +36,7 @@ Appendices: [A. Technical Reference](#appendix-a-technical-reference), [B. Sourc
 | Clock | Ricoh RP5C01 with calendar and battery-backed CMOS memory |
 | Cassette | MSX CAS images, playback and recording through the real tape signals at 1200 baud |
 | Modules | Slots 1 and 2: plain ROM modules and MegaROMs with the ASCII8, ASCII16, Konami and Konami SCC mappers (without SCC sound) |
+| USB2SLOT | Real MSX cartridges on the USB2SLOT board in slot 1 or 2, including RCX/XIO cartridges with the RC2014 cards behind them |
 | Printer | MSX printer port; output goes to text files |
 
 The emulator models the hardware, not the software: BASIC, Disk BASIC, MSX-DOS and games run from their original ROM, disk, cassette and module images without patches.
@@ -66,7 +67,7 @@ The command line can name a disk image for drive A and, with `-state <file.sst>`
 .\vg8235.exe -state "%USERPROFILE%\Documents\VG-8235\STATE\Game.sst"
 ```
 
-The machine starts like a switched-on VG 8235: with no bootable disk it shows the MSX2 logo and then Disk BASIC with `Ok`. The disk and the modules of the last session are restored from `vg8235.ini`; a disk on the command line takes precedence for drive A.
+The machine starts like a switched-on VG 8235: with no bootable disk it shows the MSX2 logo and then Disk BASIC with `Ok`. The disk, the modules and the slots of the USB2SLOT board of the last session are restored from `vg8235.ini`; a disk on the command line takes precedence for drive A.
 
 ### System Requirements
 
@@ -90,7 +91,7 @@ The window has a fixed size in screen pixels: 1140 x 1029 pixels including frame
 - **Status bar** (below the picture), from left to right:
   - joystick assignment, for example `Joystick 1: arrows + C/V | Joystick 2: off (F11: on)`;
   - disk file (`DSK: ...`), `*` when it has unsaved changes, `(drive on)` while the drive motor runs;
-  - inserted modules with file name and mapper;
+  - inserted modules with file name and mapper, or the slot of the USB2SLOT board with what it holds, `(no connection)` when the USB connection is lost;
   - cassette file, or `CAS: recording` while recording;
   - printer folder;
   - while the tape motor runs, the block, bytes, percentage and tape time (`Loading: ...`) or the bytes recorded (`Saving: ...`);
@@ -103,7 +104,7 @@ The window has a fixed size in screen pixels: 1140 x 1029 pixels including frame
 
 ## 4. Keyboard
 
-The PC keyboard layout follows the language (**System > English / Deutsch**): with English, the default, the keys are read as a US PC keyboard; with German as a German PC keyboard. Type as usual: each character is placed on the MSX key that produces it, together with MSX Shift where the MSX needs it. The PC Shift key acts as the MSX Shift key, also on its own: BASIC shows the F6-F10 labels while it is held. For characters the PC layout decides; while a character that the MSX types without Shift is held, Shift is taken back.
+The PC keyboard layout follows the language (**Settings > English / Deutsch**): with English, the default, the keys are read as a US PC keyboard; with German as a German PC keyboard. Type as usual: each character is placed on the MSX key that produces it, together with MSX Shift where the MSX needs it. The PC Shift key acts as the MSX Shift key, also on its own: BASIC shows the F6-F10 labels while it is held. For characters the PC layout decides; while a character that the MSX types without Shift is held, Shift is taken back.
 
 Keys without a character:
 
@@ -135,16 +136,23 @@ The menu **Joystick > Port 1** and **Port 2** sets what drives each MSX joystick
 
 **F11** (also **Joystick > Keyboard joystick active**) switches the keyboard joystick on and off. After the start it is off (`F11: off` in the status bar), so that loading commands such as `BLOAD"CAS:",R` can be typed; press F11 to play and again to type. Switching releases all held keys. The choice of each port is kept in the ini file.
 
-## 6. System Menu
+## 6. System and Settings Menus
+
+The **System** menu:
 
 | Item | Meaning |
 | --- | --- |
-| **Reset** | Works like the reset button: the machine restarts, while disk, cassette, RAM contents and the CMOS settings stay. A bootable MSX-DOS disk in the drive starts MSX-DOS. |
+| **Reset** | Works like the reset button: the machine restarts, while disk, cassette, RAM contents and the CMOS settings stay. A bootable MSX-DOS disk in the drive starts MSX-DOS. A lost connection to the USB2SLOT board is opened again first. |
 | **New disk...** | Makes a writable copy of a disk image: the first dialog chooses the template (it opens in the `Original` folder of the disk media folder), the second asks for the name of the copy. |
 | **Load state...** | Loads a snapshot (`*.sst`): the machine continues exactly where the snapshot was taken. |
 | **Save state...** | Saves the running machine as a snapshot: CPU, PPI, video chip with its video RAM, sound chip, clock, disk controller and drive mechanics, memory mapper RAM and registers, slot selection and the bank registers of the modules. |
 | **Record video...** | Records the picture and the sound into an MP4 file (H.264 video, AAC sound) until **Stop video**; see [Video Recording](#video-recording) below. |
 | **Stop video** | Ends the recording and finishes the file. |
+
+The **Settings** menu:
+
+| Item | Meaning |
+| --- | --- |
 | **English** / **Deutsch** | Language of menus, status bar and messages, and the PC keyboard layout: English with a US keyboard (the default) or German with a German keyboard. The switch takes effect at once and is kept in the settings file. |
 
 The snapshot dialogs start in the `STATE` media folder (see [Files and Settings](#13-files-and-settings)). A snapshot does not contain the ROMs, the module images, the disk, the cassette or the printer; it loads only with the same modules inserted, otherwise the emulator reports that it does not fit and the running machine stays as it was. After loading, the clock shows the time of the snapshot and runs on from there.
@@ -183,15 +191,46 @@ To record, choose **New recording**, save in BASIC (for example `CSAVE"NAME"`), 
 
 ## 9. Modules
 
-The **Modules** menu has the same items for slot 1 and slot 2:
+The **Modules** menu has a submenu for slot 1 and one for slot 2. Its title shows what the slot holds: the file name of the module, the slot of the USB2SLOT board with what the board found there, or `empty`. Each submenu has the same items:
 
 | Item | Meaning |
 | --- | --- |
-| **Slot n: insert (detect mapper)...** | Inserts a module image (`*.rom`); the emulator detects the mapper. |
-| **Slot n: insert as** | Inserts a module image with a fixed mapper: no mapper, ASCII8, ASCII16, Konami or Konami SCC. Use it when the automatic detection guesses wrong. |
-| **Slot n: remove** | Removes the module. |
+| **Insert ROM file...** | Inserts a module image (`*.rom`); the emulator detects the mapper. |
+| **Insert ROM file as** | Inserts a module image with a fixed mapper: no mapper, ASCII8, ASCII16, Konami or Konami SCC. Use it when the automatic detection guesses wrong. |
+| **USB2SLOT 1: ...** / **USB2SLOT 2: ...** | Puts slot 1 or 2 of the USB2SLOT board into this module slot (see below); the item shows what the board found in its slot. It is checked while this module slot uses it, and greyed when no board answers (`no board`), the board slot is empty or the other module slot uses it (`(in slot n)`). |
+| **Remove** | Removes the module or the board slot; greyed when the slot is empty. |
+
+Below the two submenus, **Detect USB2SLOT again** asks the board again what is plugged in, for example after changing a cartridge on the board.
 
 Inserting and removing restart the machine as after switching it on. Images up to 64 KiB count as plain ROMs; larger images are MegaROMs, whose mapper the emulator guesses from the bank switching writes in the image. The SCC sound chip of Konami SCC modules is not emulated, so their music is missing.
+
+### USB2SLOT Board
+
+The USB2SLOT board, a Teensy 4.1 with two MSX cartridge slots on USB, runs real MSX cartridges in the emulated machine: every access of the emulated CPU to that module slot goes over USB to the cartridge. The board is found on the COM port named by `usb2slotPort` in `vg8235.ini`, `COM16` by default.
+
+The emulator asks the board what is plugged in at the start, when a board slot is chosen in the menu, and with **Detect USB2SLOT again**; each time the board pulses /RESET on its cartridges. It recognises:
+
+- a cartridge without slot expander (`Cartridge`),
+- a cartridge with its own slot expander and the contents of each subslot, for example `Slot expander (0: ROM, 1: empty, 2: ROM, 3: empty)`,
+- the SD Mapper/Megaram 512K cartridge, as `SD Mapper (Memory Mapper)` or `SD Mapper (MegaRAM)`; only when ROM bank 7 holds its Nextor driver, otherwise it counts as a plain slot expander,
+- switched I/O on ports 40h-47h of RCX/XIO cartridges, with the RC2014 cards behind them.
+
+The names come from these checks: an MSX cartridge header carries no name.
+
+During emulation:
+
+- ROM contents are kept in a cache on the PC, so ROM software runs in real time. Other accesses take a USB round trip of about 100 microseconds.
+- SD Mapper: the Nextor ROM is cached while the SPI port of the SD cards is switched off; a sector of the SD card comes over USB in one block, so the card is about as fast as on a real MSX.
+- /INT of the cartridges reaches the emulated CPU; /WAIT of memory reads and I/O cycles is added to the emulated time.
+- While the emulation stands still, for example while a menu or dialog is open, the board switches the cartridges off like a powered-down MSX. When the emulation goes on, the machine restarts as after switching it on.
+- When the USB connection breaks, the slot reads FFh and the status bar shows `(no connection)`; **System > Reset** connects again.
+
+Limits:
+
+- /M1 reaches the cartridge only in areas without cache; cached instructions never appear on the bus.
+- /WAIT during memory writes is not added to the emulated time.
+- Cartridges with an unknown slot expander or mapper run without switching rules; after a bank switch the cache may then show stale contents. Game cartridges with their own mapper (Konami, ASCII, SCC) are not tested yet.
+- Only one program can use the board at a time: while openMSX or another emulator holds its COM port, the items show `no board`.
 
 ## 10. Printer
 
@@ -215,7 +254,7 @@ The RP5C01 clock starts with the PC's time and runs on the emulated CPU clock. I
 
 | File or folder | Contents |
 | --- | --- |
-| `vg8235.ini` | settings next to the program: `language` (`en` or `de`), `joystick1`/`joystick2` (`off`, `keyboard` or `controller`), `disk` (path of the disk in drive A), `slot1`/`slot2` (mapper number and path of the module), `printerDirectory` |
+| `vg8235.ini` | settings next to the program: `language` (`en` or `de`), `joystick1`/`joystick2` (`off`, `keyboard` or `controller`), `disk` (path of the disk in drive A), `slot1`/`slot2` (mapper number and path of the module, or `usb2slot,1`/`usb2slot,2` for a slot of the USB2SLOT board), `usb2slotPort` (COM port of the board, `COM16` by default), `printerDirectory` |
 | `vg8235.cmos` | CMOS memory of the clock |
 | `Documents\VG-8235\DISK` | disk images; templates for new disks in `DISK\Original`, where the setup puts the blank disks `LEER_1DD_360K.DSK` (360 KB, single-sided) and `LEER_2DD_720K.DSK` (720 KB, double-sided) |
 | `Documents\VG-8235\CAS` | cassette images |
@@ -251,7 +290,9 @@ Not modelled: analog picture and sound circuits, electrical timing of the chips,
 | `Game controller ... (not found)` | No game controller at that position; connect one, it is found within a second. |
 | `Audio: off` in the status bar | No audio device could be opened, for example because another program holds it exclusively. The emulator retries every second. |
 | A disk cannot be written | The image file is read-only, which makes it a write-protected disk; copy it and remove the read-only attribute. |
-| A MegaROM crashes or shows garbage | The automatic mapper detection guessed wrong; insert it again with **insert as** and the right mapper. |
+| A MegaROM crashes or shows garbage | The automatic mapper detection guessed wrong; insert it again with **Insert ROM file as** and the right mapper. |
+| The USB2SLOT items show `no board` | The board is not connected, another program (openMSX, a second emulator) holds its COM port, or `usb2slotPort` names another port. Connect it or close the other program, then choose **Modules > Detect USB2SLOT again**. |
+| `(no connection)` in the status bar | The USB connection to the board was lost; check the cable and choose **System > Reset**. |
 | A snapshot does not load | It was saved with other modules inserted, or by another version of the emulator. |
 
 ## Appendix A: Technical Reference

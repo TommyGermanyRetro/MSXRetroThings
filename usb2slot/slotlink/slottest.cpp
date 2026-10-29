@@ -35,6 +35,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <initializer_list>
 #include <string>
 
 using namespace slotlink;
@@ -366,10 +367,154 @@ static void scan(Link &link)
     link.sync(sy);
 }
 
+// Uhr PCF8583 der RC2014-Karte A (PCF8584 an IO-Adresse adr, dezimal wie CALL I2C INIT) auf die PC-Ortszeit
+// stellen, mit den Registern von CALL SET TIME und CALL SET DATE des RCX-ROM (Register 0-6, Jahr im RAM 10h).
+// Geschrieben wird nur, wenn Switched I/O antwortet, das RCX-ROM ("RCX_INTERFACE" bei 4010h) in einem Bridge-Slot
+// oder Unterslot steckt, der PCF8584 nach der Initialisierung im Leerlauf ist (PIN = 1, BB = 1) und der PCF8583
+// seine Adresse A0h quittiert. Ausgabe: CLOCK <SET|NOSWIO|NORCX|NOCONTROLLER|NOCLOCK> [Zeit]
+
+static int clockSet(Link &link, uint8_t adr)
+{
+    ReadResult rr;
+    auto rd = [&](uint8_t slot, uint16_t a) -> int
+    {
+        if (!link.memRead(slot, a, false, rr) || rr.status != StOk)
+        {
+            return -1;
+        }
+        return rr.data;
+    };
+    auto rcx = [&](uint8_t slot) -> bool
+    {
+        static const char id[] = "RCX_INTERFACE";
+        std::vector<uint8_t> blk;
+        uint16_t waits = 0;
+        uint8_t status = 0;
+        return link.memReadBlock(slot, 0x4010, sizeof id, blk, waits, status) && status == StOk &&
+               std::equal(id, id + sizeof id, blk.begin());
+    };
+
+    bool rcxRom = false;
+    for (uint8_t slot = 1; slot <= 2 && !rcxRom; slot++)
+    {
+        int old = rd(slot, 0xFFFF);
+        link.memWrite(slot, 0xFFFF, 0x5A);
+        if (rd(slot, 0xFFFF) == 0xA5)
+        {
+            for (unsigned sub = 0; sub < 4 && !rcxRom; sub++)
+            {
+                link.memWrite(slot, 0xFFFF, static_cast<uint8_t>(sub * 0x55));
+                rcxRom = rcx(slot);
+            }
+            link.memWrite(slot, 0xFFFF, 0x00);
+        }
+        else
+        {
+            if (old >= 0)
+            {
+                link.memWrite(slot, 0xFFFF, static_cast<uint8_t>(old));
+            }
+            rcxRom = rcx(slot);
+        }
+    }
+
+    link.ioWrite(0x40, 0xC0);
+    bool swio = link.ioRead(0x40, rr) && rr.data == 0x3F;
+    if (!swio || !rcxRom)
+    {
+        link.ioWrite(0x40, 0x00);
+        printf("CLOCK %s\n", !swio ? "NOSWIO" : "NORCX");
+        return 3;
+    }
+
+    // PCF8584 hinter dem Switched I/O: 46h Registeradresse, 47h Daten; S0 bei A0 = 0, S1 bei A0 = 1
+    const uint8_t s0 = adr;
+    const uint8_t s1 = static_cast<uint8_t>(adr + 1);
+    auto wr = [&](uint8_t reg, uint8_t value)
+    {
+        link.ioWrite(0x46, reg);
+        link.ioWrite(0x47, value);
+    };
+    auto status = [&]() -> int
+    {
+        link.ioWrite(0x46, s1);
+        return link.ioRead(0x47, rr) ? rr.data : 0xFF;
+    };
+    // Bis zu 255 Lesezugriffe auf S1, wie I2CBCTRL und I2CPCTRL des RCX-ROM
+    auto waitStatus = [&](uint8_t mask, uint8_t wanted, int &value) -> bool
+    {
+        for (int n = 0; n < 255; n++)
+        {
+            value = status();
+            if ((value & mask) == wanted)
+            {
+                return true;
+            }
+        }
+        return false;
+    };
+    // I2C-Block schreiben wie CORE8: START mit Chipadresse, Bytes, STOP; false ohne Quittung
+    auto block = [&](std::initializer_list<uint8_t> bytes) -> bool
+    {
+        int value = 0;
+        if (!waitStatus(0x01, 0x01, value))
+        {
+            return false;
+        }
+        wr(s0, 0xA0);
+        wr(s1, 0xC5);
+        bool ack = true;
+        auto it = bytes.begin();
+        for (;;)
+        {
+            if (!waitStatus(0x80, 0x00, value) || (value & 0x08) != 0)
+            {
+                ack = false;
+                break;
+            }
+            if (it == bytes.end())
+            {
+                break;
+            }
+            wr(s0, *it++);
+        }
+        wr(s1, 0xC3);
+        return ack;
+    };
+    auto bcd = [](int v) -> uint8_t { return static_cast<uint8_t>((((v / 10) % 10) << 4) | (v % 10)); };
+
+    // Initialisierung wie CORE6 (CALL I2C INIT): eigene Adresse 55h, Takt 8 MHz / SCL 90 kHz, Bus im Leerlauf
+    wr(s1, 0x80);
+    wr(s0, 0x55);
+    wr(s1, 0xA0);
+    wr(s0, 0x18);
+    wr(s1, 0xC1);
+    SYSTEMTIME t{};
+    GetLocalTime(&t);
+    const char *result = "SET";
+    if ((status() & 0x81) != 0x81)
+    {
+        result = "NOCONTROLLER";
+    }
+    else if (!block({0x00, 0x00, 0x00, bcd(t.wSecond), bcd(t.wMinute), bcd(t.wHour)}))
+    {
+        result = "NOCLOCK";
+    }
+    else if (!block({0x05, bcd(t.wDay), bcd(t.wMonth)}) || !block({0x10, bcd(t.wYear % 100)}))
+    {
+        result = "NOCLOCK";
+    }
+    link.ioWrite(0x40, 0x00);
+    SyncResult sy;
+    link.sync(sy);
+    printf("CLOCK %s %04u-%02u-%02u %02u:%02u:%02u\n", result, t.wYear, t.wMonth, t.wDay, t.wHour, t.wMinute, t.wSecond);
+    return strcmp(result, "SET") == 0 ? 0 : 3;
+}
+
 static void usage()
 {
     printf("Aufruf: slottest <COMx> <kommando> [parameter] [--keep]\n");
-    printf("  hello | state | read <slot> <adr> [m1] | write <slot> <adr> <wert> | in <port> | out <port> <wert> | outw <port> <wert> | scan\n");
+    printf("  hello | state | read <slot> <adr> [m1] | write <slot> <adr> <wert> | in <port> | out <port> <wert> | outw <port> <wert> | scan | clock <adr dezimal>\n");
     printf("  dump <slot> <adr> <laenge> [datei] | reset | bench | selftest | loop <sek> [block|read|mixed] | watch <sek>\n");
 }
 
@@ -484,6 +629,10 @@ int main(int argc, char **argv)
     else if (cmd == "scan")
     {
         scan(link);
+    }
+    else if (cmd == "clock" && a.size() >= 3)
+    {
+        rc = clockSet(link, static_cast<uint8_t>(atoi(a[2].c_str())));
     }
     else if (cmd == "outw" && a.size() >= 4)
     {

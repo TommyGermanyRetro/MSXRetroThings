@@ -976,6 +976,7 @@ constexpr UINT StateSaveCommand = 122;
 constexpr UINT VideoRecordCommand = 123;
 constexpr UINT VideoStopCommand = 124;
 constexpr UINT NewDiskCommand = 125;
+constexpr UINT BridgeProbeCommand = 126;
 // Cartridge commands: base + 10 * (slot - 1) + choice, choice 0 = detect, 1-5 = fixed mapper, 9 = eject.
 constexpr UINT CartridgeCommandBase = 130;
 constexpr UINT CartridgeEjectChoice = 9;
@@ -1077,6 +1078,9 @@ struct AppState {
     // slots, with the switching rules found by the probe, exist while a module slot uses them.
     std::unique_ptr<usbslot::Bridge> bridge;
     std::array<std::unique_ptr<usbslot::BoardSlot>, 2> boardSlots;
+    // What the last probe found in the two board slots (empty: nothing), for the module menu.
+    std::array<std::wstring, 2> boardContents;
+    bool boardProbed = false;
     std::string bridgePort = DefaultBridgePort;
     std::filesystem::path cmosPath;
     std::filesystem::path settingsPath;
@@ -1922,17 +1926,13 @@ void updateMenus(AppState& app)
     EnableMenuItem(menu, VideoStopCommand, MF_BYCOMMAND | (app.videoRecording ? MF_ENABLED : MF_GRAYED));
     EnableMenuItem(menu, DiskEjectCommand,
                    MF_BYCOMMAND | (app.machine.diskDrive().inserted() ? MF_ENABLED : MF_GRAYED));
-    for (std::uint8_t slot = 1; slot <= 2; ++slot) {
-        const bool occupied = app.machine.cartridgeSlot(slot).inserted() || app.machine.bridgeSlot(slot) != 0;
-        EnableMenuItem(menu, CartridgeCommandBase + 10u * (slot - 1u) + CartridgeEjectChoice,
-                       MF_BYCOMMAND | (occupied ? MF_ENABLED : MF_GRAYED));
-    }
     updateWindowTitle(app);
     DrawMenuBar(app.window);
 }
 
 std::filesystem::path executableDirectory();
-HMENU buildMenu();
+HMENU buildMenu(const AppState& app);
+void refreshMenu(AppState& app);
 
 // Name of a module mapper in the frontend language.
 std::wstring mapperText(cartridge::Mapper mapper)
@@ -2091,7 +2091,7 @@ bool loadStateFile(AppState& app, const std::filesystem::path& path)
     }
     app.fieldPhase = 0;
     app.audioSamplePhase = 0;
-    updateMenus(app);
+    refreshMenu(app);
     return true;
 }
 
@@ -2489,7 +2489,7 @@ void selectCartridge(AppState& app, std::uint8_t slot, unsigned choice)
                 L"maximal 4 MiB)."),
                 ui(L"Module", L"Modul"), MB_OK | MB_ICONERROR);
         }
-        updateMenus(app);
+        refreshMenu(app);
     } else if (CommDlgExtendedError() != 0) {
         MessageBoxW(app.window, ui(L"The file dialog could not be opened.", L"Der Dateiauswahldialog konnte nicht geoeffnet werden."),
                     ui(L"Module", L"Modul"), MB_OK | MB_ICONERROR);
@@ -2503,7 +2503,7 @@ void ejectCartridge(AppState& app, std::uint8_t slot)
     app.cartridgePaths[slot - 1].clear();
     (void)app.machine.connectBridgeSlot(slot, nullptr);
     resetMachine(app);
-    updateMenus(app);
+    refreshMenu(app);
 }
 
 // Opens the USB2SLOT board on its COM port unless it is connected already; the board slots in use keep
@@ -2538,10 +2538,21 @@ bool openBridge(AppState& app, bool showError)
     return true;
 }
 
+// Keeps what a probe found in the board slots for the module menu.
+void noteDetection(AppState& app, const usbslot::Detection& detection)
+{
+    for (std::size_t index = 0; index < 2; ++index) {
+        const auto& text = detection.slots[index].description;
+        app.boardContents[index] = detection.occupied[index] ? std::wstring(text.begin(), text.end()) : std::wstring();
+    }
+    app.boardProbed = true;
+}
+
 // Probes the board and sets up its slot with the rules for what was found; false when the slot is empty.
 bool setUpBoardSlot(AppState& app, std::uint8_t number)
 {
     const auto detection = usbslot::detectBoard(*app.bridge);
+    noteDetection(app, detection);
     if (!detection.occupied[number - 1]) return false;
     for (std::uint8_t slot = 1; slot <= 2; ++slot) {
         if (app.machine.bridgeSlot(slot) == number) (void)app.machine.connectBridgeSlot(slot, nullptr);
@@ -2573,7 +2584,43 @@ void selectBridgeSlot(AppState& app, std::uint8_t slot, std::uint8_t boardSlot)
         }
         resetMachine(app);
     }
-    updateMenus(app);
+    refreshMenu(app);
+    resumeAfterDialog(app);
+}
+
+void saveMedia(AppState& app);
+
+// Probes the board (this pulses /RESET on it) and sets up both slots again with what was found; module
+// slots that use a board slot keep it, an emptied board slot leaves them without a module.
+bool probeBoard(AppState& app, bool showError)
+{
+    if (!openBridge(app, showError)) {
+        app.boardContents = {};
+        app.boardProbed = false;
+        return false;
+    }
+    const auto detection = usbslot::detectBoard(*app.bridge);
+    noteDetection(app, detection);
+    for (std::uint8_t number = 1; number <= 2; ++number) {
+        app.boardSlots[number - 1] = detection.occupied[number - 1]
+            ? std::make_unique<usbslot::BoardSlot>(*app.bridge, number, detection.slots[number - 1])
+            : nullptr;
+    }
+    for (std::uint8_t slot = 1; slot <= 2; ++slot) {
+        if (const auto number = app.machine.bridgeSlot(slot)) {
+            (void)app.machine.connectBridgeSlot(slot, app.boardSlots[number - 1].get());
+        }
+    }
+    return true;
+}
+
+// Menu command: probe the board again; the machine is reset like after changing a module.
+void reprobeBoard(AppState& app)
+{
+    KillTimer(app.window, EmulationTimer);
+    if (probeBoard(app, true)) resetMachine(app);
+    refreshMenu(app);
+    saveMedia(app);
     resumeAfterDialog(app);
 }
 
@@ -2826,15 +2873,21 @@ void setLanguage(AppState& app, UiLanguage language)
 {
     if (uiLanguage() == language) return;
     uiLanguage() = language;
+    refreshMenu(app);
+    saveMedia(app);
+}
+
+// Builds the menu bar again (texts of the module slots and the board) and sets the state of its entries.
+void refreshMenu(AppState& app)
+{
     const HMENU previous = GetMenu(app.window);
-    const HMENU menu = buildMenu();
+    const HMENU menu = buildMenu(app);
     if (!menu) return;
     SetMenu(app.window, menu);
     if (previous) DestroyMenu(previous);
     updateMenus(app);
     updateJoystickMenu(app);
     updateWindowTitle(app);
-    saveMedia(app);
 }
 
 LRESULT CALLBACK windowProcedure(HWND window, UINT message, WPARAM wParam, LPARAM lParam)
@@ -2918,6 +2971,9 @@ LRESULT CALLBACK windowProcedure(HWND window, UINT message, WPARAM wParam, LPARA
             return 0;
         case NewDiskCommand:
             createDiskCopy(*app);
+            return 0;
+        case BridgeProbeCommand:
+            reprobeBoard(*app);
             return 0;
         case SystemResetCommand:
             // Like the reset button: disk, cassette, RAM and CMOS stay, so a bootable disk starts MSX-DOS.
@@ -3065,17 +3121,77 @@ std::filesystem::path executableDirectory()
     return std::filesystem::path(std::wstring(buffer.data(), length)).parent_path();
 }
 
-// Menu bar in the frontend language.
-HMENU buildMenu()
+// Menu text with "&" shown as such (file names).
+std::wstring literalMenuText(const std::wstring& text)
+{
+    std::wstring result;
+    for (const auto c : text) {
+        if (c == L'&') result += L'&';
+        result += c;
+    }
+    return result;
+}
+
+// What a module slot holds, for the title of its submenu.
+std::wstring slotContents(const AppState& app, std::uint8_t slot)
+{
+    if (const auto boardSlot = app.machine.bridgeSlot(slot)) {
+        const auto& found = app.boardContents[boardSlot - 1];
+        return L"USB2SLOT " + std::to_wstring(boardSlot) + (found.empty() ? L"" : L" - " + found);
+    }
+    if (app.machine.cartridgeSlot(slot).inserted()) {
+        return app.cartridgePaths[slot - 1].empty() ? ui(L"module", L"Modul")
+                                                    : literalMenuText(app.cartridgePaths[slot - 1].filename().wstring());
+    }
+    return ui(L"empty", L"leer");
+}
+
+// Submenu of a module slot: ROM file, slots of the USB2SLOT board (checked when in use here, grayed when the
+// board did not answer, the slot is empty or another module slot uses it), remove.
+HMENU buildSlotMenu(const AppState& app, std::uint8_t slot, std::uint8_t otherSlot, UINT base)
+{
+    const HMENU slotMenu = CreatePopupMenu();
+    const HMENU mapperMenu = CreatePopupMenu();
+    for (std::size_t choice = 0; choice < CartridgeMappers.size(); ++choice) {
+        AppendMenuW(mapperMenu, MF_STRING, base + 1u + static_cast<UINT>(choice), mapperText(CartridgeMappers[choice]).c_str());
+    }
+    AppendMenuW(slotMenu, MF_STRING, base, ui(L"&Insert ROM file...", L"ROM-Datei &einlegen..."));
+    AppendMenuW(slotMenu, MF_POPUP, reinterpret_cast<UINT_PTR>(mapperMenu), ui(L"Insert ROM file &as", L"ROM-Datei einlegen &als"));
+    AppendMenuW(slotMenu, MF_SEPARATOR, 0, nullptr);
+    for (std::uint8_t boardSlot = 1; boardSlot <= 2; ++boardSlot) {
+        const auto& found = app.boardContents[boardSlot - 1];
+        const bool usedHere = app.machine.bridgeSlot(slot) == boardSlot;
+        const bool usedThere = app.machine.bridgeSlot(otherSlot) == boardSlot;
+        std::wstring text = L"USB2SLOT &" + std::to_wstring(boardSlot) + L": ";
+        if (!app.boardProbed) {
+            text += ui(L"no board", L"keine Platine");
+        } else {
+            text += found.empty() ? ui(L"empty", L"leer") : found;
+        }
+        if (usedThere) text += ui(L" (in slot ", L" (in Slot ") + std::to_wstring(otherSlot) + L")";
+        const bool available = app.boardProbed && !found.empty() && !usedThere;
+        AppendMenuW(slotMenu, MF_STRING | (usedHere ? MF_CHECKED : 0u) | (available || usedHere ? 0u : MF_GRAYED),
+                    base + CartridgeBridgeChoice + boardSlot - 1, text.c_str());
+    }
+    AppendMenuW(slotMenu, MF_SEPARATOR, 0, nullptr);
+    const bool occupied = app.machine.cartridgeSlot(slot).inserted() || app.machine.bridgeSlot(slot) != 0;
+    AppendMenuW(slotMenu, MF_STRING | (occupied ? 0u : MF_GRAYED), base + CartridgeEjectChoice, ui(L"&Remove", L"E&ntfernen"));
+    return slotMenu;
+}
+
+// Menu bar in the frontend language, with the current contents of the module slots.
+HMENU buildMenu(const AppState& app)
 {
     const HMENU menu = CreateMenu();
     const HMENU systemMenu = CreatePopupMenu();
+    const HMENU settingsMenu = CreatePopupMenu();
     const HMENU diskMenu = CreatePopupMenu();
     const HMENU cassetteMenu = CreatePopupMenu();
     const HMENU printerMenu = CreatePopupMenu();
-    if (!menu || !systemMenu || !diskMenu || !cassetteMenu || !printerMenu) {
+    if (!menu || !systemMenu || !settingsMenu || !diskMenu || !cassetteMenu || !printerMenu) {
         if (menu) DestroyMenu(menu);
         if (systemMenu) DestroyMenu(systemMenu);
+        if (settingsMenu) DestroyMenu(settingsMenu);
         if (diskMenu) DestroyMenu(diskMenu);
         if (cassetteMenu) DestroyMenu(cassetteMenu);
         if (printerMenu) DestroyMenu(printerMenu);
@@ -3090,29 +3206,19 @@ HMENU buildMenu()
     AppendMenuW(systemMenu, MF_SEPARATOR, 0, nullptr);
     AppendMenuW(systemMenu, MF_STRING, VideoRecordCommand, ui(L"Record &video...", L"&Video aufnehmen..."));
     AppendMenuW(systemMenu, MF_STRING | MF_GRAYED, VideoStopCommand, ui(L"S&top video", L"Video &beenden"));
-    AppendMenuW(systemMenu, MF_SEPARATOR, 0, nullptr);
-    AppendMenuW(systemMenu, MF_STRING, LanguageEnglishCommand, L"&English");
-    AppendMenuW(systemMenu, MF_STRING, LanguageGermanCommand, L"&Deutsch");
-    CheckMenuRadioItem(systemMenu, LanguageEnglishCommand, LanguageGermanCommand,
+    AppendMenuW(settingsMenu, MF_STRING, LanguageEnglishCommand, L"&English");
+    AppendMenuW(settingsMenu, MF_STRING, LanguageGermanCommand, L"&Deutsch");
+    CheckMenuRadioItem(settingsMenu, LanguageEnglishCommand, LanguageGermanCommand,
                        uiLanguage() == UiLanguage::German ? LanguageGermanCommand : LanguageEnglishCommand, MF_BYCOMMAND);
     const HMENU cartridgeMenu = CreatePopupMenu();
     for (std::uint8_t slot = 1; slot <= 2; ++slot) {
         const UINT base = CartridgeCommandBase + 10u * (slot - 1u);
-        const HMENU mapperMenu = CreatePopupMenu();
-        for (std::size_t choice = 0; choice < CartridgeMappers.size(); ++choice) {
-            AppendMenuW(mapperMenu, MF_STRING, base + 1u + static_cast<UINT>(choice),
-                        mapperText(CartridgeMappers[choice]).c_str());
-        }
-        const std::wstring slotName = L"Slot " + std::to_wstring(slot);
-        AppendMenuW(cartridgeMenu, MF_STRING, base, (slotName + ui(L": &insert (detect mapper)...", L": &einlegen (automatisch)...")).c_str());
-        AppendMenuW(cartridgeMenu, MF_POPUP, reinterpret_cast<UINT_PTR>(mapperMenu), (slotName + ui(L": insert &as", L": einlegen &als")).c_str());
-        for (UINT boardSlot = 1; boardSlot <= 2; ++boardSlot) {
-            AppendMenuW(cartridgeMenu, MF_STRING, base + CartridgeBridgeChoice + boardSlot - 1,
-                        (slotName + ui(L": USB2SLOT slot &", L": USB2SLOT-Steckplatz &") + std::to_wstring(boardSlot)).c_str());
-        }
-        AppendMenuW(cartridgeMenu, MF_STRING | MF_GRAYED, base + CartridgeEjectChoice, (slotName + ui(L": &remove", L": e&ntfernen")).c_str());
-        if (slot == 1) AppendMenuW(cartridgeMenu, MF_SEPARATOR, 0, nullptr);
+        const HMENU slotMenu = buildSlotMenu(app, slot, slot == 1 ? 2 : 1, base);
+        const std::wstring title = L"Slot &" + std::to_wstring(slot) + L": " + slotContents(app, slot);
+        AppendMenuW(cartridgeMenu, MF_POPUP, reinterpret_cast<UINT_PTR>(slotMenu), title.c_str());
     }
+    AppendMenuW(cartridgeMenu, MF_SEPARATOR, 0, nullptr);
+    AppendMenuW(cartridgeMenu, MF_STRING, BridgeProbeCommand, ui(L"&Detect USB2SLOT again", L"USB2SLOT neu &erkennen"));
     AppendMenuW(diskMenu, MF_STRING, DiskInsertCommand, ui(L"&Insert image...", L"Image &einlegen..."));
     AppendMenuW(diskMenu, MF_STRING | MF_GRAYED, DiskEjectCommand, ui(L"&Eject", L"&Auswerfen"));
     AppendMenuW(cassetteMenu, MF_STRING, CassetteOpenCommand, ui(L"&Open image...", L"Image &oeffnen..."));
@@ -3144,6 +3250,7 @@ HMENU buildMenu()
     AppendMenuW(menu, MF_POPUP | (diskRomPresent ? 0u : static_cast<UINT>(MF_GRAYED)), reinterpret_cast<UINT_PTR>(diskMenu), ui(L"&Disk", L"&Diskette"));
     AppendMenuW(menu, MF_POPUP, reinterpret_cast<UINT_PTR>(cassetteMenu), ui(L"&Cassette", L"&Kassette"));
     AppendMenuW(menu, MF_POPUP, reinterpret_cast<UINT_PTR>(printerMenu), ui(L"&Printer", L"&Drucker"));
+    AppendMenuW(menu, MF_POPUP, reinterpret_cast<UINT_PTR>(settingsMenu), ui(L"S&ettings", L"&Einstellungen"));
     AppendMenuW(menu, MF_STRING | MF_RIGHTJUSTIFY, ManualCommand, L"&?");
     return menu;
 }
@@ -3222,6 +3329,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR, int showCommand)
     }
     app.settingsPath = executableDirectory() / SettingsFileName;
     loadMedia(app, !startDisk.empty());
+    if (!app.boardProbed) (void)probeBoard(app, false);
     if (diskLeftOut) {
         std::wstring text = ui(L"The disk ROM (VG8235-ROM3 - Disc.rom, 16 KiB) is missing, so the disk drive is off and the disk is left out. Place the file in the ROM folder and start the emulator again:\n\n",
                                L"Das Disk-ROM (VG8235-ROM3 - Disc.rom, 16 KiB) fehlt, daher ist das Diskettenlaufwerk aus und die Diskette bleibt weg. Legen Sie die Datei in den ROM-Ordner und starten Sie den Emulator neu:\n\n");
@@ -3243,7 +3351,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR, int showCommand)
     RECT rect{0, 0, ClientWidth, ClientHeight};
     const DWORD style = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_CLIPCHILDREN;
     loadLanguage(app.settingsPath);
-    const HMENU menu = buildMenu();
+    const HMENU menu = buildMenu(app);
     if (!menu) return 1;
     AdjustWindowRect(&rect, style, TRUE);
     const HWND window = CreateWindowExW(0, className,

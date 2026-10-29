@@ -1,6 +1,6 @@
 # SVI-728 Emulator – User Manual
 
-This manual describes the Spectravideo SVI-728 emulator `svi728.exe`: what it emulates, how to start it, and how to use the keyboard, joysticks, cassettes, modules and the printer. The SVI-728 is Spectravideo's MSX1 computer. The program's menus and messages are in English; **System > Deutsch** switches them to German and **System > English** back, and the choice is kept in the settings. This manual names the English menu items.
+This manual describes the Spectravideo SVI-728 emulator `svi728.exe`: what it emulates, how to start it, and how to use the keyboard, joysticks, cassettes, modules, real cartridges on the USB2SLOT board and the printer. The SVI-728 is Spectravideo's MSX1 computer. The program's menus and messages are in English; **Settings > Deutsch** switches them to German and **Settings > English** back, and the choice is kept in the settings. This manual names the English menu items.
 
 ## Contents
 
@@ -9,7 +9,7 @@ This manual describes the Spectravideo SVI-728 emulator `svi728.exe`: what it em
 3. [The Window](#3-the-window)
 4. [Keyboard](#4-keyboard)
 5. [Joysticks](#5-joysticks)
-6. [System Menu](#6-system-menu)
+6. [System and Settings Menus](#6-system-and-settings-menus)
 7. [Cassette](#7-cassette)
 8. [Modules](#8-modules)
 9. [Printer](#9-printer)
@@ -31,6 +31,7 @@ Appendices: [A. Technical Reference](#appendix-a-technical-reference), [B. Sourc
 | Joysticks | Two joystick ports with two triggers each, driven by the PC keyboard or by PC game controllers |
 | Cassette | MSX CAS images, playback and recording through the real tape signals at 1200 baud |
 | Modules | Slots 2 and 3: plain ROM modules and MegaROMs with the ASCII8, ASCII16, Konami and Konami SCC mappers (without SCC sound) |
+| USB2SLOT | Real MSX cartridges on the USB2SLOT board in slot 2 or 3, including RCX/XIO cartridges with the RC2014 cards behind them |
 | Printer | MSX printer port; output goes to text files |
 
 The emulator models the hardware, not the software: BASIC and games run from their original ROM, cassette and module images without patches.
@@ -53,7 +54,7 @@ A different BIOS can be given on the command line, and `-state <file.sst>` start
 .\svi728.exe -state "%USERPROFILE%\Documents\SVI-728\STATE\Game.sst"
 ```
 
-The machine starts like a switched-on SVI-728: the screen shows `MSX BASIC version 1.0` and `Ok`. The video standard, the modules and the printer folder of the last session are restored from `svi728.ini`.
+The machine starts like a switched-on SVI-728: the screen shows `MSX BASIC version 1.0` and `Ok`. The video standard, the modules, the slots of the USB2SLOT board and the printer folder of the last session are restored from `svi728.ini`.
 
 ### System Requirements
 
@@ -76,7 +77,7 @@ The window has a fixed size in screen pixels: 1140 x 949 pixels including frame,
 - **Title bar:** the effective CPU clock, measured once per second (for example `SVI-728 | CPU@3,58MHz`). Values around 3.58 MHz mean the emulation runs in real time.
 - **Status bar** (below the picture), from left to right:
   - joystick assignment, for example `Joystick 1: arrows + C/V | Joystick 2: off (F11: on)`;
-  - inserted modules with file name and mapper;
+  - inserted modules with file name and mapper, or the slot of the USB2SLOT board with what it holds, `(no connection)` when the USB connection is lost;
   - cassette file, or `CAS: recording` while recording;
   - printer folder;
   - video standard, `PAL 50 Hz` or `NTSC 60 Hz`;
@@ -90,7 +91,7 @@ The window has a fixed size in screen pixels: 1140 x 949 pixels including frame,
 
 ## 4. Keyboard
 
-The PC keyboard layout follows the language (**System > English / Deutsch**): with English, the default, the keys are read as a US PC keyboard; with German as a German PC keyboard. Type as usual: each character is placed on the MSX key that produces it, together with MSX Shift where the MSX needs it. The PC Shift key acts as the MSX Shift key, also on its own: BASIC shows the F6-F10 labels while it is held. For characters the PC layout decides; while a character that the MSX types without Shift is held, Shift is taken back.
+The PC keyboard layout follows the language (**Settings > English / Deutsch**): with English, the default, the keys are read as a US PC keyboard; with German as a German PC keyboard. Type as usual: each character is placed on the MSX key that produces it, together with MSX Shift where the MSX needs it. The PC Shift key acts as the MSX Shift key, also on its own: BASIC shows the F6-F10 labels while it is held. For characters the PC layout decides; while a character that the MSX types without Shift is held, Shift is taken back.
 
 Keys without a character:
 
@@ -122,18 +123,26 @@ The menu **Joystick > Port 1** and **Port 2** sets what drives each MSX joystick
 
 **F11** (also **Joystick > Keyboard joystick active**) switches the keyboard joystick on and off. After the start it is off (`F11: off` in the status bar), so that loading commands such as `BLOAD"CAS:",R` can be typed; press F11 to play and again to type. Switching releases all held keys. The choice of each port is kept in the ini file.
 
-## 6. System Menu
+## 6. System and Settings Menus
+
+The **System** menu:
 
 | Item | Meaning |
 | --- | --- |
-| **Reset** | Restarts the machine as after switching it on: the RAM is cleared and the CPU starts again from the BIOS; modules and cassette stay in place. |
-| **PAL (TMS9929A, 50 Hz)** | European machine: 313 lines, 50 pictures per second. This is the default. |
-| **NTSC (TMS9918A, 60 Hz)** | 262 lines, 60 pictures per second. |
+| **Reset** | Restarts the machine as after switching it on: the RAM is cleared and the CPU starts again from the BIOS; modules and cassette stay in place. A lost connection to the USB2SLOT board is opened again first. |
 | **Load state...** | Loads a snapshot (`*.sst`): the machine continues exactly where the snapshot was taken, for example in a game without its tape load. A snapshot of the other video standard switches the machine first. |
 | **Save state...** | Saves the running machine as a snapshot: CPU, PPI, video chip with its video RAM, sound chip, RAM, slot selection and the bank registers of the modules. |
 | **Record video...** | Records the picture and the sound into an MP4 file (H.264 video, AAC sound) until **Stop video**; see [Video Recording](#video-recording) below. |
 | **Stop video** | Ends the recording and finishes the file. |
-| **English** / **Deutsch** | Language of menus, status bar and messages, and the PC keyboard layout: English with a US keyboard (the default) or German with a German keyboard. The switch takes effect at once and is kept in the settings file. |
+
+The **Settings** menu; every choice takes effect at once and is kept in the settings file:
+
+| Item | Meaning |
+| --- | --- |
+| **PAL (TMS9929A, 50 Hz)** | European machine: 313 lines, 50 pictures per second. This is the default. |
+| **NTSC (TMS9918A, 60 Hz)** | 262 lines, 60 pictures per second. |
+| **English** / **Deutsch** | Language of menus, status bar and messages, and the PC keyboard layout: English with a US keyboard (the default) or German with a German keyboard. |
+| **Set clock of card A at start** | Sets the clock of RC2014 card A to the PC time whenever the emulator starts; see [Clock of RC2014 Card A](#clock-of-rc2014-card-a). Off by default. Switching it on asks for the I/O address of the card. |
 
 Switching the video standard is like switching on the other machine: it restarts, while the BIOS, the modules and the cassette stay in place. Software that counts in pictures runs five sixths as fast on the PAL machine as on the NTSC machine.
 
@@ -169,15 +178,52 @@ To record, choose **New recording**, save in BASIC (for example `CSAVE"NAME"`, `
 
 ## 8. Modules
 
-The **Modules** menu has the same items for slot 2 and slot 3:
+The **Modules** menu has a submenu for slot 2 and one for slot 3. Its title shows what the slot holds: the file name of the module, the slot of the USB2SLOT board with what the board found there, or `empty`. Each submenu has the same items:
 
 | Item | Meaning |
 | --- | --- |
-| **Slot n: insert (detect mapper)...** | Inserts a module image (`*.rom`); the emulator detects the mapper. |
-| **Slot n: insert as** | Inserts a module image with a fixed mapper: no mapper, ASCII8, ASCII16, Konami or Konami SCC. Use it when the automatic detection guesses wrong. |
-| **Slot n: remove** | Removes the module. |
+| **Insert ROM file...** | Inserts a module image (`*.rom`); the emulator detects the mapper. |
+| **Insert ROM file as** | Inserts a module image with a fixed mapper: no mapper, ASCII8, ASCII16, Konami or Konami SCC. Use it when the automatic detection guesses wrong. |
+| **USB2SLOT 1: ...** / **USB2SLOT 2: ...** | Puts slot 1 or 2 of the USB2SLOT board into this module slot (see below); the item shows what the board found in its slot. It is checked while this module slot uses it, and greyed when no board answers (`no board`), the board slot is empty or the other module slot uses it (`(in slot n)`). |
+| **Remove** | Removes the module or the board slot; greyed when the slot is empty. |
+
+Below the two submenus, **Detect USB2SLOT again** asks the board again what is plugged in, for example after changing a cartridge on the board.
 
 Inserting and removing restart the machine as after switching it on. Images up to 64 KiB count as plain ROMs; larger images are MegaROMs, whose mapper the emulator guesses from the bank switching writes in the image. The SCC sound chip of Konami SCC modules is not emulated, so their music is missing.
+
+### USB2SLOT Board
+
+The USB2SLOT board, a Teensy 4.1 with two MSX cartridge slots on USB, runs real MSX cartridges in the emulated machine: every access of the emulated CPU to that module slot goes over USB to the cartridge. The board is found on the COM port named by `usb2slotPort` in `svi728.ini`, `COM16` by default.
+
+The emulator asks the board what is plugged in at the start, when a board slot is chosen in the menu, and with **Detect USB2SLOT again**; each time the board pulses /RESET on its cartridges. It recognises:
+
+- a cartridge without slot expander (`Cartridge`),
+- a cartridge with its own slot expander and the contents of each subslot, for example `Slot expander (0: ROM, 1: empty, 2: ROM, 3: empty)`,
+- the SD Mapper/Megaram 512K cartridge, as `SD Mapper (Memory Mapper)` or `SD Mapper (MegaRAM)`; only when ROM bank 7 holds its Nextor driver, otherwise it counts as a plain slot expander,
+- switched I/O on ports 40h-47h of RCX/XIO cartridges, with the RC2014 cards behind them.
+
+The names come from these checks: an MSX cartridge header carries no name.
+
+During emulation:
+
+- ROM contents are kept in a cache on the PC, so ROM software runs in real time. Other accesses take a USB round trip of about 100 microseconds.
+- SD Mapper: the Nextor ROM is cached while the SPI port of the SD cards is switched off; a sector of the SD card comes over USB in one block, so the card is about as fast as on a real MSX.
+- /INT of the cartridges reaches the emulated CPU; /WAIT of memory reads and I/O cycles is added to the emulated time.
+- While the emulation stands still, for example while a menu or dialog is open, the board switches the cartridges off like a powered-down MSX. When the emulation goes on, the machine restarts as after switching it on.
+- When the USB connection breaks, the slot reads FFh and the status bar shows `(no connection)`; **System > Reset** connects again.
+
+Limits:
+
+- /M1 reaches the cartridge only in areas without cache; cached instructions never appear on the bus.
+- /WAIT during memory writes is not added to the emulated time.
+- Cartridges with an unknown slot expander or mapper run without switching rules; after a bank switch the cache may then show stale contents. Game cartridges with their own mapper (Konami, ASCII, SCC) are not tested yet.
+- Only one program can use the board at a time: while openMSX or another emulator holds its COM port, the items show `no board`.
+
+### Clock of RC2014 Card A
+
+With **Settings > Set clock of card A at start** the emulator sets the PCF8583 clock of RC2014 card A to the local PC time at every start, before the machine starts, with the registers that `CALL SET TIME` and `CALL SET DATE` of the RCX ROM use. Switching the item on asks for the I/O address of the card's PCF8584, a decimal number from 0 to 254 as in `CALL I2C INIT`, 0 by default.
+
+The emulator does not search the I/O addresses, because writes there would change other RC2014 cards. It sets the clock only when every check passes, and otherwise writes nothing and shows no message: switched I/O answers, the RCX ROM is on the board, the PCF8584 is idle after its initialisation, and the PCF8583 acknowledges its address.
 
 ## 9. Printer
 
@@ -189,7 +235,7 @@ Each `LLIST` and each `LPRINT` in direct mode becomes its own file; a running BA
 
 | File or folder | Contents |
 | --- | --- |
-| `svi728.ini` | settings next to the program: `language` (`en` or `de`), `video` (`PAL` or `NTSC`), `joystick1`/`joystick2` (`off`, `keyboard` or `controller`), `printerDirectory`, `slot2`/`slot3` (mapper number and path of the module) |
+| `svi728.ini` | settings next to the program: `language` (`en` or `de`), `video` (`PAL` or `NTSC`), `joystick1`/`joystick2` (`off`, `keyboard` or `controller`), `printerDirectory`, `slot2`/`slot3` (mapper number and path of the module, or `usb2slot,1`/`usb2slot,2` for a slot of the USB2SLOT board), `usb2slotPort` (COM port of the board, `COM16` by default), `cardClock` (`1`: set the clock of card A at start, `0` by default), `cardClockAddress` (I/O address of its PCF8584, `0` by default) |
 | `Documents\SVI-728\CAS` | cassette images |
 | `Documents\SVI-728\CARD` | module images |
 | `Documents\SVI-728\ROM` | ROM image (see [Starting the Emulator](#2-starting-the-emulator)) |
@@ -220,9 +266,12 @@ Not modelled: analog picture and sound circuits, electrical timing of the chips,
 | Typing in a game moves the joystick | The keyboard joystick is on; press F11 or set the port to **off**. |
 | `Game controller ... (not found)` | No game controller at that position; connect one, it is found within a second. |
 | `Audio: off` in the status bar | No audio device could be opened, for example because another program holds it exclusively. The emulator retries every second. |
-| A MegaROM crashes or shows garbage | The automatic mapper detection guessed wrong; insert it again with **insert as** and the right mapper. |
+| A MegaROM crashes or shows garbage | The automatic mapper detection guessed wrong; insert it again with **Insert ROM file as** and the right mapper. |
 | A snapshot does not load | It was saved with other modules inserted, or by another version of the emulator. |
 | A module saved in `svi728.ini` is not restored | The file was moved or deleted; insert it again from the menu. |
+| The USB2SLOT items show `no board` | The board is not connected, another program (openMSX, a second emulator) holds its COM port, or `usb2slotPort` names another port. Connect it or close the other program, then choose **Modules > Detect USB2SLOT again**. |
+| `(no connection)` in the status bar | The USB connection to the board was lost; check the cable and choose **System > Reset**. |
+| The clock of card A is not set | One of the checks in [Clock of RC2014 Card A](#clock-of-rc2014-card-a) failed, for example a wrong `cardClockAddress` or no RCX cartridge on the board; the emulator then writes nothing. |
 
 ## Appendix A: Technical Reference
 

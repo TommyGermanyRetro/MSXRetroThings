@@ -93,7 +93,13 @@ slottest COM16 hello       version and state of the board
 slottest COM16 scan        what is plugged in: slot expander, ROM/data/empty per subslot, Nextor driver name, I/O ports
 slottest COM16 selftest    protocol self test
 slottest COM16 dump 1 4000 4000 rom.bin    read 16 KB from slot 1, address 4000h, into rom.bin
+slottest COM16 clock 0     set the clock of RC2014 card A (PCF8584 at I/O address 0) to the PC time
 ```
+
+`clock` uses the registers of `CALL SET TIME` and `CALL SET DATE` of the RCX ROM. It writes only when switched I/O
+answers, the RCX ROM ("RCX_INTERFACE" at 4010h) is in a slot or subslot of the board, the PCF8584 is idle after its
+initialisation and the PCF8583 acknowledges its address A0h; it prints `CLOCK SET`, or `NOSWIO`, `NORCX`,
+`NOCONTROLLER` or `NOCLOCK` for the check that failed. The address is decimal, as in `CALL I2C INIT`.
 
 `slottest` without parameters lists all commands. The self test checks /INT and /WAIT through jumper JP201; with
 the jumper open those two checks fail, all others must pass.
@@ -104,7 +110,7 @@ Requirements: Windows 10/11 x64 and Python 3. No installation of openMSX is need
 openMSX 21.0.
 
 ```text
-openmsx\start_usbslot.cmd [machine] [--port COMx] [--bridge 1|2|12] [more openMSX parameters]
+openmsx\start_usbslot.cmd [machine] [--port COMx] [--bridge 1|2|12] [--clock [address]] [more openMSX parameters]
 ```
 
 The script first asks the board what is plugged in (`slottest scan`), writes matching extensions to
@@ -127,6 +133,9 @@ openmsx\start_usbslot.cmd Philips_VG_8235-00 --bridge 1 -cartb game.rom
 
 - `--port`: COM port of the board, default `COM16` (or the environment variable `USBSLOT_PORT`).
 - `--bridge 1`, `2` or `12`: use only these slots of the board (see next section).
+- `--clock [address]`: on MSX1 machines (`<type>MSX</type>` in the machine description) set the clock of RC2014
+  card A to the PC time with `slottest clock` before openMSX starts; the address of its PCF8584 is decimal,
+  default 0. Without `--clock` the clock is left alone.
 - Without a machine name the script uses `C-BIOS_MSX2+_JP`.
 
 ### Mixing real and emulated cartridges

@@ -2739,6 +2739,7 @@ LRESULT CALLBACK windowProcedure(HWND window, UINT message, WPARAM wParam, LPARA
         case ResetCommand:
             releaseAllInput(*app);
             resetMachine(*app);
+            if (app->cardClock && app->boardProbed) setCardClockToPc(*app);
             return 0;
         case StateLoadCommand:
         case StateSaveCommand:

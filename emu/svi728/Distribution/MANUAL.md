@@ -142,7 +142,7 @@ The **Settings** menu; every choice takes effect at once and is kept in the sett
 | **PAL (TMS9929A, 50 Hz)** | European machine: 313 lines, 50 pictures per second. This is the default. |
 | **NTSC (TMS9918A, 60 Hz)** | 262 lines, 60 pictures per second. |
 | **English** / **Deutsch** | Language of menus, status bar and messages, and the PC keyboard layout: English with a US keyboard (the default) or German with a German keyboard. |
-| **Set clock of card A at start** | Sets the clock of RC2014 card A to the PC time whenever the emulator starts; see [Clock of RC2014 Card A](#clock-of-rc2014-card-a). Off by default. Switching it on asks for the I/O address of the card. |
+| **Set clock of card A at start** | Sets the clock of RC2014 card A to the PC time whenever the emulator starts and with **System > Reset**; see [Clock of RC2014 Card A](#clock-of-rc2014-card-a). Off by default. Switching it on asks for the I/O address of the card. |
 
 Switching the video standard is like switching on the other machine: it restarts, while the BIOS, the modules and the cassette stay in place. Software that counts in pictures runs five sixths as fast on the PAL machine as on the NTSC machine.
 
@@ -221,7 +221,7 @@ Limits:
 
 ### Clock of RC2014 Card A
 
-With **Settings > Set clock of card A at start** the emulator sets the PCF8583 clock of RC2014 card A to the local PC time at every start, before the machine starts, with the registers that `CALL SET TIME` and `CALL SET DATE` of the RCX ROM use. Switching the item on asks for the I/O address of the card's PCF8584, a decimal number from 0 to 254 as in `CALL I2C INIT`, 0 by default.
+With **Settings > Set clock of card A at start** the emulator sets the PCF8583 clock of RC2014 card A to the local PC time at every start, before the machine starts, and with **System > Reset**, with the registers that `CALL SET TIME` and `CALL SET DATE` of the RCX ROM use. Switching the item on asks for the I/O address of the card's PCF8584, a decimal number from 0 to 254 as in `CALL I2C INIT`, 0 by default.
 
 The emulator does not search the I/O addresses, because writes there would change other RC2014 cards. It sets the clock only when every check passes, and otherwise writes nothing and shows no message: switched I/O answers, the RCX ROM is on the board, the PCF8584 is idle after its initialisation, and the PCF8583 acknowledges its address.
 

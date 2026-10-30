@@ -61,6 +61,8 @@ types is included: [`images/startup.mp4`](images/startup.mp4).
 
 ## Panels
 
+How to operate every panel, step by step and with pictures: [MANUAL.md](MANUAL.md).
+
 All four panel types share one carousel (two triangle sprites, `SPACE` switches between instances)
 and the same bidirectional CAN wiring:
 

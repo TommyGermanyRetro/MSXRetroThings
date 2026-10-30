@@ -6,7 +6,7 @@
 //* involved. Works against RCX_INTERFACE in ROM (CALSLT) or in mapped RAM (RCXRAM.COM, via the RAM *
 //* helper), through the rcx_io library (see MSXgl/lib/rcx_io/).                                    *
 //***************************************************************************************************
-//* Datei: RTCLCD.c                                                                                 *
+//* File:  RTCLCD.c                                                                                 *
 //***************************************************************************************************
 //* MSX (c) 2026 by Dr.-Ing. Thomas Wiesner                                                         *
 //***************************************************************************************************

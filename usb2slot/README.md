@@ -151,7 +151,7 @@ side in one machine.
   slots that are still free.
 - A machine with two cartridge slots has no free slot left when both slots of the board are in use. Then
   `--bridge 1` or `--bridge 2` takes only one slot of the board into the emulation and leaves the other machine
-  slot for the emulated cartridge. The script reports a board slot it leaves out as "nicht eingebunden".
+  slot for the emulated cartridge. The script reports a board slot it leaves out as "not included".
 
 Examples:
 

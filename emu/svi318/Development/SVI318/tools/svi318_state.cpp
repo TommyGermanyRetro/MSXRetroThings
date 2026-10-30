@@ -1,7 +1,7 @@
 // svi318_state: runs the SVI-318 without a window, as fast as the PC allows, and works through its
 // arguments in order like a script: boot, insert a tape, type, wait for the tape, hold keys or
 // joysticks, write pictures and snapshots. It makes snapshots that the frontend loads
-// (System > Zustand laden...), for example of a game after its five-minute tape load, and checks
+// (System > Load state...), for example of a game after its five-minute tape load, and checks
 // input on a snapshot without the frontend.
 
 #include "SVI318/Keyboard.hpp"

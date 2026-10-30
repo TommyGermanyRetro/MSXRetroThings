@@ -4,7 +4,7 @@
 //* Plain MSX-DOS console I/O and small print/input utilities, not tied to XIO_IO_EXPANDER or        *
 //* RCX_INTERFACE - see dostools.c/dostools.s for the implementation.                                *
 //***************************************************************************************************
-//* Datei: dostools.h                                                                                *
+//* File:  dostools.h                                                                                *
 //***************************************************************************************************
 //* MSX (c) 2026 by Dr.-Ing. Thomas Wiesner                                                          *
 //***************************************************************************************************

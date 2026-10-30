@@ -1,15 +1,15 @@
 //***************************************************************************************************
 //* HEADER - mbc89_com.h - CONNECT6021 mapping, system stop/go, loco queries, module config channels *
 //***************************************************************************************************
-//* The 80-entry loco GUiD/address database and CONNECT6021 handshake (CAN-ID 0x44/0x45), system      *
-//* stop/go (CAN-ID 0x00), loco direction/function/speed query answering (CAN-ID 0x08/0x0A/0x0C), the  *
-//* 5 "classic" module config channels (SW Major/Minor of a simulated Connect6021 firmware version,    *
-//* Zentralentyp-Mapping, Keyboard-Basisadressblock, I2C-Bus-Takt), CU6021/Control80f loco control,     *
-//* and CAN-ID 0x16 "Zubehoer schalten" send/receive for the Keyboard panel. Protocol (MM/DCC) is       *
-//* hardcoded to MM for now - a per-keyboard protocol-selection config would make this configurable    *
-//* but is not implemented.                                                                            *
+//* The 80-entry loco GUiD/address database and CONNECT6021 handshake (CAN-ID 0x44/0x45), system    *
+//* stop/go (CAN-ID 0x00), loco direction/function/speed query answering (CAN-ID 0x08/0x0A/0x0C),   *
+//* the 5 "classic" module config channels (SW Major/Minor of a simulated Connect6021 firmware      *
+//* version, central-unit type mapping, Keyboard base address block, I2C bus clock),                *
+//* CU6021/Control80f loco control, and CAN-ID 0x16 "Zubehoer schalten" send/receive for the        *
+//* Keyboard panel. Protocol (MM/DCC) is hardcoded to MM for now - a per-keyboard                   *
+//* protocol-selection config would make this configurable but is not implemented.                  *
 //***************************************************************************************************
-//* Datei: mbc89_com.h                                                                                *
+//* File:  mbc89_com.h                                                                                *
 //***************************************************************************************************
 //* MSX (c) 2026 by Dr.-Ing. Thomas Wiesner                                                           *
 //***************************************************************************************************
@@ -49,11 +49,11 @@ void McCom_HashInit(u8 guid0, u8 guid1, u8 guid2, u8 guid3, u8 hashH, u8 hashL);
 // CheckCs2Connection() CAN_ID_KONFIG handler once idNr exceeds the base's own channels.
 const u8* McCom_Cs2IndexExtern(u8 laufendeNr);
 
-// Applies a CS2-requested config-channel value (msg[D5]=Kanalnummer 7..11, msg[D6:D7]=new value),
+// Applies a CS2-requested config-channel value (msg[D5]=channel 7..11, msg[D6:D7]=new value),
 // validates per-channel range, updates RAM state and, for the Mapping channel, live-adjusts every
 // loco without LOK_MAPPED_ECHT set. Always confirms via _msgKonfigOk regardless of validity. Call
 // from mbc89_base.c's CheckCs2Connection() CAN_ID_SYSTEM_BEFEHLE handler when msg[D4]==SUB_MW and
-// msg[DLC]==8 (parameter write, as opposed to the DLC==6 messwert-read case the base handles itself).
+// msg[DLC]==8 (parameter write, as opposed to the DLC==6 measured-value read case the base handles itself).
 void McCom_Cs2IndexParameterExtern(const u8* msg);
 
 // Outgoing (Panel -> CAN): kbIndex=0..g_KeyboardCount-1 (which simulated Keyboard instance, 0-based),
@@ -78,9 +78,9 @@ bool McCom_DecodeKeyboardEvent(const u8* msg, u8* kbIndex, u8* col, bool* green)
 // Keyboard instances' own accessory addresses, writes instance and column and returns TRUE.
 bool McCom_DecodeKeyboardAddr(u16 addr, u8* kbIndex, u8* col);
 
-// Low-level Zubehoer-Schalten-Versand, fuer mbc89_memory.c's Fahrstraßen-Wiedergabe exportiert (CAN-ID
-// 0x16, DLC 6, Strom=an) - gleiches Drahtformat wie McCom_HandleKeyboardEvent()'s eigener Versand, nur
-// direkt adressiert statt ueber eine Keyboard-Spalte.
+// Low-level "Zubehoer schalten" send, exported for mbc89_memory.c's route playback (CAN-ID 0x16,
+// DLC 6, Strom=an) - same wire format as McCom_HandleKeyboardEvent()'s own send, but addressed
+// directly instead of via a Keyboard column.
 void McCom_SendZubehoer(u16 addr, u8 richtung);
 
 // --- CU6021 loco control ---

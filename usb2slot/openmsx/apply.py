@@ -1,11 +1,11 @@
 """
-apply.py - spielt das Geraet USBSlot in einen openMSX-21.0-Quellbaum ein
+apply.py - adds the USBSlot device to an openMSX 21.0 source tree
 
-Kopiert USBSlot.hh/.cc und die Bibliothek slotlink.h nach <baum>/src/memory, tragt das Geraet in
-DeviceFactory.cc und in das MSVC-Projekt ein und installiert die Erweiterungen USBSlot1.xml und
-USBSlot2.xml in das Benutzerverzeichnis von openMSX. Mehrfaches Ausfuehren aendert nichts.
+Copies USBSlot.hh/.cc and the slotlink.h library to <tree>/src/memory, registers the device in
+DeviceFactory.cc and in the MSVC project, and installs the extensions USBSlot1.xml and
+USBSlot2.xml into the openMSX user directory. Running it more than once changes nothing.
 
-Aufruf:   python apply.py [baum]      Vorgabe: D:\\openMSX_build\\openMSX-21.0
+Usage:    python apply.py [tree]      Default: D:\\openMSX_build\\openMSX-21.0
 """
 
 import os
@@ -28,7 +28,7 @@ def schreiben(pfad, text):
 
 
 def einfuegen(pfad, marke, neu, vor=True, schon=None):
-    """Fuegt 'neu' vor oder nach der ersten Zeile mit 'marke' ein, falls 'neu' noch fehlt."""
+    """Inserts 'neu' before or after the first line containing 'marke', unless 'neu' is already there."""
     text = lesen(pfad)
     if (schon or neu.strip()) in text:
         return False
@@ -39,7 +39,7 @@ def einfuegen(pfad, marke, neu, vor=True, schon=None):
             zeilen.insert(i if vor else i + 1, neu.replace("\n", nl))
             schreiben(pfad, nl.join(zeilen))
             return True
-    raise RuntimeError("Marke nicht gefunden: %s in %s" % (marke, pfad))
+    raise RuntimeError("Marker not found: %s in %s" % (marke, pfad))
 
 
 def main():
@@ -47,27 +47,27 @@ def main():
     for name, quelle in (("USBSlot.hh", HIER), ("USBSlot.cc", HIER),
                          ("slotlink.h", os.path.join(HIER, "..", "SlotLink"))):
         shutil.copyfile(os.path.join(quelle, name), os.path.join(memory, name))
-        print("kopiert:", name)
+        print("copied:", name)
 
     fabrik = os.path.join(BAUM, "src", "DeviceFactory.cc")
     if einfuegen(fabrik, '#include "MSXRam.hh"', '#include "USBSlot.hh"'):
-        print("DeviceFactory.cc: Include eingetragen")
+        print("DeviceFactory.cc: include added")
     if einfuegen(fabrik, '} else if (type == "RAM") {', schon='type == "USBSlot"', neu=
                  '\t} else if (type == "USBSlot") {\n\t\tresult = std::make_unique<USBSlot>(conf);'):
-        print("DeviceFactory.cc: Geraet eingetragen")
+        print("DeviceFactory.cc: device added")
 
     proj = os.path.join(BAUM, "build", "msvc", "openmsx.vcxproj")
     if einfuegen(proj, "memory\\MSXRam.cc", '    <ClCompile Include="..\\..\\src\\memory\\USBSlot.cc" />'):
-        print("openmsx.vcxproj: USBSlot.cc eingetragen")
+        print("openmsx.vcxproj: USBSlot.cc added")
     if einfuegen(proj, "memory\\MSXRam.hh", '    <ClInclude Include="..\\..\\src\\memory\\USBSlot.hh" />'):
-        print("openmsx.vcxproj: USBSlot.hh eingetragen")
+        print("openmsx.vcxproj: USBSlot.hh added")
     if einfuegen(proj, "memory\\MSXRam.hh", '    <ClInclude Include="..\\..\\src\\memory\\slotlink.h" />'):
-        print("openmsx.vcxproj: slotlink.h eingetragen")
+        print("openmsx.vcxproj: slotlink.h added")
 
     os.makedirs(USER_EXT, exist_ok=True)
     for name in sorted(n for n in os.listdir(os.path.join(HIER, "extensions")) if n.endswith(".xml")):
         shutil.copyfile(os.path.join(HIER, "extensions", name), os.path.join(USER_EXT, name))
-        print("installiert:", os.path.join(USER_EXT, name))
+        print("installed:", os.path.join(USER_EXT, name))
 
 
 if __name__ == "__main__":

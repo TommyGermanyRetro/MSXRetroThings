@@ -1,9 +1,9 @@
 @echo off
 rem *************************************************************************************************
-rem * start_usbslot.cmd - erkennt die Belegung der Bridge und startet den selbst gebauten openMSX   *
+rem * start_usbslot.cmd - detects what is plugged into the bridge and starts the self-built openMSX *
 rem *                                                                                               *
-rem * Aufruf:  start_usbslot.cmd [maschine] [--port COMx] [--bridge 1|2|12] [openMSX-Parameter]     *
-rem * Vorgabe: C-BIOS_MSX2+_JP. Die Erkennung und die passenden Erweiterungen (USBSlotAuto1,        *
-rem * USBSlotAuto2, USBSlotAutoIO) uebernimmt start_usbslot.py; Port --port, USBSLOT_PORT, COM16    *
+rem * Usage:   start_usbslot.cmd [machine] [--port COMx] [--bridge 1|2|12] [openMSX parameters]     *
+rem * Default: C-BIOS_MSX2+_JP. Detection and the matching extensions (USBSlotAuto1, USBSlotAuto2,  *
+rem * USBSlotAutoIO) are handled by start_usbslot.py; port: --port, USBSLOT_PORT, COM16             *
 rem *************************************************************************************************
 python "%~dp0start_usbslot.py" %*

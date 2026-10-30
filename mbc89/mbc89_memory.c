@@ -1,7 +1,7 @@
 //***************************************************************************************************
-//* SOURCE - mbc89_memory.c - Memory 6043: Fahrstraßen-Aufnahme/-Wiedergabe (diskettenbasiert)        *
+//* SOURCE - mbc89_memory.c - Memory 6043: route recording/playback (disk-based)                    *
 //***************************************************************************************************
-//* Datei: mbc89_memory.c                                                                             *
+//* File:  mbc89_memory.c                                                                             *
 //***************************************************************************************************
 //* MSX (c) 2026 by Dr.-Ing. Thomas Wiesner                                                           *
 //***************************************************************************************************
@@ -14,16 +14,16 @@
 //===================================================================================================
 // FILE FORMAT
 //===================================================================================================
-// MBC89R.CFG, MEM_TOTAL_ROUTES feste 128-Byte-Sätze (wahlfreier Zugriff über DOS_RandomBlockReadFCB/
-// WriteFCB, ein Satz pro Fahrstraße, globalRoute = instanz*MEM_ROUTES_PER_INSTANCE + lokaleRoute):
-//   0      Befehlsanzahl (0 = leer/ungueltig, max. MEM_CMDS_PER_ROUTE)
-//   1      Folgefahrstrasse: globaler Routenindex 0..(MEM_TOTAL_ROUTES-1), 0xFF = keine
-//   2..61  bis zu 20 Befehle x 3 Byte (Adresse-H, Adresse-L, Richtung)
-//   62..127 reserviert/Null
-// Satz MEM_TOTAL_ROUTES (hinter den Fahrstrassen) haelt den Zustand fuer den naechsten Start:
-//   0..11  gueltige Fahrstrassen (1 Bit je Fahrstrasse)
-//   12     Automatikbetrieb je Memory (Bit 0-3)
-//   13     Kennung STATE_MAGIC (fehlt in Dateien ohne Zustandssatz)
+// MBC89R.CFG, MEM_TOTAL_ROUTES fixed 128-byte records (random access via DOS_RandomBlockReadFCB/
+// WriteFCB, one record per route, globalRoute = instance*MEM_ROUTES_PER_INSTANCE + localRoute):
+//   0      command count (0 = empty/invalid, max. MEM_CMDS_PER_ROUTE)
+//   1      follow-on route: global route index 0..(MEM_TOTAL_ROUTES-1), 0xFF = none
+//   2..61  up to 20 commands x 3 bytes (address high, address low, direction)
+//   62..127 reserved/zero
+// Record MEM_TOTAL_ROUTES (after the routes) holds the state for the next start:
+//   0..11  valid routes (1 bit per route)
+//   12     automatic mode per Memory (bits 0-3)
+//   13     marker STATE_MAGIC (missing in files without a state record)
 
 #define MEM_RECORD_SIZE  128
 #define MEM_TOTAL_ROUTES (MEMORY_COUNT_MAX * MEM_ROUTES_PER_INSTANCE)
@@ -40,70 +40,70 @@
 #define O_ST_MAGIC   13
 #define STATE_MAGIC  0xA5
 
-// Sentinel-Werte fuer s_RecordingLocalRoute[] - 0..(MEM_ROUTES_PER_INSTANCE-1) = aktive Aufnahme
-// dieser lokalen Route, sonst eines der beiden Sentinels unten.
-#define REC_IDLE    0xFF // nicht im Aufnahme-Modus
-#define REC_WAITING 0xFE // "input" gedrueckt, wartet auf Routenwahl
+// Sentinel values for s_RecordingLocalRoute[] - 0..(MEM_ROUTES_PER_INSTANCE-1) = active recording
+// of this local route, otherwise one of the two sentinels below.
+#define REC_IDLE    0xFF // not in recording mode
+#define REC_WAITING 0xFE // "input" pressed, waiting for route selection
 
-// MSX-DOS 1 Disk-I/O darf nicht durch Page 1 transferieren (siehe mbc89_store.c) - fester Page-3-
-// Puffer, direkt nach mbc89_store.c's STORE_BUF (endet 0xC71F).
+// MSX-DOS 1 disk I/O must not transfer through page 1 (see mbc89_store.c) - fixed page-3
+// buffer, directly after mbc89_store.c's STORE_BUF (ends at 0xC71F).
 #define MEM_FCB 0xC720 // DOS_FCB struct
 #define MEM_BUF 0xC756 // 128-Byte Transferpuffer
 
-// Eigene Namen (nicht s_File/s_Buf wie mbc89_store.c) - SDCC haengt __at()-Variablen offenbar als
-// globale Symbole ab, "static" schuetzt bei fester Adresse nicht vor Namenskollision ueber
-// Compile-Units hinweg (Linker-Fehler "Multiple definition of _s_Buf/_s_File" bei gleichem Namen).
+// Own names (not s_File/s_Buf like mbc89_store.c) - SDCC apparently emits __at() variables as
+// global symbols, "static" does not protect against name collisions across compile units at a
+// fixed address (linker error "Multiple definition of _s_Buf/_s_File" with the same name).
 __at(MEM_FCB) DOS_FCB s_MemFile;
 __at(MEM_BUF) u8      s_MemBuf[MEM_RECORD_SIZE];
 
-// Guelig-/Aktiv-Bitfelder, 1 Bit pro Fahrstrasse (MEM_TOTAL_ROUTES=96 Bit = 12 Byte).
+// Valid/active bit fields, 1 bit per route (MEM_TOTAL_ROUTES=96 bits = 12 bytes).
 static u8 s_Valid[(MEM_TOTAL_ROUTES + 7) / 8];
 static u8 s_Active[(MEM_TOTAL_ROUTES + 7) / 8];
 
-// Je Instanz: REC_IDLE/REC_WAITING oder die lokale Route (0..23), die gerade aufgenommen wird.
+// Per instance: REC_IDLE/REC_WAITING or the local route (0..23) currently being recorded.
 static u8   s_RecordingLocalRoute[MEMORY_COUNT_MAX];
-// Nur gueltig waehrend REC_WAITING: naechster Routendruck loescht die GANZE Route statt Aufnahme zu
-// starten (Spec: "input"+"clear"+Routenwahl).
+// Only valid during REC_WAITING: the next route press clears the WHOLE route instead of starting a
+// recording (spec: "input"+"clear"+route selection).
 static bool s_PendingWholeDelete[MEMORY_COUNT_MAX];
-// Nur ausserhalb einer Aufnahme: "clear" gedrueckt, der naechste Routendruck gibt die Route frei
-// (Handbuch 3.3.4), "end" bricht ab.
+// Only outside a recording: "clear" pressed, the next route press releases the route
+// (manual 3.3.4), "end" cancels.
 static bool s_PendingRelease[MEMORY_COUNT_MAX];
 
-// Uebersicht fuer McMem_NoteSwitch(): je Adress-Low-Byte ein Bit pro Richtung, ob die Adresse in einer
-// gueltigen Fahrstrasse vorkommt. Darf zu viel melden (nach Freigaben), nie zu wenig.
+// Overview for McMem_NoteSwitch(): per address low byte one bit per direction, whether the address
+// occurs in a valid route. May report too much (after releases), never too little.
 static u8 s_UsedDir0[32];
 static u8 s_UsedDir1[32];
 
-// Vergleichsbefehle (Format wie im Satz: AdrH, AdrL, Richtung): die Fahrstrasse, die gestellt werden soll,
-// oder der eine geschaltete Magnetartikel - s_MemBuf wird beim Lesen der gueltigen Fahrstrassen ueberschrieben.
+// Comparison commands (format as in the record: AdrH, AdrL, direction): the route to be set, or
+// the one switched solenoid accessory - s_MemBuf is overwritten while reading the valid routes.
 static u8 s_CandCount;
 static u8 s_CandFollow;
 static u8 s_Cand[MEM_CMDS_PER_ROUTE * 3];
-// Gueltige Fahrstrassen, die s_Cand kreuzen (Ergebnis von ScanActive()).
+// Valid routes that cross s_Cand (result of ScanActive()).
 static u8 s_Cross[(MEM_TOTAL_ROUTES + 7) / 8];
 
-// Warnblinken kreuzender Fahrstrassen (Handbuch 3.3.3): Instanz (0xFF = keins), Routen, Ende, Takt.
+// Warning flash of crossing routes (manual 3.3.3): instance (0xFF = none), routes, end, clock.
 #define BLINK_JIFFIES  250 // ~5 s
-#define BLINK_PERIOD   15  // ~0,3 s je Phase
+#define BLINK_PERIOD   15  // ~0.3 s per phase
 static u8   s_BlinkInstance;
 static u8   s_Blink[(MEM_TOTAL_ROUTES + 7) / 8];
 static u16  s_BlinkUntil;
 static u16  s_BlinkNext;
 static bool s_BlinkOn;
 
-// Automatikbetrieb (Handbuch 4): je Instanz an/aus; gespeicherte Anforderungen und belegte Freigabe-Eingaenge
-// je Fahrstrasse.
+// Automatic mode (manual 4): on/off per instance; stored requests and occupied release inputs
+// per route.
 static bool s_Auto[MEMORY_COUNT_MAX];
 static u8   s_Pending[(MEM_TOTAL_ROUTES + 7) / 8];
 static u8   s_ReleaseHeld[(MEM_TOTAL_ROUTES + 7) / 8];
 
-// PlayRoute(): Handbetrieb (blinkt bei Kreuzung), zweiter Druck auf eine blinkende Fahrstrasse, Automatik
-// (blinkt nicht, meldet nur, ob gestellt wurde).
+// PlayRoute(): manual mode (flashes on crossing), second press on a flashing route, automatic
+// (does not flash, only reports whether the route was set).
 #define PLAY_MANUAL 0
 #define PLAY_FORCE  1
 #define PLAY_AUTO   2
 
-// Zuletzt gespeicherter Zustand - geschrieben wird nur bei einer echten Aenderung.
+// Last saved state - written only on a real change.
 static u8 s_SavedActive[(MEM_TOTAL_ROUTES + 7) / 8];
 static u8 s_SavedAuto;
 
@@ -132,8 +132,8 @@ static void OpenFile(void)
 }
 
 //---------------------------------------------------------------------------------------------------
-// Oeffnet MBC89R.CFG fuer eine Folge von Random-Zugriffen. Der Aufrufer schliesst mit EndSession().
-// Gibt FALSE zurueck, wenn die Datei nicht existiert (Aufrufer entscheidet, ob das ein Fehler ist).
+// Opens MBC89R.CFG for a sequence of random accesses. The caller closes it with EndSession().
+// Returns FALSE if the file does not exist (the caller decides whether that is an error).
 static bool BeginSession(void)
 {
 	OpenFile();
@@ -143,7 +143,7 @@ static bool BeginSession(void)
 		EnableInterrupt();
 		return FALSE;
 	}
-	// OPEN laesst das Satzgroessen-Feld unberuehrt - Random Block Read/Write (27h/26h) brauchen es.
+	// OPEN leaves the record size field untouched - Random Block Read/Write (27h/26h) need it.
 	s_MemFile.RecordSize = MEM_RECORD_SIZE;
 	return TRUE;
 }
@@ -156,9 +156,9 @@ static void EndSession(void)
 }
 
 //---------------------------------------------------------------------------------------------------
-// Liest einen Satz nach s_MemBuf. TRUE nur bei echtem Treffer (1 Satz gelesen) - FALSE u.a. dann, wenn
-// die Datei noch nicht so weit reicht (frische/teilweise befuellte Datei), s_MemBuf bleibt dann
-// unveraendert, der Aufrufer muss selbst auf "leer" zurueckfallen.
+// Reads one record into s_MemBuf. TRUE only on a real hit (1 record read) - FALSE among others
+// when the file does not reach that far yet (fresh/partially filled file); s_MemBuf then stays
+// unchanged and the caller must fall back to "empty" itself.
 static bool ReadRoute(u8 globalRoute)
 {
 	s_MemFile.RandomRecord = globalRoute;
@@ -175,7 +175,7 @@ static void WriteRoute(u8 globalRoute)
 }
 
 //---------------------------------------------------------------------------------------------------
-// Leerer Satz (Befehlsanzahl 0, keine Folgefahrstrasse) - fuer Neuanlage/komplettes Loeschen.
+// Empty record (command count 0, no follow-on route) - for creating/completely clearing.
 static void ClearBuf(void)
 {
 	Mem_Set(0, s_MemBuf, MEM_RECORD_SIZE);
@@ -191,8 +191,8 @@ static void SummaryAdd(const u8* cmds, u8 count)
 }
 
 //---------------------------------------------------------------------------------------------------
-// TRUE, wenn der Satz in s_MemBuf einen Magnetartikel aus s_Cand in der anderen Richtung schaltet - nur
-// das zaehlt als kreuzend (Handbuch 3.3.1).
+// TRUE if the record in s_MemBuf switches a solenoid accessory from s_Cand in the other direction -
+// only that counts as crossing (manual 3.3.1).
 static bool CrossesCandidate(void)
 {
 	u8 n = s_MemBuf[O_COUNT];
@@ -211,8 +211,8 @@ static bool CrossesCandidate(void)
 }
 
 //---------------------------------------------------------------------------------------------------
-// Liest alle gueltigen Fahrstrassen ausser skip: die s_Cand kreuzenden kommen nach s_Cross, alle bilden die
-// neue Uebersicht. FALSE, wenn MBC89R.CFG nicht zu oeffnen war.
+// Reads all valid routes except skip: those crossing s_Cand go to s_Cross, all of them form the
+// new overview. FALSE if MBC89R.CFG could not be opened.
 static bool ScanActive(u8 skip)
 {
 	u8 r;
@@ -231,7 +231,7 @@ static bool ScanActive(u8 skip)
 }
 
 //---------------------------------------------------------------------------------------------------
-// Warnblinken: die kreuzenden gueltigen Fahrstrassen der Instanz und die aufgerufene.
+// Warning flash: the crossing valid routes of the instance and the called one.
 static void StartBlink(u8 instance, u8 route)
 {
 	u8 r, first = (u8)(instance * MEM_ROUTES_PER_INSTANCE);
@@ -255,8 +255,8 @@ static u8 AutoBits(void)
 }
 
 //---------------------------------------------------------------------------------------------------
-// Schreibt gueltige Fahrstrassen und Betriebsart in den Zustandssatz, aber nur wenn sie sich seit dem letzten
-// Schreiben geaendert haben. Aufruf am Ende jeder oeffentlichen Funktion, die sie aendern kann.
+// Writes valid routes and operating mode to the state record, but only if they have changed since
+// the last write. Call at the end of every public function that can change them.
 static void SaveState(void)
 {
 	u8 auto8 = AutoBits();
@@ -302,21 +302,21 @@ void McMem_Init(void)
 		u8 r;
 		for (r = 0; r < MEM_TOTAL_ROUTES; r++)
 			if (ReadRoute(r)) BitSet(s_Valid, r, (bool)(s_MemBuf[O_COUNT] > 0));
-		// Zustand des letzten Laufs: nur Fahrstrassen, die es noch gibt; Automatik nur fuer vorhandene Memorys
+		// State of the last run: only routes that still exist; automatic only for existing Memorys
 		if (ReadRoute(STATE_RECORD) && (s_MemBuf[O_ST_MAGIC] == STATE_MAGIC))
 		{
 			for (i = 0; i < sizeof(s_Active); i++) s_Active[i] = (u8)(s_MemBuf[O_ST_ACTIVE + i] & s_Valid[i]);
 			for (i = 0; i < g_MemoryCount; i++) s_Auto[i] = (bool)((s_MemBuf[O_ST_AUTO] >> i) & 1);
 		}
 		EndSession();
-		// Uebersicht fuer McMem_NoteSwitch() aus den gueltigen Fahrstrassen (leere Vergleichsliste: nichts kreuzt)
+		// Overview for McMem_NoteSwitch() from the valid routes (empty comparison list: nothing crosses)
 		(void)ScanActive(0xFF);
 	}
 	else
 	{
-		// Datei existiert noch nicht (Erststart) - anlegen, leer lassen. Jeder spaetere WriteRoute()
-		// materialisiert ihren eigenen Satz on demand, kein Vorab-Befuellen aller MEM_TOTAL_ROUTES
-		// Saetze noetig.
+		// File does not exist yet (first start) - create it, leave it empty. Every later WriteRoute()
+		// materializes its own record on demand, no need to pre-fill all MEM_TOTAL_ROUTES
+		// records.
 		OpenFile();
 		DisableInterrupt();
 		DOS_CreateFCB(&s_MemFile);
@@ -342,15 +342,15 @@ bool McMem_IsActive(u8 globalRoute)
 //---------------------------------------------------------------------------------------------------
 bool McMem_LedOn(u8 instance, u8 localIdx)
 {
-	if (localIdx == 2) // "in" - leuchtet solange die Instanz im Aufnahme-Modus ist (Wahl oder Aufnahme)
+	if (localIdx == 2) // "in" - lit while the instance is in recording mode (selection or recording)
 		return (bool)(s_RecordingLocalRoute[instance] != REC_IDLE);
-	if (localIdx == 4) // "clr" - wartet auf die Fahrstrasse, die freigegeben werden soll
+	if (localIdx == 4) // "clr" - waiting for the route to be released
 		return s_PendingRelease[instance];
-	if (localIdx == 0) // "ex" - Automatikbetrieb
+	if (localIdx == 0) // "ex" - automatic mode
 		return s_Auto[instance];
 	if (localIdx == 1) // "off" - Handbetrieb
 		return (bool)!s_Auto[instance];
-	if (localIdx < 5) // "end" - ohne eigene Dauer-Anzeige
+	if (localIdx < 5) // "end" - no steady indication of its own
 		return FALSE;
 	{
 		u8 localRoute = (u8)(localIdx - 5);
@@ -407,11 +407,11 @@ static void DeleteWholeRoute(u8 globalRoute)
 }
 
 //---------------------------------------------------------------------------------------------------
-// Spielt globalRoute ab, folgt einer evtl. gesetzten Folgefahrstrasse (max. 5 Kettenglieder gegen
-// Endlosschleifen). Kein kuenstliches Delay zwischen den Befehlen - entspricht schnellem manuellem
-// Tastendruecken derselben Tasten, siehe Plan 8a. Je Kettenglied wird der Satz gelesen und die Datei
-// wieder geschlossen, bevor gesendet wird: CAN-Versand nie bei gesperrten Interrupts, die Befehle
-// kommen direkt aus s_MemBuf (bleibt nach EndSession() unveraendert).
+// Plays globalRoute, follows a follow-on route if set (max. 5 chain links against endless loops).
+// No artificial delay between the commands - corresponds to quickly pressing the same keys by
+// hand, see plan 8a. For each chain link the record is read and the file closed again before
+// sending: CAN sending never with interrupts disabled, the commands come straight from s_MemBuf
+// (unchanged after EndSession()).
 static bool PlayRoute(u8 globalRoute, u8 mode)
 {
 	u8 hop, cur = globalRoute;
@@ -433,14 +433,14 @@ static bool PlayRoute(u8 globalRoute, u8 mode)
 		if (!ScanActive(cur)) break;
 		if (g_MemInterlock && !force)
 		{
-			// Mit Verriegelung blockiert nur eine kreuzende gueltige Fahrstrasse derselben Memory (3.3.3)
+			// With interlocking only a crossing valid route of the same Memory blocks (3.3.3)
 			bool blocked = FALSE;
 			for (r = (u8)(instance * MEM_ROUTES_PER_INSTANCE); r < (u8)((instance + 1) * MEM_ROUTES_PER_INSTANCE); r++)
 				if (BitGet(s_Cross, r)) blocked = TRUE;
 			if (blocked)
 			{
 				if (BitGet(s_Active, cur)) SummaryAdd(s_Cand, s_CandCount);
-				// Folgefahrstrassen werden dann still nicht ausgefuehrt, nur der Aufruf selbst blinkt
+				// Follow-on routes are then silently not executed, only the call itself flashes
 				if ((hop == 0) && (mode == PLAY_MANUAL)) StartBlink(instance, cur);
 				break;
 			}
@@ -452,7 +452,7 @@ static bool PlayRoute(u8 globalRoute, u8 mode)
 			McCom_SendZubehoer(addr, richtung);
 			Gui_MirrorZubehoer(addr, richtung);
 		}
-		// Die gestellte Fahrstrasse zerstoert jede gueltige, die sie kreuzt
+		// The route being set destroys every valid route it crosses
 		for (r = 0; r < MEM_TOTAL_ROUTES; r++)
 			if (BitGet(s_Cross, r)) BitSet(s_Active, r, FALSE);
 		BitSet(s_Active, cur, TRUE);
@@ -466,8 +466,8 @@ static bool PlayRoute(u8 globalRoute, u8 mode)
 }
 
 //---------------------------------------------------------------------------------------------------
-// Stellt gespeicherte Anforderungen der Automatik, sobald nichts mehr dagegen steht; feste Prioritaet A1 vor
-// A2 ... vor C8 (Handbuch 4.4). Aufruf nach jeder Freigabe.
+// Sets stored automatic requests as soon as nothing stands against them anymore; fixed priority
+// A1 before A2 ... before C8 (manual 4.4). Call after every release.
 static void TryPending(void)
 {
 	u8 r;
@@ -482,8 +482,8 @@ static void TryPending(void)
 //---------------------------------------------------------------------------------------------------
 static void HandlePress(u8 instance, u8 localIdx)
 {
-	// Jeder Tastendruck dieser Memory beendet ihr Warnblinken - ausser dem Aufruf einer blinkenden Fahrstrasse,
-	// der sie trotz Kreuzung stellt (zweiter Druck, Handbuch 3.3.3)
+	// Every key press of this Memory ends its warning flash - except calling a flashing route, which
+	// sets it despite the crossing (second press, manual 3.3.3)
 	if (s_BlinkInstance == instance)
 	{
 		u8 blinkRoute = (u8)(instance * MEM_ROUTES_PER_INSTANCE + localIdx - 5);
@@ -494,7 +494,7 @@ static void HandlePress(u8 instance, u8 localIdx)
 			return;
 		}
 	}
-	if (localIdx == 2) // "in" (input) - Instanz wartet auf Routenwahl
+	if (localIdx == 2) // "in" (input) - instance waits for route selection
 	{
 		s_RecordingLocalRoute[instance] = REC_WAITING;
 		s_PendingWholeDelete[instance] = FALSE;
@@ -504,7 +504,7 @@ static void HandlePress(u8 instance, u8 localIdx)
 	if (localIdx == 3) // "end"
 	{
 		s_PendingRelease[instance] = FALSE;
-		FinishRecording(instance); // no-op, wenn weder WAITING noch aktiv aufnehmend
+		FinishRecording(instance); // no-op if neither WAITING nor actively recording
 		return;
 	}
 	if (localIdx == 4) // "clear"
@@ -517,7 +517,7 @@ static void HandlePress(u8 instance, u8 localIdx)
 			s_PendingRelease[instance] = TRUE; // Freigeben (3.3.4)
 		return;
 	}
-	if (localIdx == 0) // "extern" - Automatikbetrieb: Rueckmeldekontakte werden ausgewertet (Handbuch 4)
+	if (localIdx == 0) // "extern" - automatic mode: feedback contacts are evaluated (manual 4)
 	{
 		s_Auto[instance] = TRUE;
 		return;
@@ -546,15 +546,15 @@ static void HandlePress(u8 instance, u8 localIdx)
 			}
 			else
 			{
-				s_RecordingLocalRoute[instance] = localRoute; // Aufnahme startet, erster Keyboard-
-			}                                                  // Tastendruck legt den Satz ggf. erst an
+				s_RecordingLocalRoute[instance] = localRoute; // recording starts, the first Keyboard
+			}                                                  // key press creates the record if needed
 			return;
 		}
-		if (recState < MEM_ROUTES_PER_INSTANCE) return; // schon mitten in einer Aufnahme - "end" zuerst
+		if (recState < MEM_ROUTES_PER_INSTANCE) return; // already in the middle of a recording - "end" first
 
 		if (s_PendingRelease[instance])
 		{
-			// Freigeben: LED aus, Inhalt bleibt; die Uebersicht darf zu viel melden
+			// Release: LED off, content stays; the overview may report too much
 			s_PendingRelease[instance] = FALSE;
 			BitSet(s_Active, globalRoute, FALSE);
 			TryPending();
@@ -608,7 +608,7 @@ static bool NoteSwitch(u16 addr, bool richtung)
 {
 	u8 r;
 	bool changed = FALSE;
-	// Kommt der Magnetartikel in einer gueltigen Fahrstrasse in der anderen Richtung vor?
+	// Does the solenoid accessory occur in a valid route in the other direction?
 	if (!BitGet(richtung ? s_UsedDir0 : s_UsedDir1, (u8)(addr & 0xFF))) return FALSE;
 	s_Cand[0] = (u8)(addr >> 8);
 	s_Cand[1] = (u8)(addr & 0xFF);
@@ -634,7 +634,7 @@ u8 McMem_Tick(void)
 	if (instance == 0xFF) return 0xFF;
 	if ((i16)(g_JIFFY - s_BlinkUntil) >= 0)
 	{
-		// Kein zweiter Druck: die bisherige Fahrstrasse bleibt gueltig
+		// No second press: the previous route stays valid
 		s_BlinkInstance = 0xFF;
 		return instance;
 	}
@@ -654,7 +654,7 @@ static bool S88Event(u16 pin, bool active)
 	u16 rest = pin % 1000;
 	u8  module, contact, idx, instance, route;
 
-	// Umkehrung der Pinnummer von mbc88/mbc90: 1000 x Bus + 16 x (Modul im Bus - 1) + Kontakt 1-16, 31 Module je Bus
+	// Inverse of the pin number of mbc88/mbc90: 1000 x bus + 16 x (module in bus - 1) + contact 1-16, 31 modules per bus
 	if ((bus < 1) || (bus > 3) || (rest == 0) || (rest > 31 * 16)) return FALSE;
 	rest--;
 	module  = (u8)(rest / 16 + 1 + 31 * (bus - 1));
@@ -668,8 +668,8 @@ static bool S88Event(u16 pin, bool active)
 
 	if (contact >= 8)
 	{
-		// Freigabe-Eingang: solange belegt, sperrt er die Anforderung; das Belegen gibt die gueltige Fahrstrasse
-		// frei, damit eine kreuzende gestellt werden kann - nur mit Verriegelung (Handbuch 4.4)
+		// Release input: while occupied, it blocks the request; occupying it releases the valid route
+		// so that a crossing one can be set - only with interlocking (manual 4.4)
 		BitSet(s_ReleaseHeld, route, active);
 		if (!active || !s_Auto[instance] || !g_MemInterlock || !BitGet(s_Active, route)) return FALSE;
 		BitSet(s_Active, route, FALSE);
@@ -677,10 +677,10 @@ static bool S88Event(u16 pin, bool active)
 		return TRUE;
 	}
 
-	// Stell-Eingang: das Belegen fordert die Fahrstrasse an
+	// Set input: occupying it requests the route
 	if (!active || !s_Auto[instance] || !McMem_IsValid(route)) return FALSE;
-	if (g_MemInterlock && BitGet(s_ReleaseHeld, route)) return FALSE; // Anforderung sperren, nicht speichern
-	if (!PlayRoute(route, PLAY_AUTO) && g_MemInterlock) BitSet(s_Pending, route, TRUE); // Anforderung speichern
+	if (g_MemInterlock && BitGet(s_ReleaseHeld, route)) return FALSE; // block the request, do not store it
+	if (!PlayRoute(route, PLAY_AUTO) && g_MemInterlock) BitSet(s_Pending, route, TRUE); // store the request
 	return TRUE;
 }
 

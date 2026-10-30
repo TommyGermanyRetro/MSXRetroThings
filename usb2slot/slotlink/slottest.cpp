@@ -1,26 +1,26 @@
 //***************************************************************************************************
-//* HEADER - slottest.cpp - Testprogramm fuer das Binaerprotokoll der USB-Slot-Bridge
+//* HEADER - slottest.cpp - test program for the binary protocol of the USB slot bridge
 //***************************************************************************************************
-//* Aufruf:  slottest <COMx> <kommando> [parameter]
+//* Usage:   slottest <COMx> <command> [parameters]
 //*
-//*   hello                       Protokollversion und Blockgroesse
-//*   state                       Zustand der Bridge (LAEUFT/AUS), /INT-Pegel
-//*   read <slot> <adr> [m1]      ein Lesezyklus (m1 = Opcode-Fetch), Zahlen hexadezimal
-//*   write <slot> <adr> <wert>   ein Schreibzyklus
-//*   in <port>  |  out <port> <wert>   I/O lesen / schreiben
-//*   outw <port> <wert>          I/O schreiben mit Antwort, zeigt die /WAIT-Wartetakte
-//*   scan                        erkennt, was in Bridge-Slot 1 und 2 steckt (fuer das Startskript)
-//*   dump <slot> <adr> <laenge> [datei]   Speicherbereich blockweise lesen, hexadezimal anzeigen
-//*   reset                       /RESET-Impuls
-//*   bench                       Zeitmessung: einzelne Zyklen, Bloecke, gebuendelte Schreibzyklen
-//*   selftest                    automatischer Protokolltest mit Ergebnis je Pruefung
-//*   loop <sekunden> [block|read|mixed]   Verkehr erzeugen (fuer Messungen am Logikanalysator)
-//*   watch <sekunden>            /INT-Meldungen anzeigen
+//*   hello                       protocol version and block size
+//*   state                       bridge state (RUNNING/OFF), /INT level
+//*   read <slot> <adr> [m1]      one read cycle (m1 = opcode fetch), numbers in hex
+//*   write <slot> <adr> <value>  one write cycle
+//*   in <port>  |  out <port> <value>   read / write I/O
+//*   outw <port> <value>         write I/O with a response, shows the /WAIT wait clocks
+//*   scan                        detects what is plugged into bridge slots 1 and 2 (for the start script)
+//*   dump <slot> <adr> <length> [file]   read a memory range block by block, show it in hex
+//*   reset                       /RESET pulse
+//*   bench                       timing: single cycles, blocks, bundled write cycles
+//*   selftest                    automatic protocol test with a result per check
+//*   loop <seconds> [block|read|mixed]   generate traffic (for logic analyzer measurements)
+//*   watch <seconds>             show /INT messages
 //*
-//* Die Bridge steht danach wieder im Textmodus ohne Ueberwachung (Option --keep laesst sie im
-//* Binaermodus; ohne Herzschlag geht sie nach der Zeitgrenze in den Zustand AUS).
+//* Afterwards the bridge is back in text mode without monitoring (option --keep leaves it in
+//* binary mode; without a heartbeat it goes to state OFF after the timeout).
 //***************************************************************************************************
-//* Datei: slottest.cpp
+//* File:  slottest.cpp
 //***************************************************************************************************
 //* MSX (c) 2026 by Dr.-Ing. Thomas Wiesner
 //***************************************************************************************************
@@ -61,7 +61,7 @@ static void check(bool ok, const char *text)
     {
         failures++;
     }
-    printf("  %s  %s\n", ok ? "OK    " : "FEHLER", text);
+    printf("  %s  %s\n", ok ? "OK    " : "FAIL  ", text);
 }
 
 static void checkf(bool ok, const char *fmt, ...)
@@ -75,7 +75,7 @@ static void checkf(bool ok, const char *fmt, ...)
 }
 
 //===================================================================================================
-// Selbsttest
+// Self test
 //===================================================================================================
 
 static void selftest(Link &link)
@@ -86,18 +86,18 @@ static void selftest(Link &link)
     ReadResult rr;
     uint8_t st = 0;
 
-    printf("Selbsttest Binaerprotokoll\n");
+    printf("Self test binary protocol\n");
 
-    check(link.hello(version, maxBlock), "HELLO beantwortet");
-    checkf(version == 3 && maxBlock == 1024, "Version %u, groesster Block %u (Soll 3, 1024)", version,
+    check(link.hello(version, maxBlock), "HELLO answered");
+    checkf(version == 3 && maxBlock == 1024, "version %u, largest block %u (expected 3, 1024)", version,
            maxBlock);
 
-    check(link.sync(sy), "SYNC beantwortet");
-    checkf(sy.running, "Bridge im Zustand LAEUFT nach dem Wechsel ins Binaerprotokoll");
-    checkf(sy.intLevel == 1, "/INT frei (Pegel %u)", sy.intLevel);
+    check(link.sync(sy), "SYNC answered");
+    checkf(sy.running, "bridge in state RUNNING after switching to the binary protocol");
+    checkf(sy.intLevel == 1, "/INT released (level %u)", sy.intLevel);
 
-    // Herzschlag und Zeitgrenze: 300 ms lang alle 20 ms RUN, dazwischen lesen
-    check(link.config(100, st) && st == StOk, "CFG: Zeitgrenze 100 ms");
+    // Heartbeat and timeout: RUN every 20 ms for 300 ms, reading in between
+    check(link.config(100, st) && st == StOk, "CFG: timeout 100 ms");
     bool alive = true;
     for (int i = 0; i < 15; i++)
     {
@@ -105,79 +105,79 @@ static void selftest(Link &link)
         alive = alive && link.memRead(1, 0x4000, false, rr) && rr.status == StOk;
         Sleep(20);
     }
-    check(alive, "300 ms lang lesen mit Herzschlag alle 20 ms ohne Fehler");
-    check(link.sync(sy) && sy.running, "Bridge laeuft weiter (Herzschlag genuegt)");
+    check(alive, "read for 300 ms with a heartbeat every 20 ms without error");
+    check(link.sync(sy) && sy.running, "bridge keeps running (heartbeat is enough)");
 
-    // Einzelzyklen
+    // Single cycles
     check(link.memRead(1, 0x4000, false, rr) && rr.status == StOk && rr.waits == 0, "MRD Slot 1, 4000h");
     check(link.memRead(2, 0x8000, false, rr) && rr.status == StOk && rr.waits == 0, "MRD Slot 2, 8000h");
-    check(link.memRead(1, 0x4000, true, rr) && rr.status == StOk && rr.waits == 0, "MRD mit M1 (Opcode-Fetch)");
+    check(link.memRead(1, 0x4000, true, rr) && rr.status == StOk && rr.waits == 0, "MRD with M1 (opcode fetch)");
     check(link.ioRead(0x98, rr) && rr.status == StOk && rr.waits == 0, "IORD Port 98h");
-    check(link.memRead(3, 0x4000, false, rr) && rr.status == StArg, "MRD mit ungueltigem Slot 3 -> Argumentfehler");
+    check(link.memRead(3, 0x4000, false, rr) && rr.status == StArg, "MRD with invalid slot 3 -> argument error");
 
-    // Gebuendelte Schreibzyklen ohne Antwort, danach SYNC
+    // Bundled write cycles without a response, then SYNC
     double t0 = nowUs();
     for (int i = 0; i < 1000; i++)
     {
         link.memWrite(1, static_cast<uint16_t>(0x4000 + i), static_cast<uint8_t>(i));
     }
-    check(link.sync(sy), "1000 MWR gebuendelt, danach SYNC");
+    check(link.sync(sy), "1000 MWR bundled, then SYNC");
     double t1 = nowUs();
-    checkf(sy.errors == 0, "keine verworfenen Schreibzyklen (%u)", sy.errors);
-    printf("        1000 MWR + SYNC in %.0f us = %.2f us je Zyklus\n", t1 - t0, (t1 - t0) / 1000.0);
+    checkf(sy.errors == 0, "no discarded write cycles (%u)", sy.errors);
+    printf("        1000 MWR + SYNC in %.0f us = %.2f us per cycle\n", t1 - t0, (t1 - t0) / 1000.0);
     link.ioWrite(0x98, 0x55);
     check(link.sync(sy) && sy.errors == 0, "IOWR Port 98h");
 
-    // Blocklesen
+    // Block read
     std::vector<uint8_t> blk;
     uint16_t waits = 0;
     check(link.memReadBlock(1, 0x4000, 256, blk, waits, st) && st == StOk && blk.size() == 256, "MRDN 256 Bytes");
-    checkf(waits == 0, "MRDN ohne Wartetakte (%u)", waits);
+    checkf(waits == 0, "MRDN without wait clocks (%u)", waits);
     check(link.memReadBlock(1, 0x4000, 1024, blk, waits, st) && st == StOk && blk.size() == 1024, "MRDN 1024 Bytes");
-    check(link.memReadBlock(1, 0x4000, 1025, blk, waits, st) && st == StArg, "MRDN 1025 -> Argumentfehler");
-    check(link.memReadBlock(1, 0x4000, 0, blk, waits, st) && st == StArg, "MRDN 0 -> Argumentfehler");
-    check(link.memReadBlock(3, 0x4000, 16, blk, waits, st) && st == StArg, "MRDN Slot 3 -> Argumentfehler");
-    check(link.memRead(1, 0x4000, false, rr) && rr.status == StOk, "Datenstrom nach Fehlern weiter synchron");
+    check(link.memReadBlock(1, 0x4000, 1025, blk, waits, st) && st == StArg, "MRDN 1025 -> argument error");
+    check(link.memReadBlock(1, 0x4000, 0, blk, waits, st) && st == StArg, "MRDN 0 -> argument error");
+    check(link.memReadBlock(3, 0x4000, 16, blk, waits, st) && st == StArg, "MRDN slot 3 -> argument error");
+    check(link.memRead(1, 0x4000, false, rr) && rr.status == StOk, "data stream still in sync after errors");
 
-    // /RESET-Impuls
+    // /RESET pulse
     t0 = nowUs();
-    check(link.reset(st) && st == StOk, "RESET beantwortet");
+    check(link.reset(st) && st == StOk, "RESET answered");
     t1 = nowUs();
-    checkf(t1 - t0 > 9000 && t1 - t0 < 20000, "Antwort erst nach dem Impuls (%.1f ms, Soll 10 ms)", (t1 - t0) / 1000.0);
+    checkf(t1 - t0 > 9000 && t1 - t0 < 20000, "response only after the pulse (%.1f ms, expected 10 ms)", (t1 - t0) / 1000.0);
 
-    // /INT ueber die Testleitung (Bruecke Pin 29 -> Pin 5)
+    // /INT via the test line (jumper pin 29 -> pin 5)
     uint8_t level = 9;
     link.testLine(false);
     link.pollEvents(50);
-    check(link.popInt(level) && level == 0, "Meldung /INT LOW nach TEST LOW");
+    check(link.popInt(level) && level == 0, "report /INT LOW after TEST LOW");
     link.testLine(true);
     link.pollEvents(50);
-    check(link.popInt(level) && level == 1, "Meldung /INT HIGH nach TEST HIGH");
+    check(link.popInt(level) && level == 1, "report /INT HIGH after TEST HIGH");
 
-    // Wartetakte: TEST bremst auch /WAIT; ohne Wartetakt-Testmodus bleibt der Zyklus unbeeinflusst
-    check(link.memRead(1, 0x4000, false, rr) && rr.waits == 0, "MRD ohne /WAIT-Bremse: 0 Wartetakte");
+    // Wait clocks: TEST also slows down /WAIT; without the wait-clock test mode the cycle is unaffected
+    check(link.memRead(1, 0x4000, false, rr) && rr.waits == 0, "MRD without /WAIT slowdown: 0 wait clocks");
 
-    // Zustand AUS: 300 ms ohne Herzschlag bei Zeitgrenze 100 ms
+    // State OFF: 300 ms without a heartbeat at a timeout of 100 ms
     Sleep(300);
-    check(link.sync(sy) && !sy.running, "ohne Herzschlag: Bridge im Zustand AUS");
-    check(link.memRead(1, 0x4000, false, rr) && rr.status == StOff && rr.data == 0xFF, "MRD in AUS: Status AUS, Daten FFh");
+    check(link.sync(sy) && !sy.running, "without heartbeat: bridge in state OFF");
+    check(link.memRead(1, 0x4000, false, rr) && rr.status == StOff && rr.data == 0xFF, "MRD in OFF: status OFF, data FFh");
     link.memWrite(1, 0x4000, 0x11);
-    check(link.sync(sy) && sy.errors == 1, "MWR in AUS wird verworfen und gezaehlt");
+    check(link.sync(sy) && sy.errors == 1, "MWR in OFF is discarded and counted");
     check(link.memReadBlock(1, 0x4000, 8, blk, waits, st) && st == StOff && blk.size() == 8 && blk[0] == 0xFF,
-          "MRDN in AUS: Status AUS, Daten FFh");
-    check(link.reset(st) && st == StOff, "RESET in AUS: Status AUS");
+          "MRDN in OFF: status OFF, data FFh");
+    check(link.reset(st) && st == StOff, "RESET in OFF: status OFF");
     link.run();
-    check(link.sync(sy) && sy.running, "RUN weckt die Bridge aus AUS");
-    check(link.memRead(1, 0x4000, false, rr) && rr.status == StOk, "MRD nach dem Wecken");
+    check(link.sync(sy) && sy.running, "RUN wakes the bridge from OFF");
+    check(link.memRead(1, 0x4000, false, rr) && rr.status == StOk, "MRD after waking");
 
-    check(link.config(0, st) && st == StOk, "CFG: Ueberwachung aus");
-    check(link.config(60001, st) && st == StArg, "CFG: 60001 ms -> Argumentfehler");
+    check(link.config(0, st) && st == StOk, "CFG: monitoring off");
+    check(link.config(60001, st) && st == StArg, "CFG: 60001 ms -> argument error");
 
-    printf("\n%d Pruefungen, %d Fehler\n", checks, failures);
+    printf("\n%d checks, %d failed\n", checks, failures);
 }
 
 //===================================================================================================
-// Zeitmessung
+// Timing
 //===================================================================================================
 
 static void bench(Link &link)
@@ -207,7 +207,7 @@ static void bench(Link &link)
         }
     }
     std::sort(v.begin(), v.end());
-    printf("MRD einzeln (5000): Min %.0f us, Median %.0f us, 99 %% %.0f us, Max %.0f us\n", v.front(),
+    printf("MRD single (5000): Min %.0f us, Median %.0f us, 99 %% %.0f us, Max %.0f us\n", v.front(),
            v[v.size() / 2], v[v.size() * 99 / 100], v.back());
 
     for (int nn : { 16, 64, 256, 1024 })
@@ -226,7 +226,7 @@ static void bench(Link &link)
             }
         }
         std::sort(v.begin(), v.end());
-        printf("MRDN %4u Bytes (200): Median %.0f us = %.2f us je Byte = %.0f kByte/s\n", n, v[v.size() / 2],
+        printf("MRDN %4u bytes (200): Median %.0f us = %.2f us per byte = %.0f kByte/s\n", n, v[v.size() / 2],
                v[v.size() / 2] / n, n * 1000.0 / v[v.size() / 2]);
     }
 
@@ -239,22 +239,22 @@ static void bench(Link &link)
         }
         link.sync(sy);
         double t1 = nowUs();
-        printf("%5d MWR gebuendelt + SYNC: %.0f us = %.2f us je Zyklus\n", n, t1 - t0, (t1 - t0) / n);
+        printf("%5d MWR bundled + SYNC: %.0f us = %.2f us per cycle\n", n, t1 - t0, (t1 - t0) / n);
         link.run();
     }
     link.config(0, st);
 }
 
 //===================================================================================================
-// Hauptprogramm
+// Main program
 //===================================================================================================
 
-// Erkennung fuer das Startskript: was steckt in Bridge-Slot 1 und 2. Geschrieben werden nur FFFFh
-// (Expander-Pruefung, danach 00h bzw. alter Wert) und Port 40h (Switched-I/O-Kennung C0h, danach 00h).
-// Ausgabe zeilenweise:
+// Detection for the start script: what is plugged into bridge slots 1 and 2. Only FFFFh is written
+// (expander check, afterwards 00h or the old value) and port 40h (switched I/O ID C0h, afterwards 00h).
+// Output line by line:
 //   SLOT <s> EXPANDER <0|1>
-//   SUB <s> <unterslot> <ROM|DATA|EMPTY>    ROM = "AB" bei 4000h/8000h, EMPTY = nur FFh, DATA = sonst
-//   SWIO <0|1>                               1 = an Port 40h antwortet die Kennung C0h (RCX/XIO)
+//   SUB <s> <subslot> <ROM|DATA|EMPTY>      ROM = "AB" at 4000h/8000h, EMPTY = only FFh, DATA = otherwise
+//   SWIO <0|1>                               1 = the ID C0h answers at port 40h (RCX/XIO)
 //   MAPPERPORTS <FC> <FD> <FE> <FF>
 
 static void scan(Link &link)
@@ -317,8 +317,8 @@ static void scan(Link &link)
                 printf("SUB %u %u %s\n", slot, sub, kind[sub]);
             }
             link.memWrite(slot, 0xFFFF, 0x00);
-            // Nextor-Treiber eines SD Mappers: Kopf in ROM-Bank 7 von Unterslot 1 ("NEXTOR_DRIVER" bei 4100h,
-            // Treibername bei 4110h); danach wieder Bank 0 und Expander-Register 00h
+            // Nextor driver of an SD Mapper: header in ROM bank 7 of subslot 1 ("NEXTOR_DRIVER" at 4100h,
+            // driver name at 4110h); afterwards back to bank 0 and expander register 00h
             if (strcmp(kind[1], "ROM") == 0 && strcmp(kind[3], "DATA") == 0)
             {
                 link.memWrite(slot, 0xFFFF, 0x04);
@@ -350,8 +350,8 @@ static void scan(Link &link)
             }
             const char *kind = classify(slot);
             printf("SUB %u 0 %s\n", slot, kind);
-            // MegaROM: Mapper wie openMSX raten - LD (nnnn),A (32h nn nn) auf die Bankregister der Typen in den
-            // 32 KB bei 4000h-BFFFh nach /RESET zaehlen; mindestens 3 Treffer, sonst einfaches ROM
+            // MegaROM: guess the mapper like openMSX - count LD (nnnn),A (32h nn nn) to the bank registers of the
+            // types in the 32 KB at 4000h-BFFFh after /RESET; at least 3 hits, otherwise a plain ROM
             if (strcmp(kind, "ROM") == 0)
             {
                 std::vector<uint8_t> rom;
@@ -420,11 +420,11 @@ static void scan(Link &link)
     link.sync(sy);
 }
 
-// Uhr PCF8583 der RC2014-Karte A (PCF8584 an IO-Adresse adr, dezimal wie CALL I2C INIT) auf die PC-Ortszeit
-// stellen, mit den Registern von CALL SET TIME und CALL SET DATE des RCX-ROM (Register 0-6, Jahr im RAM 10h).
-// Geschrieben wird nur, wenn Switched I/O antwortet, das RCX-ROM ("RCX_INTERFACE" bei 4010h) in einem Bridge-Slot
-// oder Unterslot steckt, der PCF8584 nach der Initialisierung im Leerlauf ist (PIN = 1, BB = 1) und der PCF8583
-// seine Adresse A0h quittiert. Ausgabe: CLOCK <SET|NOSWIO|NORCX|NOCONTROLLER|NOCLOCK> [Zeit]
+// Set the PCF8583 clock of RC2014 card A (PCF8584 at IO address adr, decimal like CALL I2C INIT) to the
+// PC local time, using the registers of CALL SET TIME and CALL SET DATE of the RCX ROM (registers 0-6,
+// year in RAM 10h). Written only if switched I/O answers, the RCX ROM ("RCX_INTERFACE" at 4010h) is in a
+// bridge slot or subslot, the PCF8584 is idle after initialization (PIN = 1, BB = 1) and the PCF8583
+// acknowledges its address A0h. Output: CLOCK <SET|NOSWIO|NORCX|NOCONTROLLER|NOCLOCK> [time]
 
 static int clockSet(Link &link, uint8_t adr)
 {
@@ -480,7 +480,7 @@ static int clockSet(Link &link, uint8_t adr)
         return 3;
     }
 
-    // PCF8584 hinter dem Switched I/O: 46h Registeradresse, 47h Daten; S0 bei A0 = 0, S1 bei A0 = 1
+    // PCF8584 behind the switched I/O: 46h register address, 47h data; S0 at A0 = 0, S1 at A0 = 1
     const uint8_t s0 = adr;
     const uint8_t s1 = static_cast<uint8_t>(adr + 1);
     auto wr = [&](uint8_t reg, uint8_t value)
@@ -493,7 +493,7 @@ static int clockSet(Link &link, uint8_t adr)
         link.ioWrite(0x46, s1);
         return link.ioRead(0x47, rr) ? rr.data : 0xFF;
     };
-    // Bis zu 255 Lesezugriffe auf S1, wie I2CBCTRL und I2CPCTRL des RCX-ROM
+    // Up to 255 read accesses to S1, like I2CBCTRL and I2CPCTRL of the RCX ROM
     auto waitStatus = [&](uint8_t mask, uint8_t wanted, int &value) -> bool
     {
         for (int n = 0; n < 255; n++)
@@ -506,7 +506,7 @@ static int clockSet(Link &link, uint8_t adr)
         }
         return false;
     };
-    // I2C-Block schreiben wie CORE8: START mit Chipadresse, Bytes, STOP; false ohne Quittung
+    // Write an I2C block like CORE8: START with chip address, bytes, STOP; false without acknowledge
     auto block = [&](std::initializer_list<uint8_t> bytes) -> bool
     {
         int value = 0;
@@ -536,7 +536,7 @@ static int clockSet(Link &link, uint8_t adr)
     };
     auto bcd = [](int v) -> uint8_t { return static_cast<uint8_t>((((v / 10) % 10) << 4) | (v % 10)); };
 
-    // Initialisierung wie CORE6 (CALL I2C INIT): eigene Adresse 55h, Takt 8 MHz / SCL 90 kHz, Bus im Leerlauf
+    // Initialization like CORE6 (CALL I2C INIT): own address 55h, clock 8 MHz / SCL 90 kHz, bus idle
     wr(s1, 0x80);
     wr(s0, 0x55);
     wr(s1, 0xA0);
@@ -566,9 +566,9 @@ static int clockSet(Link &link, uint8_t adr)
 
 static void usage()
 {
-    printf("Aufruf: slottest <COMx> <kommando> [parameter] [--keep]\n");
-    printf("  hello | state | read <slot> <adr> [m1] | write <slot> <adr> <wert> | in <port> | out <port> <wert> | outw <port> <wert> | scan | clock <adr dezimal>\n");
-    printf("  dump <slot> <adr> <laenge> [datei] | reset | bench | selftest | loop <sek> [block|read|mixed] | watch <sek>\n");
+    printf("Usage: slottest <COMx> <command> [parameters] [--keep]\n");
+    printf("  hello | state | read <slot> <adr> [m1] | write <slot> <adr> <value> | in <port> | out <port> <value> | outw <port> <value> | scan | clock <adr decimal>\n");
+    printf("  dump <slot> <adr> <length> [file] | reset | bench | selftest | loop <sec> [block|read|mixed] | watch <sec>\n");
 }
 
 int main(int argc, char **argv)
@@ -599,7 +599,7 @@ int main(int argc, char **argv)
     Link link;
     if (!link.open(a[0]) || !link.enterBinary())
     {
-        printf("Fehler: %s\n", link.error().c_str());
+        printf("Error: %s\n", link.error().c_str());
         return 1;
     }
 
@@ -609,8 +609,8 @@ int main(int argc, char **argv)
     uint8_t st = 0;
     int rc = 0;
 
-    // Ueberwachung mit Herzschlag: ohne RUN geht die Bridge nach der Zeitgrenze nach AUS;
-    // die Zustandsabfrage darf die Bridge nicht wecken
+    // Monitoring with heartbeat: without RUN the bridge goes to OFF after the timeout;
+    // the state query must not wake the bridge
     if (cmd != "state")
     {
         link.run();
@@ -622,11 +622,11 @@ int main(int argc, char **argv)
         uint16_t m;
         if (link.hello(v, m))
         {
-            printf("Protokollversion %u, groesster Block %u\n", v, m);
+            printf("protocol version %u, largest block %u\n", v, m);
         }
         else
         {
-            printf("Fehler: %s\n", link.error().c_str());
+            printf("Error: %s\n", link.error().c_str());
             rc = 1;
         }
     }
@@ -634,8 +634,8 @@ int main(int argc, char **argv)
     {
         if (link.sync(sy))
         {
-            printf("%s, /INT %s, verworfene Schreibzyklen %u\n", sy.running ? "LAEUFT" : "AUS",
-                   sy.intLevel ? "frei" : "aktiv (LOW)", sy.errors);
+            printf("%s, /INT %s, discarded write cycles %u\n", sy.running ? "RUNNING" : "OFF",
+                   sy.intLevel ? "released" : "active (LOW)", sy.errors);
         }
         else
         {
@@ -648,7 +648,7 @@ int main(int argc, char **argv)
         if (link.memRead(static_cast<uint8_t>(atoi(a[2].c_str())),
                          static_cast<uint16_t>(hex(a[3].c_str())), m1, rr))
         {
-            printf("Status %u, Daten %02X, Wartetakte %u\n", rr.status, rr.data, rr.waits);
+            printf("status %u, data %02X, wait clocks %u\n", rr.status, rr.data, rr.waits);
         }
         else
         {
@@ -660,13 +660,13 @@ int main(int argc, char **argv)
         link.memWrite(static_cast<uint8_t>(atoi(a[2].c_str())), static_cast<uint16_t>(hex(a[3].c_str())),
                       static_cast<uint8_t>(hex(a[4].c_str())));
         link.sync(sy);
-        printf("Geschrieben, verworfene Schreibzyklen %u\n", sy.errors);
+        printf("written, discarded write cycles %u\n", sy.errors);
     }
     else if (cmd == "in" && a.size() >= 3)
     {
         if (link.ioRead(static_cast<uint8_t>(hex(a[2].c_str())), rr))
         {
-            printf("Status %u, Daten %02X, Wartetakte %u\n", rr.status, rr.data, rr.waits);
+            printf("status %u, data %02X, wait clocks %u\n", rr.status, rr.data, rr.waits);
         }
         else
         {
@@ -677,7 +677,7 @@ int main(int argc, char **argv)
     {
         link.ioWrite(static_cast<uint8_t>(hex(a[2].c_str())), static_cast<uint8_t>(hex(a[3].c_str())));
         link.sync(sy);
-        printf("Geschrieben, verworfene Schreibzyklen %u\n", sy.errors);
+        printf("written, discarded write cycles %u\n", sy.errors);
     }
     else if (cmd == "scan")
     {
@@ -694,7 +694,7 @@ int main(int argc, char **argv)
         if (link.ioWriteWait(static_cast<uint8_t>(hex(a[2].c_str())), static_cast<uint8_t>(hex(a[3].c_str())),
                              status, waits))
         {
-            printf("Status %u, Wartetakte %lu\n", status, static_cast<unsigned long>(waits));
+            printf("status %u, wait clocks %lu\n", status, static_cast<unsigned long>(waits));
         }
         else
         {
@@ -715,7 +715,7 @@ int main(int argc, char **argv)
             link.run();
             if (!link.memReadBlock(slot, static_cast<uint16_t>(addr + all.size()), n, blk, waits, st) || st != StOk)
             {
-                printf("Fehler beim Lesen (Status %u)\n", st);
+                printf("read error (status %u)\n", st);
                 rc = 1;
                 break;
             }
@@ -737,7 +737,7 @@ int main(int argc, char **argv)
             {
                 fwrite(all.data(), 1, all.size(), f);
                 fclose(f);
-                printf("%zu Bytes in %s geschrieben\n", all.size(), a[5].c_str());
+                printf("%zu bytes written to %s\n", all.size(), a[5].c_str());
             }
         }
     }
@@ -746,7 +746,7 @@ int main(int argc, char **argv)
         double t0 = nowUs();
         if (link.reset(st))
         {
-            printf("RESET-Impuls, Status %u, Antwort nach %.1f ms\n", st, (nowUs() - t0) / 1000.0);
+            printf("RESET pulse, status %u, response after %.1f ms\n", st, (nowUs() - t0) / 1000.0);
         }
         else
         {
@@ -791,7 +791,7 @@ int main(int argc, char **argv)
             }
         }
         link.sync(sy);
-        printf("%lu Zyklen in %.1f s (%.0f Zyklen/s)\n", cycles, (nowUs() - start) / 1e6, cycles / ((nowUs() - start) / 1e6));
+        printf("%lu cycles in %.1f s (%.0f cycles/s)\n", cycles, (nowUs() - start) / 1e6, cycles / ((nowUs() - start) / 1e6));
     }
     else if (cmd == "watch" && a.size() >= 3)
     {
@@ -805,7 +805,7 @@ int main(int argc, char **argv)
             uint8_t level;
             while (link.popInt(level))
             {
-                printf("%.1f s: /INT %s\n", (nowUs() - start) / 1e6, level ? "frei (HIGH)" : "aktiv (LOW)");
+                printf("%.1f s: /INT %s\n", (nowUs() - start) / 1e6, level ? "released (HIGH)" : "active (LOW)");
             }
         }
     }

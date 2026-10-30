@@ -12,7 +12,7 @@
 //* config-channel delay are not implemented - with a single test unit on the bus and Can_Tx()         *
 //* already blocking until the frame is sent, both are safe to omit (see mbc89_base.c for detail).     *
 //***************************************************************************************************
-//* Datei: mbc89_base.h                                                                                *
+//* File:  mbc89_base.h                                                                                *
 //***************************************************************************************************
 //* MSX (c) 2026 by Dr.-Ing. Thomas Wiesner                                                           *
 //***************************************************************************************************

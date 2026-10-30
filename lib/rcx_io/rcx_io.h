@@ -19,7 +19,7 @@
 //* Functions needing more than sdcccall(1)'s 2-argument limit use sdcccall(0) (stack-based, see the  *
 //* per-function comments in rcx_io.s for the exact stack layout each one expects).                   *
 //***************************************************************************************************
-//* Datei: rcx_io.h                                                                                  *
+//* File:  rcx_io.h                                                                                  *
 //***************************************************************************************************
 //* MSX (c) 2026 by Dr.-Ing. Thomas Wiesner                                                          *
 //***************************************************************************************************

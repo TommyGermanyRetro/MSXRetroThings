@@ -4,7 +4,7 @@
 ;* Plain MSX-DOS console I/O, not tied to any UNAPI driver - moved here verbatim from xio_io.s,      *
 ;* which only ever held these because no other shared library existed yet at the time.               *
 ;***************************************************************************************************
-;* Datei: dostools.s                                                                                *
+;* File:  dostools.s                                                                                *
 ;***************************************************************************************************
 ;* MSX (c) 2026 by Dr.-Ing. Thomas Wiesner                                                          *
 ;***************************************************************************************************

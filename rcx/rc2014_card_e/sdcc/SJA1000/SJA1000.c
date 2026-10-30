@@ -7,7 +7,7 @@
 //* CAN GET ADDR) via XIO SET ADDR - no custom ISR stub needed, unlike XIOIM2/XIOPIC/RTCLCDI. CAN is  *
 //* not implemented in RCXRAM.COM, so this only works against a real RCX ROM card.                   *
 //***************************************************************************************************
-//* Datei: SJA1000.c                                                                                 *
+//* File:  SJA1000.c                                                                                 *
 //***************************************************************************************************
 //* MSX (c) 2026 by Dr.-Ing. Thomas Wiesner                                                          *
 //***************************************************************************************************

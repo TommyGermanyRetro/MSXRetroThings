@@ -1,43 +1,43 @@
 //***************************************************************************************************
-//* HEADER - BridgeTeensy.ino - USB-Slot-Bridge (Teensy 4.1)                                        *
+//* HEADER - BridgeTeensy.ino - USB slot bridge (Teensy 4.1)                                        *
 //***************************************************************************************************
-//* Erzeugt den MSX-Takt CLOCK (315/88 MHz = 3,579545 MHz) auf Pin 33 aus Audio-PLL4 (SAI2_MCLK)    *
-//* und fuehrt Z80-Buszyklen fuer Slot 1 und Slot 2 aus. Pin 33 ist im Taktmodus nicht lesbar;      *
-//* CLOCK wird ueber eine Drahtbruecke von Pin 33 auf Pin 3 (CLOCK_IN) zurueckgefuehrt, jede        *
-//* Busflanke wird auf eine Flanke von CLOCK_IN ausgerichtet.                                       *
+//* Generates the MSX clock CLOCK (315/88 MHz = 3.579545 MHz) on pin 33 from audio PLL4 (SAI2_MCLK) *
+//* and runs Z80 bus cycles for slot 1 and slot 2. Pin 33 cannot be read in clock mode;             *
+//* CLOCK is fed back from pin 33 to pin 3 (CLOCK_IN) via a wire jumper, and every                  *
+//* bus edge is aligned to an edge of CLOCK_IN.                                                     *
 //*                                                                                                 *
-//* Zyklen: Speicher lesen (3 T), Opcode-Fetch M1 (4 T + 1 Wartezyklus + Refresh), Speicher         *
-//* schreiben (3 T), I/O lesen und schreiben (4 T). Vor jedem Lesezyklus wird der Datenbus ueber    *
-//* den 74HCT245 auf FFh vorgeladen und vor /RD freigegeben. /WAIT (Pin 4) verlaengert jeden        *
-//* Zyklus, hoechstens um 100 ms. Mit Ueberwachung des Herzschlags gibt die Bridge zwischen den     *
-//* Zyklen Leerlauf-Refresh aus und geht ohne Herzschlag nach AUS (wie ein stromloser MSX).         *
+//* Cycles: memory read (3 T), opcode fetch M1 (4 T + 1 wait cycle + refresh), memory               *
+//* write (3 T), I/O read and write (4 T). Before every read cycle the data bus is precharged to    *
+//* FFh via the 74HCT245 and released before /RD. /WAIT (pin 4) extends every                       *
+//* cycle, by at most 100 ms. With heartbeat monitoring the bridge issues idle refresh between      *
+//* cycles and goes to OFF without a heartbeat (like an unpowered MSX).                             *
 //*                                                                                                 *
-//* Betrieb ueber das Binaerprotokoll Version 3 (Textkommando b, siehe ANALYSE.md Abschnitt 4.3):   *
-//* HELLO, MRD, MWR, IORD, IOWR, IOWRW, MRDN, MRDNG, RESET, RUN, SYNC, CFG, TEST; jede Aenderung    *
-//* von /INT meldet die Bridge mit C0h und Pegel. MRDNG liest wie MRDN fortlaufende Adressen, mit   *
-//* einem festen Abstand in Takten von Zyklusbeginn zu Zyklusbeginn (SPI-Fenster mit Zeitbedarf).   *
+//* Operation via binary protocol version 3 (text command b, see ANALYSE.md section 4.3):           *
+//* HELLO, MRD, MWR, IORD, IOWR, IOWRW, MRDN, MRDNG, RESET, RUN, SYNC, CFG, TEST; every change      *
+//* of /INT is reported by the bridge with C0h and the level. MRDNG reads consecutive addresses     *
+//* like MRDN, with a fixed distance in clocks from cycle start to cycle start (SPI window).        *
 //*                                                                                                 *
-//* Textkommandos fuer Tests (eine Zeile, Abschluss LF oder CR, Zahlen hexadezimal):                *
-//*   r<slot> <adr>          Speicher lesen           m<slot> <adr>        Opcode-Fetch (M1)        *
-//*   w<slot> <adr> <wert>   Speicher schreiben       i <port>             I/O lesen                *
-//*   o <port> <wert>        I/O schreiben            <n>*<kommando>       Kommando n-mal           *
-//*   u / d                  /RESET freigeben / aktiv c                    CLOCK_IN messen          *
-//*   t <n>                  /WAIT n Takte bremsen (Test, 0 = aus)   Bruecke Pin 29 -> Pin 4        *
-//*   z <ms>                 Zeitgrenze fuer den Herzschlag (0 = keine Ueberwachung)                *
-//*   h / s                  Herzschlag (RUN) / Status       ohne Herzschlag: AUS                   *
-//*   p [ms]                 /RESET-Impuls (Vorgabe 10 ms)   q <0|1>  TEST-Leitung LOW/HIGH         *
-//*   b                      Binaerprotokoll einschalten (Antwort BIN), Rueckweg mit Byte 00        *
-//*   ?                      Hilfe                    slot = 1 oder 2, port = 00..FF                *
+//* Text commands for tests (one line, terminated by LF or CR, numbers in hex):                     *
+//*   r<slot> <adr>          memory read              m<slot> <adr>        opcode fetch (M1)        *
+//*   w<slot> <adr> <value>  memory write             i <port>             I/O read                 *
+//*   o <port> <value>       I/O write                <n>*<command>        command n times          *
+//*   u / d                  release / assert /RESET  c                    measure CLOCK_IN         *
+//*   t <n>                  slow /WAIT by n clocks (test, 0 = off)   jumper pin 29 -> pin 4        *
+//*   z <ms>                 heartbeat timeout (0 = no monitoring)                                  *
+//*   h / s                  heartbeat (RUN) / status        without heartbeat: OFF                 *
+//*   p [ms]                 /RESET pulse (default 10 ms)    q <0|1>  TEST line LOW/HIGH            *
+//*   b                      enable binary protocol (response BIN), back with byte 00               *
+//*   ?                      help                     slot = 1 or 2, port = 00..FF                  *
 //*                                                                                                 *
-//* Pins (Teensy 4.1, Arduino-Nummern, siehe ANALYSE.md Abschnitt 6.3):                             *
+//* Pins (Teensy 4.1, Arduino numbers, see ANALYSE.md section 6.3):                                 *
 //*   A0-A15  = 19,18,14,15,40,41,17,16,22,23,20,21,38,39,26,27   D0-D7 = 10,12,11,13,8,7,36,37     *
 //*   /MERQ 6, /RD 9, /WR 32, /IORQ 35, /M1 34, /RFSH 31, /SLTSL1 1, /SLTSL2 0                      *
-//*   /CS1 24, /CS2 25, /CS12 28, /RESET 30, /OE_WR 2, /WAIT 4 (Eingang), /INT 5 (Eingang)          *
-//*   TEST 29, CLOCK 33 (Ausgang), CLOCK_IN 3 (Eingang, Bruecke von Pin 33)                         *
+//*   /CS1 24, /CS2 25, /CS12 28, /RESET 30, /OE_WR 2, /WAIT 4 (input), /INT 5 (input)              *
+//*   TEST 29, CLOCK 33 (output), CLOCK_IN 3 (input, jumper from pin 33)                            *
 //*                                                                                                 *
-//* Ruhezustand: alle Strobes und Selects HIGH, /RESET LOW, Adressen LOW, Daten Eingang.            *
+//* Idle state: all strobes and selects HIGH, /RESET LOW, addresses LOW, data input.                *
 //***************************************************************************************************
-//* Datei: BridgeTeensy.ino                                                                         *
+//* File:  BridgeTeensy.ino                                                                         *
 //***************************************************************************************************
 //* MSX (c) 2026 by Dr.-Ing. Thomas Wiesner                                                         *
 //***************************************************************************************************
@@ -73,7 +73,7 @@ static const uint8_t PIN_CLOCK    = 33;
 static const uint8_t PIN_CLOCK_IN = 3;
 
 //===================================================================================================
-// Bits in den schnellen GPIO-Registern (Zuordnung Pin -> Port/Bit siehe ANALYSE.md 6.3)
+// Bits in the fast GPIO registers (mapping pin -> port/bit see ANALYSE.md 6.3)
 //===================================================================================================
 
 // GPIO6: A0-A15 = Bit 16-31, /SLTSL1 = Bit 2, /SLTSL2 = Bit 3, /CS1 = Bit 12, /CS2 = Bit 13
@@ -107,10 +107,10 @@ static const uint32_t G9_INT      = 1u << 8;
 static const uint32_t G9_TEST     = 1u << 31;
 
 //===================================================================================================
-// Einstellungen
+// Settings
 //===================================================================================================
 
-// PLL4 = 24 MHz * (38 + 2/11) = 916,3636 MHz, SAI2-Teiler 4 * 64 = 256 -> 3,579545 MHz
+// PLL4 = 24 MHz * (38 + 2/11) = 916.3636 MHz, SAI2 divider 4 * 64 = 256 -> 3.579545 MHz
 
 static const uint32_t PLL4_DIV   = 38;
 static const uint32_t PLL4_NUM   = 2;
@@ -118,24 +118,24 @@ static const uint32_t PLL4_DENOM = 11;
 static const uint32_t SAI2_PRED  = 4;                   // 1..8
 static const uint32_t SAI2_PODF  = 64;                  // 1..64
 
-static const uint32_t MEASURE_MS   = 50;                // Messfenster fuer CLOCK_IN
-static const uint32_t EDGE_TIMEOUT = 3000;              // CPU-Takte bis "kein Takt" (5 us)
-static const uint32_t MAX_WAIT_T   = 358000;            // hoechste Zahl eingefuegter Wartetakte (100 ms; ein Z80
-                                                        // wartet beliebig lange, die Grenze faengt nur eine
-                                                        // haengende Karte ab)
-static const uint32_t MAX_TEST_WAITS = 64;              // hoechste Zahl Wartetakte im Testmodus (t <n>)
+static const uint32_t MEASURE_MS   = 50;                // measuring window for CLOCK_IN
+static const uint32_t EDGE_TIMEOUT = 3000;              // CPU clocks until "no clock" (5 us)
+static const uint32_t MAX_WAIT_T   = 358000;            // maximum number of inserted wait clocks (100 ms; a Z80
+                                                        // waits any length of time, the limit only catches a
+                                                        // hanging card)
+static const uint32_t MAX_TEST_WAITS = 64;              // maximum number of wait clocks in test mode (t <n>)
 static const size_t   LINE_SIZE    = 48;
-static const uint32_t RESET_MS     = 10;                // Vorgabe fuer die Laenge des /RESET-Impulses
-static const uint8_t  PROTOCOL_VERSION = 3;             // Version des Binaerprotokolls
-static const uint16_t MAX_BLOCK    = 1024;              // hoechste Zahl Lesezyklen je MRDN
-static const uint32_t BINARY_SUPERVISE_MS = 200;        // Zeitgrenze fuer RUN nach dem Wechsel ins Binaerprotokoll
-static const uint32_t REFRESH_DUE_US = 12;              // spaetestens so oft ein Refresh-Zyklus (128 Zeilen in 2 ms)
+static const uint32_t RESET_MS     = 10;                // default length of the /RESET pulse
+static const uint8_t  PROTOCOL_VERSION = 3;             // version of the binary protocol
+static const uint16_t MAX_BLOCK    = 1024;              // maximum number of read cycles per MRDN
+static const uint32_t BINARY_SUPERVISE_MS = 200;        // RUN timeout after switching to the binary protocol
+static const uint32_t REFRESH_DUE_US = 12;              // a refresh cycle at least this often (128 rows in 2 ms)
 
 //===================================================================================================
-// Zustand der Bus-Engine
+// State of the bus engine
 //===================================================================================================
 
-// Ergebnis eines Buszyklus (vor allen Funktionen definiert, wegen der Arduino-Prototypen)
+// Result of a bus cycle (defined before all functions because of the Arduino prototypes)
 
 struct CycleResult
 {
@@ -143,27 +143,27 @@ struct CycleResult
     uint32_t waits;
 };
 
-static uint32_t addrBits    = 0;                        // Adresse, wie sie in GPIO6 Bit 16-31 steht
-static uint8_t  refreshR    = 0;                        // Refresh-Zaehler R (7 Bit)
-static uint8_t  refreshI    = 0;                        // Refresh-Register I
-static bool     clockFailed = false;                    // CLOCK_IN kam nicht
-static uint32_t testWaits   = 0;                        // Testmodus: /WAIT um so viele Takte verlaengern
-static uint32_t superviseMs = 0;                        // Zeitgrenze fuer den Herzschlag, 0 = keine Ueberwachung
-static uint32_t lastRun     = 0;                        // Zeit des letzten Herzschlags (millis)
-static bool     busOn       = true;                     // LAEUFT (true) oder AUS (false)
-static uint32_t refreshCount = 0;                       // Zahl der Leerlauf-Refresh-Zyklen
-static bool     intLevel    = true;                     // zuletzt gemeldeter Pegel von /INT
-static bool     binaryMode  = false;                    // Binaerprotokoll aktiv (sonst Textkommandos)
-static uint32_t lastRefreshCycles = 0;                  // Zyklenzaehler beim letzten Refresh
-static uint32_t postedErrors = 0;                       // verworfene Schreibzyklen ohne Antwort
+static uint32_t addrBits    = 0;                        // address as it is in GPIO6 bits 16-31
+static uint8_t  refreshR    = 0;                        // refresh counter R (7 bits)
+static uint8_t  refreshI    = 0;                        // refresh register I
+static bool     clockFailed = false;                    // CLOCK_IN did not arrive
+static uint32_t testWaits   = 0;                        // test mode: extend /WAIT by this many clocks
+static uint32_t superviseMs = 0;                        // heartbeat timeout, 0 = no monitoring
+static uint32_t lastRun     = 0;                        // time of the last heartbeat (millis)
+static bool     busOn       = true;                     // RUNNING (true) or OFF (false)
+static uint32_t refreshCount = 0;                       // number of idle refresh cycles
+static bool     intLevel    = true;                     // last reported level of /INT
+static bool     binaryMode  = false;                    // binary protocol active (otherwise text commands)
+static uint32_t lastRefreshCycles = 0;                  // cycle counter at the last refresh
+static uint32_t postedErrors = 0;                       // discarded write cycles without a response
 
 //===================================================================================================
-// Ruhezustand
+// Idle state
 //===================================================================================================
 
-// Pin als Ausgang mit festem Pegel einrichten. Der Pegel geht vor der Richtungsumschaltung direkt in
-// das Datenregister, denn digitalWrite() wirkt bei einem Eingang nur auf die Pull-Widerstaende:
-// der Pin waere sonst bis zum ersten Zyklus LOW.
+// Set up a pin as an output with a fixed level. The level goes directly into the data register
+// before the direction is switched, because digitalWrite() only affects the pull resistors on an
+// input: the pin would otherwise be LOW until the first cycle.
 
 static void idleOutput(uint8_t pin, uint8_t level)
 {
@@ -180,20 +180,20 @@ static void idleOutput(uint8_t pin, uint8_t level)
 
 static void busIdle()
 {
-    idleOutput(PIN_RESET, LOW);                         // Cartridges im Reset
+    idleOutput(PIN_RESET, LOW);                         // cartridges in reset
 
     const uint8_t highPins[] = { PIN_MERQ, PIN_RD, PIN_WR, PIN_IORQ, PIN_M1, PIN_RFSH, PIN_SLTSL1,
                                  PIN_SLTSL2, PIN_CS1, PIN_CS2, PIN_CS12, PIN_OE_WR };
     for (uint8_t pin : highPins)
     {
-        idleOutput(pin, HIGH);                          // inaktiv
+        idleOutput(pin, HIGH);                          // inactive
     }
 
     for (uint8_t pin : PIN_A)
     {
         idleOutput(pin, LOW);
     }
-    addrBits = 0;                                       // setAddress() schaltet relativ zu diesem Stand
+    addrBits = 0;                                       // setAddress() switches relative to this state
 
     for (uint8_t pin : PIN_D)
     {
@@ -203,14 +203,14 @@ static void busIdle()
     pinMode(PIN_CLOCK_IN, INPUT);
     pinMode(PIN_WAIT, INPUT_PULLUP);
     pinMode(PIN_INT, INPUT_PULLUP);
-    idleOutput(PIN_TEST, HIGH);                         // Testleitung zu /WAIT, HIGH = keine Bremse
+    idleOutput(PIN_TEST, HIGH);                         // test line to /WAIT, HIGH = no slowdown
 }
 
 //===================================================================================================
 // CLOCK
 //===================================================================================================
 
-// Audio-PLL4 einstellen, an SAI2 legen und als SAI2_MCLK auf Pin 33 ausgeben
+// Set up audio PLL4, connect it to SAI2 and output it as SAI2_MCLK on pin 33
 
 static void clockStart()
 {
@@ -242,8 +242,8 @@ static void clockStart()
     CORE_PIN33_CONFIG = 2;                              // ALT2 = SAI2_MCLK
 }
 
-// CLOCK-Ausgang sperren (Pin 33 als GPIO auf LOW) und wieder als SAI2_MCLK freigeben. Der Takt selbst
-// laeuft intern weiter; beim Wiedereinschalten kann der erste Impuls verkuerzt sein, /RESET ist dann LOW.
+// Disable the CLOCK output (pin 33 as GPIO at LOW) and enable it again as SAI2_MCLK. The clock
+// itself keeps running internally; when re-enabled the first pulse may be shortened, /RESET is LOW then.
 
 static void clockOutputOff()
 {
@@ -257,7 +257,7 @@ static void clockOutputOn()
     CORE_PIN33_CONFIG = 2;                              // ALT2 = SAI2_MCLK
 }
 
-// Frequenz in mHz aus den Registern: 24 MHz * (DIV + NUM/DENOM) / (PRED * PODF), Nachteiler 1
+// Frequency in mHz from the registers: 24 MHz * (DIV + NUM/DENOM) / (PRED * PODF), post divider 1
 
 static uint64_t clockMilliHz()
 {
@@ -270,8 +270,8 @@ static uint64_t clockMilliHz()
     return (24000000000ULL * (div * denom + num)) / (denom * pred * podf);
 }
 
-// CLOCK_IN abtasten und gegen den Zyklenzaehler der CPU messen. Die CPU-Zaehlung und die PLL4
-// stammen aus demselben 24-MHz-Quarz.
+// Sample CLOCK_IN and measure it against the CPU cycle counter. The CPU counter and PLL4
+// come from the same 24 MHz crystal.
 
 static void clockMeasure(uint32_t &edges, uint32_t &high, uint32_t &total, uint32_t &cycles)
 {
@@ -310,10 +310,10 @@ static void clockMeasure(uint32_t &edges, uint32_t &high, uint32_t &total, uint3
 }
 
 //===================================================================================================
-// Warten auf CLOCK_IN
+// Waiting for CLOCK_IN
 //===================================================================================================
 
-// Warten, bis CLOCK_IN den Pegel hat. Kommt er nicht, wird clockFailed gesetzt.
+// Wait until CLOCK_IN has the level. If it does not come, clockFailed is set.
 
 static inline void waitLevel(bool level)
 {
@@ -342,10 +342,10 @@ static inline void waitFalling()
 }
 
 //===================================================================================================
-// Signale setzen
+// Setting signals
 //===================================================================================================
 
-// Adresse auf den Bus legen; nur die geaenderten Bits werden umgeschaltet
+// Put the address on the bus; only the changed bits are switched
 
 static inline void setAddress(uint16_t addr)
 {
@@ -355,8 +355,8 @@ static inline void setAddress(uint16_t addr)
     addrBits = bits;
 }
 
-// Testmodus: TEST (ueber eine Drahtbruecke mit /WAIT verbunden) zieht /WAIT wie eine langsame
-// Cartridge auf LOW, sobald der Zyklus ihre Selects sieht; testWaits = 0 schaltet ihn ab
+// Test mode: TEST (connected to /WAIT via a wire jumper) pulls /WAIT LOW like a slow
+// cartridge as soon as the cycle sees its selects; testWaits = 0 turns it off
 
 static inline void testAssert()
 {
@@ -366,9 +366,9 @@ static inline void testAssert()
     }
 }
 
-// Wartetakte einfuegen, solange /WAIT LOW ist. Aufruf direkt nach einer fallenden Taktflanke,
-// an der /WAIT abgetastet wird; liefert die Zahl der eingefuegten Takte. Im Testmodus wird /WAIT
-// nach der letzten gewuenschten Abtastung freigegeben.
+// Insert wait clocks as long as /WAIT is LOW. Call directly after a falling clock edge
+// at which /WAIT is sampled; returns the number of inserted clocks. In test mode /WAIT is
+// released after the last requested sample.
 
 static inline uint32_t insertWaits()
 {
@@ -389,7 +389,7 @@ static inline uint32_t insertWaits()
     return count;
 }
 
-// Select-Signale fuer Speicherzugriffe; /CSx nur beim Lesen
+// Select signals for memory accesses; /CSx only when reading
 
 static inline void selectSlot(uint8_t slot, uint16_t addr, bool read)
 {
@@ -418,9 +418,9 @@ static inline void deselectAll()
     GPIO8_DR_SET = G8_CS12;
 }
 
-// Datenbus vor einem Lesezyklus auf FFh vorladen: D0-D7 ueber den 74HCT245 treiben und vor /RD wieder
-// freigeben. Treibt danach keine Karte, haelt der Bus FFh wie der Bus eines MSX; sonst liefe der zuletzt
-// gelesene oder geschriebene Wert zurueck (BIOS-RAM-Suche haelt leere Bereiche dann fuer RAM).
+// Precharge the data bus to FFh before a read cycle: drive D0-D7 via the 74HCT245 and release it
+// again before /RD. If no card drives afterwards, the bus holds FFh like an MSX bus; otherwise the
+// last value read or written would come back (the BIOS RAM search then takes empty areas for RAM).
 
 static inline void prechargeStart()
 {
@@ -433,15 +433,15 @@ static inline void prechargeEnd()
 {
     GPIO9_DR_SET = G9_OE_WR;
     GPIO7_GDIR &= ~G7_DATA;
-    delayNanoseconds(30);                               // 74HCT245 abgeschaltet, bevor /RD den 74LVC245 oeffnet
+    delayNanoseconds(30);                               // 74HCT245 switched off before /RD opens the 74LVC245
 }
 
 //===================================================================================================
-// Buszyklen
+// Bus cycles
 //===================================================================================================
 
-// Speicher lesen, 3 Takte: T1 steigend Adresse, T1 fallend /MERQ /RD /SLTSL /CSx, T2 fallend /WAIT,
-// T3 fallend Daten lesen und alles wieder inaktiv
+// Memory read, 3 clocks: T1 rising address, T1 falling /MERQ /RD /SLTSL /CSx, T2 falling /WAIT,
+// T3 falling read data and everything inactive again
 
 static CycleResult memRead(uint8_t slot, uint16_t addr)
 {
@@ -456,10 +456,10 @@ static CycleResult memRead(uint8_t slot, uint16_t addr)
     selectSlot(slot, addr, true);
     testAssert();
 
-    waitFalling();                                      // T2 fallend: /WAIT abtasten
+    waitFalling();                                      // T2 falling: sample /WAIT
     r.waits = insertWaits();
 
-    waitFalling();                                      // T3 fallend
+    waitFalling();                                      // T3 falling
     uint32_t psr = GPIO7_PSR;
     r.data = (uint8_t)((psr & 0x0F) | ((psr >> 12) & 0xF0));
 
@@ -469,8 +469,8 @@ static CycleResult memRead(uint8_t slot, uint16_t addr)
     return r;
 }
 
-// Opcode-Fetch, 4 Takte + 1 Wartetakt des MSX: /M1 von T1 bis T3 steigend, Daten bei T3 steigend,
-// danach Refresh mit /RFSH LOW und /MERQ von T3 fallend bis T4 fallend
+// Opcode fetch, 4 clocks + 1 MSX wait clock: /M1 from T1 to T3 rising, data at T3 rising,
+// then refresh with /RFSH LOW and /MERQ from T3 falling to T4 falling
 
 static CycleResult opcodeFetch(uint8_t slot, uint16_t addr)
 {
@@ -486,11 +486,11 @@ static CycleResult opcodeFetch(uint8_t slot, uint16_t addr)
     selectSlot(slot, addr, true);
     testAssert();
 
-    waitFalling();                                      // T2 fallend
-    waitFalling();                                      // Wartetakt des MSX, /WAIT abtasten
+    waitFalling();                                      // T2 falling
+    waitFalling();                                      // MSX wait clock, sample /WAIT
     r.waits = insertWaits();
 
-    waitRising();                                       // T3 steigend: Daten lesen
+    waitRising();                                       // T3 rising: read data
     uint32_t psr = GPIO7_PSR;
     r.data = (uint8_t)((psr & 0x0F) | ((psr >> 12) & 0xF0));
 
@@ -500,21 +500,21 @@ static CycleResult opcodeFetch(uint8_t slot, uint16_t addr)
     setAddress((uint16_t)((refreshI << 8) | (refreshR & 0x7F)));
     refreshR = (uint8_t)((refreshR + 1) & 0x7F);
 
-    waitFalling();                                      // T3 fallend: Refresh-/MERQ
+    waitFalling();                                      // T3 falling: refresh /MERQ
     GPIO7_DR_CLEAR = G7_MERQ;
 
-    waitFalling();                                      // T4 fallend
+    waitFalling();                                      // T4 falling
     GPIO7_DR_SET = G7_MERQ;
 
-    waitRising();                                       // Ende T4
+    waitRising();                                       // end of T4
     GPIO8_DR_SET = G8_RFSH;
     lastRefreshCycles = ARM_DWT_CYCCNT;
 
     return r;
 }
 
-// Speicher schreiben, 3 Takte: Daten ab T1 steigend, /WR von T2 fallend bis T3 fallend, Daten bis
-// zum Ende von T3 gehalten
+// Memory write, 3 clocks: data from T1 rising, /WR from T2 falling to T3 falling, data held
+// until the end of T3
 
 static CycleResult memWrite(uint8_t slot, uint16_t addr, uint8_t value)
 {
@@ -532,23 +532,23 @@ static CycleResult memWrite(uint8_t slot, uint16_t addr, uint8_t value)
     selectSlot(slot, addr, false);
     testAssert();
 
-    waitFalling();                                      // T2 fallend
+    waitFalling();                                      // T2 falling
     GPIO7_DR_CLEAR = G7_WR;
     r.waits = insertWaits();
 
-    waitFalling();                                      // T3 fallend
+    waitFalling();                                      // T3 falling
     GPIO7_DR_SET = G7_WR | G7_MERQ;
     deselectAll();
 
-    waitRising();                                       // Ende T3
+    waitRising();                                       // end of T3
     GPIO9_DR_SET = G9_OE_WR;
     GPIO7_GDIR &= ~G7_DATA;
 
     return r;
 }
 
-// I/O lesen, 4 Takte (T1, T2, automatischer Wartetakt, T3): Port auf A0-A7, /IORQ und /RD von
-// T2 steigend bis T3 fallend, Daten bei T3 fallend. Kein /MERQ, kein /SLTSL, kein /CSx.
+// I/O read, 4 clocks (T1, T2, automatic wait clock, T3): port on A0-A7, /IORQ and /RD from
+// T2 rising to T3 falling, data at T3 falling. No /MERQ, no /SLTSL, no /CSx.
 
 static CycleResult ioRead(uint8_t port)
 {
@@ -557,16 +557,16 @@ static CycleResult ioRead(uint8_t port)
     waitRising();                                       // T1
     setAddress(port);
     prechargeStart();
-    waitRising();                                       // T2 steigend
+    waitRising();                                       // T2 rising
     prechargeEnd();
     GPIO7_DR_CLEAR = G7_IORQ | G7_RD;
     testAssert();
 
-    waitFalling();                                      // T2 fallend
-    waitFalling();                                      // automatischer Wartetakt, /WAIT abtasten
+    waitFalling();                                      // T2 falling
+    waitFalling();                                      // automatic wait clock, sample /WAIT
     r.waits = insertWaits();
 
-    waitFalling();                                      // T3 fallend
+    waitFalling();                                      // T3 falling
     uint32_t psr = GPIO7_PSR;
     r.data = (uint8_t)((psr & 0x0F) | ((psr >> 12) & 0xF0));
 
@@ -575,8 +575,8 @@ static CycleResult ioRead(uint8_t port)
     return r;
 }
 
-// I/O schreiben, 4 Takte: Daten ab T1 steigend, /IORQ und /WR von T2 steigend bis T3 fallend,
-// Daten bis zum Ende von T3 gehalten
+// I/O write, 4 clocks: data from T1 rising, /IORQ and /WR from T2 rising to T3 falling,
+// data held until the end of T3
 
 static CycleResult ioWrite(uint8_t port, uint8_t value)
 {
@@ -590,49 +590,49 @@ static CycleResult ioWrite(uint8_t port, uint8_t value)
     GPIO7_GDIR |= G7_DATA;
     GPIO9_DR_CLEAR = G9_OE_WR;
 
-    waitRising();                                       // T2 steigend
+    waitRising();                                       // T2 rising
     GPIO7_DR_CLEAR = G7_IORQ | G7_WR;
     testAssert();
 
-    waitFalling();                                      // T2 fallend
-    waitFalling();                                      // automatischer Wartetakt, /WAIT abtasten
+    waitFalling();                                      // T2 falling
+    waitFalling();                                      // automatic wait clock, sample /WAIT
     r.waits = insertWaits();
 
-    waitFalling();                                      // T3 fallend
+    waitFalling();                                      // T3 falling
     GPIO7_DR_SET = G7_IORQ | G7_WR;
 
-    waitRising();                                       // Ende T3
+    waitRising();                                       // end of T3
     GPIO9_DR_SET = G9_OE_WR;
     GPIO7_GDIR &= ~G7_DATA;
 
     return r;
 }
 
-// Leerlauf-Refresh, 4 Takte wie ein NOP des Z80 in HALT: T1 und T2 ohne Strobes, T3 steigend /RFSH
-// LOW mit Refresh-Adresse, /MERQ von T3 fallend bis T4 fallend, Ende T4 /RFSH HIGH
+// Idle refresh, 4 clocks like a Z80 NOP in HALT: T1 and T2 without strobes, T3 rising /RFSH
+// LOW with refresh address, /MERQ from T3 falling to T4 falling, end of T4 /RFSH HIGH
 
 static void idleRefresh()
 {
     waitRising();                                       // T1
     waitRising();                                       // T2
-    waitRising();                                       // T3 steigend
+    waitRising();                                       // T3 rising
     GPIO8_DR_CLEAR = G8_RFSH;
     setAddress((uint16_t)((refreshI << 8) | (refreshR & 0x7F)));
     refreshR = (uint8_t)((refreshR + 1) & 0x7F);
 
-    waitFalling();                                      // T3 fallend
+    waitFalling();                                      // T3 falling
     GPIO7_DR_CLEAR = G7_MERQ;
 
-    waitFalling();                                      // T4 fallend
+    waitFalling();                                      // T4 falling
     GPIO7_DR_SET = G7_MERQ;
 
-    waitRising();                                       // Ende T4
+    waitRising();                                       // end of T4
     GPIO8_DR_SET = G8_RFSH;
     lastRefreshCycles = ARM_DWT_CYCCNT;
 }
 
-// /INT beobachten und jede Aenderung melden: "INT 0" = Leitung LOW (aktiv), "INT 1" = frei. Im
-// Zustand AUS wird nichts gemeldet.
+// Watch /INT and report every change: "INT 0" = line LOW (active), "INT 1" = released. In
+// state OFF nothing is reported.
 
 static void checkInt()
 {
@@ -654,7 +654,7 @@ static void checkInt()
     }
 }
 
-// Zustand AUS wie ein stromloser MSX: alle Leitungen inaktiv, /RESET LOW, CLOCK LOW, kein Refresh
+// State OFF like an unpowered MSX: all lines inactive, /RESET LOW, CLOCK LOW, no refresh
 
 static void busGoOff()
 {
@@ -677,13 +677,13 @@ static void busGoOn()
 }
 
 //===================================================================================================
-// Kommandos
+// Commands
 //===================================================================================================
 
 static void printHelp()
 {
-    Serial.println("r<slot> <adr>  m<slot> <adr>  w<slot> <adr> <wert>  i <port>  o <port> <wert>");
-    Serial.println("<n>*<kommando>  t <n>  z <ms>  h  s  p [ms]  q <0|1>  b  u  d  c  ?");
+    Serial.println("r<slot> <adr>  m<slot> <adr>  w<slot> <adr> <value>  i <port>  o <port> <value>");
+    Serial.println("<n>*<command>  t <n>  z <ms>  h  s  p [ms]  q <0|1>  b  u  d  c  ?");
 }
 
 static void printClock()
@@ -695,8 +695,8 @@ static void printClock()
     uint64_t measHz = ((uint64_t)edges * F_CPU_ACTUAL * 1000ULL) / cycles;
     uint32_t duty   = (uint32_t)(((uint64_t)high * 1000ULL) / total);
 
-    Serial.printf("CLOCK Register %lu.%03lu Hz  gemessen %lu.%03lu Hz  Tastverhaeltnis %lu.%lu %%  "
-                  "Flanken %lu\n",
+    Serial.printf("CLOCK register %lu.%03lu Hz  measured %lu.%03lu Hz  duty cycle %lu.%lu %%  "
+                  "edges %lu\n",
                   (unsigned long)(setHz / 1000ULL), (unsigned long)(setHz % 1000ULL),
                   (unsigned long)(measHz / 1000ULL), (unsigned long)(measHz % 1000ULL),
                   (unsigned long)(duty / 10), (unsigned long)(duty % 10), (unsigned long)edges);
@@ -731,7 +731,7 @@ static void runCommand(char *line)
 
         if (sscanf(line + 1, "%u", &ms) != 1 || ms > 60000)
         {
-            Serial.println("Fehler: z <0..60000> (Zeitgrenze in ms, 0 = keine Ueberwachung)");
+            Serial.println("Error: z <0..60000> (timeout in ms, 0 = no monitoring)");
             return;
         }
         superviseMs = ms;
@@ -742,11 +742,11 @@ static void runCommand(char *line)
         lastRun = millis();
         if (ms == 0)
         {
-            Serial.println("Ueberwachung aus: dauerhaft LAEUFT, kein Leerlauf-Refresh");
+            Serial.println("monitoring off: permanently RUNNING, no idle refresh");
         }
         else
         {
-            Serial.printf("Ueberwachung %u ms: Herzschlag h noetig, Leerlauf-Refresh aktiv\n", ms);
+            Serial.printf("monitoring %u ms: heartbeat h required, idle refresh active\n", ms);
         }
         return;
     }
@@ -764,24 +764,24 @@ static void runCommand(char *line)
         if (!busOn)
         {
             busGoOn();
-            Serial.println("Herzschlag: LAEUFT (CLOCK an, /RESET bleibt LOW)");
+            Serial.println("heartbeat: RUNNING (CLOCK on, /RESET stays LOW)");
         }
         else
         {
-            Serial.println("Herzschlag: LAEUFT");
+            Serial.println("heartbeat: RUNNING");
         }
         return;
     }
     if (op == 's')
     {
-        Serial.printf("%s  Zeitgrenze %lu ms  letzter Herzschlag vor %lu ms  Refresh-Zyklen %lu\n",
-                      busOn ? "LAEUFT" : "AUS", (unsigned long)superviseMs,
+        Serial.printf("%s  timeout %lu ms  last heartbeat %lu ms ago  refresh cycles %lu\n",
+                      busOn ? "RUNNING" : "OFF", (unsigned long)superviseMs,
                       (unsigned long)(millis() - lastRun), (unsigned long)refreshCount);
         return;
     }
     if (!busOn)
     {
-        Serial.println("AUS: erst Herzschlag h senden");
+        Serial.println("OFF: send heartbeat h first");
         return;
     }
     if (op == 'p')
@@ -790,14 +790,14 @@ static void runCommand(char *line)
 
         if (sscanf(line + 1, "%u", &ms) == 1 && (ms < 1 || ms > 1000))
         {
-            Serial.println("Fehler: p [1..1000] (Laenge des /RESET-Impulses in ms)");
+            Serial.println("Error: p [1..1000] (length of the /RESET pulse in ms)");
             return;
         }
         GPIO8_DR_CLEAR = G8_RESET;
         delay(ms);
         GPIO8_DR_SET = G8_RESET;
         lastRun = millis();
-        Serial.printf("/RESET-Impuls %u ms\n", ms);
+        Serial.printf("/RESET pulse %u ms\n", ms);
         return;
     }
     if (op == 'q')
@@ -806,7 +806,7 @@ static void runCommand(char *line)
 
         if (sscanf(line + 1, "%u", &level) != 1 || level > 1)
         {
-            Serial.println("Fehler: q <0|1> (Testleitung TEST LOW oder HIGH)");
+            Serial.println("Error: q <0|1> (test line TEST LOW or HIGH)");
             return;
         }
         if (level)
@@ -823,13 +823,13 @@ static void runCommand(char *line)
     if (op == 'u')
     {
         GPIO8_DR_SET = G8_RESET;
-        Serial.println("/RESET inaktiv (HIGH)");
+        Serial.println("/RESET inactive (HIGH)");
         return;
     }
     if (op == 'd')
     {
         GPIO8_DR_CLEAR = G8_RESET;
-        Serial.println("/RESET aktiv (LOW)");
+        Serial.println("/RESET active (LOW)");
         return;
     }
     if (op == 'c')
@@ -843,12 +843,12 @@ static void runCommand(char *line)
 
         if (sscanf(line + 1, "%u", &waits) != 1 || waits > MAX_TEST_WAITS)
         {
-            Serial.println("Fehler: t <0..64> (Anzahl Wartetakte, 0 = aus)");
+            Serial.println("Error: t <0..64> (number of wait clocks, 0 = off)");
             return;
         }
         testWaits = waits;
         GPIO9_DR_SET = G9_TEST;
-        Serial.printf("Testmodus: %u Wartetakte je Zyklus (Bruecke TEST Pin 29 -> /WAIT Pin 4)\n", waits);
+        Serial.printf("test mode: %u wait clocks per cycle (jumper TEST pin 29 -> /WAIT pin 4)\n", waits);
         return;
     }
 
@@ -860,7 +860,7 @@ static void runCommand(char *line)
 
         if (port > 0xFF || data > 0xFF || (op == 'i' && cnt < 1) || (op == 'o' && cnt < 2))
         {
-            Serial.println("Fehler: Kommando nicht verstanden (? = Hilfe)");
+            Serial.println("Error: command not understood (? = help)");
             return;
         }
 
@@ -876,11 +876,11 @@ static void runCommand(char *line)
 
         if (clockFailed)
         {
-            Serial.println("Fehler: kein CLOCK an Pin 3 (Bruecke von Pin 33?)");
+            Serial.println("Error: no CLOCK on pin 3 (jumper from pin 33?)");
             return;
         }
 
-        Serial.printf("%c %02X -> %02X  Wartetakte %lu  (%lux)\n", op, port, io.data,
+        Serial.printf("%c %02X -> %02X  wait clocks %lu  (%lux)\n", op, port, io.data,
                       (unsigned long)io.waits, count);
         return;
     }
@@ -894,7 +894,7 @@ static void runCommand(char *line)
               ((op == 'w' && n == 3) || ((op == 'r' || op == 'm') && n >= 2));
     if (!ok)
     {
-        Serial.println("Fehler: Kommando nicht verstanden (? = Hilfe)");
+        Serial.println("Error: command not understood (? = help)");
         return;
     }
 
@@ -921,44 +921,44 @@ static void runCommand(char *line)
 
     if (clockFailed)
     {
-        Serial.println("Fehler: kein CLOCK an Pin 3 (Bruecke von Pin 33?)");
+        Serial.println("Error: no CLOCK on pin 3 (jumper from pin 33?)");
         return;
     }
 
-    Serial.printf("%c%u %04X -> %02X  Wartetakte %lu  (%lux)\n", op, slot, addr, r.data,
+    Serial.printf("%c%u %04X -> %02X  wait clocks %lu  (%lux)\n", op, slot, addr, r.data,
                   (unsigned long)r.waits, count);
 }
 
 //===================================================================================================
-// Binaerprotokoll (siehe ANALYSE.md, Abschnitt 4.3)
+// Binary protocol (see ANALYSE.md, section 4.3)
 //===================================================================================================
 
-// PC -> Teensy, alle Zahlen Little Endian. Kennungen kleiner 0x20 ausser LF und CR, damit Textzeilen
-// und Binaerrahmen unterscheidbar bleiben. Antwort = Kennung | 0x80, dann Status, dann Nutzdaten.
+// PC -> Teensy, all numbers little endian. IDs below 0x20 except LF and CR, so that text lines
+// and binary frames stay distinguishable. Response = ID | 0x80, then status, then payload.
 
-static const uint8_t OP_TEXT  = 0x00;                   // zurueck zu Textkommandos
+static const uint8_t OP_TEXT  = 0x00;                   // back to text commands
 static const uint8_t OP_HELLO = 0x01;
-static const uint8_t OP_MRD   = 0x02;                   // slot, adr (2), flags (Bit 0 = M1)
-static const uint8_t OP_MWR   = 0x03;                   // slot, adr (2), wert; keine Antwort
+static const uint8_t OP_MRD   = 0x02;                   // slot, adr (2), flags (bit 0 = M1)
+static const uint8_t OP_MWR   = 0x03;                   // slot, adr (2), value; no response
 static const uint8_t OP_IORD  = 0x04;                   // port
-static const uint8_t OP_IOWR  = 0x05;                   // port, wert; keine Antwort
-static const uint8_t OP_MRDN  = 0x06;                   // slot, adr (2), anzahl (2)
+static const uint8_t OP_IOWR  = 0x05;                   // port, value; no response
+static const uint8_t OP_MRDN  = 0x06;                   // slot, adr (2), count (2)
 static const uint8_t OP_RESET = 0x07;
-static const uint8_t OP_RUN   = 0x08;                   // Herzschlag, keine Antwort
+static const uint8_t OP_RUN   = 0x08;                   // heartbeat, no response
 static const uint8_t OP_SYNC  = 0x09;
-static const uint8_t OP_CFG   = 0x0B;                   // Zeitgrenze in ms (2)
-static const uint8_t OP_TEST  = 0x0C;                   // Testleitung TEST: 0 = LOW, 1 = HIGH
-static const uint8_t OP_IOWRW = 0x0D;                   // port, wert; Antwort mit Wartetakten (4)
-static const uint8_t OP_MRDNG = 0x0E;                   // slot, adr (2), anzahl (2), abstand in Takten
+static const uint8_t OP_CFG   = 0x0B;                   // timeout in ms (2)
+static const uint8_t OP_TEST  = 0x0C;                   // test line TEST: 0 = LOW, 1 = HIGH
+static const uint8_t OP_IOWRW = 0x0D;                   // port, value; response with wait clocks (4)
+static const uint8_t OP_MRDNG = 0x0E;                   // slot, adr (2), count (2), distance in clocks
 
 static const uint8_t ST_OK    = 0;
-static const uint8_t ST_OFF   = 1;                      // Zustand AUS
-static const uint8_t ST_CLOCK = 2;                      // kein CLOCK_IN
-static const uint8_t ST_ARG   = 3;                      // ungueltiger Parameter
+static const uint8_t ST_OFF   = 1;                      // state OFF
+static const uint8_t ST_CLOCK = 2;                      // no CLOCK_IN
+static const uint8_t ST_ARG   = 3;                      // invalid parameter
 
 static uint8_t blockBuf[MAX_BLOCK + 8];
 
-// Laenge des Rahmens einschliesslich Kennung, 0 = unbekannte Kennung
+// frame length including the ID, 0 = unknown ID
 
 static size_t frameLength(uint8_t op)
 {
@@ -988,8 +988,8 @@ static void sendReply(const uint8_t *data, size_t n)
     Serial.send_now();
 }
 
-// Leerlauf-Refresh einschieben, wenn der letzte zu lange her ist. Nur im Betrieb mit Ueberwachung;
-// Aufruf mit gesperrten Interrupts.
+// Insert an idle refresh if the last one is too long ago. Only in operation with monitoring;
+// call with interrupts disabled.
 
 static void refreshIfDue()
 {
@@ -1013,7 +1013,7 @@ static void replyRead(uint8_t op, uint8_t status, uint8_t data, uint32_t waits)
     sendReply(reply, 4);
 }
 
-// Antwort auf einen Schreibzyklus mit Antwort: Kennung, Status, Wartetakte (4 Byte, Little Endian)
+// Response to a write cycle with response: ID, status, wait clocks (4 bytes, little endian)
 
 static void replyWrite(uint8_t op, uint8_t status, uint32_t waits)
 {
@@ -1118,7 +1118,7 @@ static void handleFrame(const uint8_t *f)
         break;
     }
 
-    // Buszyklen; ein Wechsel von /INT, den der Zyklus ausloest, wird noch vor seiner Antwort gemeldet
+    // Bus cycles; a change of /INT triggered by the cycle is reported before its response
     uint8_t slot = f[1];
     uint16_t addr = (uint16_t)(f[2] | (f[3] << 8));
     bool memory = (op == OP_MRD || op == OP_MWR || op == OP_MRDN || op == OP_MRDNG);
@@ -1146,7 +1146,7 @@ static void handleFrame(const uint8_t *f)
             {
                 reply[0] = op | 0x80;
                 reply[1] = ST_ARG;
-                sendReply(reply, 2);                    // Argumentfehler: nur der Kopf
+                sendReply(reply, 2);                    // argument error: header only
                 return;
             }
             blockBuf[0] = op | 0x80;
@@ -1229,7 +1229,7 @@ static void handleFrame(const uint8_t *f)
     else if (op == OP_MRDN || op == OP_MRDNG)
     {
         uint16_t n = (uint16_t)(f[4] | (f[5] << 8));
-        uint8_t gap = (op == OP_MRDNG) ? f[6] : 0;      // Takte von Zyklusbeginn zu Zyklusbeginn
+        uint8_t gap = (op == OP_MRDNG) ? f[6] : 0;      // clocks from cycle start to cycle start
         uint32_t waits = 0;
 
         if (n == 0 || n > MAX_BLOCK)
@@ -1244,7 +1244,7 @@ static void handleFrame(const uint8_t *f)
             noInterrupts();
             refreshIfDue();
             CycleResult r = memRead(slot, (uint16_t)(addr + i));
-            // Lesezyklus = 3 Takte + Wartetakte; den Rest des Abstands im Leerlauf abwarten
+            // read cycle = 3 clocks + wait clocks; wait out the rest of the distance in idle
             for (uint32_t used = 3 + r.waits; used < gap && i + 1 < n && !clockFailed; used++)
             {
                 waitRising();
@@ -1266,7 +1266,7 @@ static void handleFrame(const uint8_t *f)
     }
 }
 
-// Alle vollstaendig angekommenen Rahmen abarbeiten; ein unbekanntes Byte wird verworfen
+// Process all completely received frames; an unknown byte is discarded
 
 static void binaryService()
 {
@@ -1292,7 +1292,7 @@ static void binaryService()
 }
 
 //===================================================================================================
-// Setup / Hauptschleife
+// Setup / main loop
 //===================================================================================================
 
 void setup()

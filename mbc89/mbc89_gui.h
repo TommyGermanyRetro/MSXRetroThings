@@ -1,14 +1,13 @@
 //***************************************************************************************************
-//* HEADER - mbc89_gui.h - GUI-Prozessor: SCREEN2 Keyboard-6040/CU6021/Control80f-Karussell            *
+//* HEADER - mbc89_gui.h - GUI processor: SCREEN2 Keyboard-6040/CU6021/Control80f carousel          *
 //***************************************************************************************************
-//* Grafische Bedienoberflaeche fuer bis zu 16 Keyboard-Instanzen, 1 CU6021, bis zu 8 Control80f-       *
-//* Instanzen (KEYB/C80F-Umgebungsvariablen, mbc89.c), per Karussell (zwei Dreieck-Sprites, SPACE zum   *
-//* Wechseln) umschaltbar. Ein Tastendruck loest McCom_HandleKeyboardEvent()/McCom_HandleLoco*() aus    *
-//* (CAN-ID 0x16/0x08/0x0A/0x0C); eingehende Nachrichten aktualisieren ueber                            *
-//* McCom_DecodeKeyboardEvent()/McCom_GetLokState() live die gerade gezeigte Instanz - beide            *
-//* Richtungen laufen in Gui_Run()'s Hauptschleife.                                                     *
+//* Graphical user interface for up to 16 Keyboard instances, 1 CU6021 and up to 8 Control80f       *
+//* instances (KEYB/C80F environment variables, mbc89.c), switched by a carousel (two triangle      *
+//* sprites, SPACE to switch). A key press triggers McCom_HandleKeyboardEvent()/McCom_HandleLoco*() *
+//* (CAN-ID 0x16/0x08/0x0A/0x0C); incoming messages update the instance currently shown live via    *
+//* McCom_DecodeKeyboardEvent()/McCom_GetLokState() - both directions run in Gui_Run()'s main loop. *
 //***************************************************************************************************
-//* Datei: mbc89_gui.h                                                                                *
+//* File:  mbc89_gui.h                                                                                *
 //***************************************************************************************************
 //* MSX (c) 2026 by Dr.-Ing. Thomas Wiesner                                                           *
 //***************************************************************************************************

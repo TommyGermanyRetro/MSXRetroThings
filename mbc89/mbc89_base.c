@@ -1,7 +1,7 @@
 //***************************************************************************************************
 //* SOURCE - mbc89_base.c - PC-/CS2 registration and config-channel state machine                    *
 //***************************************************************************************************
-//* Datei: mbc89_base.c                                                                                *
+//* File:  mbc89_base.c                                                                                *
 //***************************************************************************************************
 //* MSX (c) 2026 by Dr.-Ing. Thomas Wiesner                                                           *
 //***************************************************************************************************
@@ -56,8 +56,8 @@
 #define MBC_COM_ANZKONFIG      4
 #define MBC_COM_CS2PAKETE      5
 
-// This module always has a fixed CS2 device Kennung - the Maerklin-specified Connect6021
-// identification, never assigned by ParaCenter like a generic module's Kennung.
+// This module always has a fixed CS2 device ID (Kennung) - the Maerklin-specified Connect6021
+// identification, never assigned by ParaCenter like a generic module's ID.
 #define MCAN_KENNER_FIXED_H 0x00
 #define MCAN_KENNER_FIXED_L 0x20
 
@@ -98,8 +98,8 @@ static u8 s_Arr[ARR_SIZE];
 #define MBC_89_S_SW   328	// 2 bytes, SW Major/Minor
 #define MBC_89_S_LOKS 330
 
-// Absolute systemarray offsets for 3 more module-specific config fields (Zentralentyp-Mapping,
-// Keyboard-Basisadresse, I2C-Bus-Takt) that ParaCenter's "Stammdaten" dialog reads/writes via the
+// Absolute systemarray offsets for 3 more module-specific config fields (central-unit type mapping,
+// Keyboard base address, I2C bus clock) that ParaCenter's "Stammdaten" dialog reads/writes via the
 // same PC_ARRAY_DATA byte protocol - a separate path from the CS2 config-channel protocol
 // (McCom_Cs2IndexParameterExtern() below). These sit past a reserved per-keyboard protocol block
 // (not bridged - out of this port's scope) that follows the loco database.
@@ -344,7 +344,7 @@ static void ModuleBlank(void)
 }
 
 //---------------------------------------------------------------------------------------------------
-// Computes the CS2 HASH value and fills every field derived from it - GUiD/Kennung/HASH on the
+// Computes the CS2 HASH value and fills every field derived from it - GUiD/ID/HASH on the
 // message templates, hardware version and GUiD into the config-channel table.
 static void HashInit(void)
 {
@@ -501,7 +501,7 @@ static void CheckPcConnection(const u8* msg, bool isPcGuid)
 				Store_Save();
 			}
 
-			// mbc-89 always has a fixed Kennung (MCAN_KENNER_FIXED_H/L) - unlike a generic
+			// mbc-89 always has a fixed ID (MCAN_KENNER_FIXED_H/L) - unlike a generic
 			// module, ParaCenter's own D6/D7 proposal (msg[MCAN_D6]/msg[MCAN_D7]) is ignored.
 			if ((s_Arr[O_KN_H] != MCAN_KENNER_FIXED_H) || (s_Arr[O_KN_L] != MCAN_KENNER_FIXED_L))
 			{

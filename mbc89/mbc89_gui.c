@@ -1,7 +1,7 @@
 //***************************************************************************************************
 //* SOURCE - mbc89_gui.c - GUI-Prozessor: SCREEN2 Keyboard-6040/CU6021/Control80f-Karussell           *
 //***************************************************************************************************
-//* Datei: mbc89_gui.c                                                                                *
+//* File:  mbc89_gui.c                                                                                *
 //***************************************************************************************************
 //* MSX (c) 2026 by Dr.-Ing. Thomas Wiesner                                                           *
 //***************************************************************************************************
@@ -208,8 +208,8 @@ static u8  s_Hotspot = 0;
 
 // Control Unit 6021 / Control 80f live interactive state - one persistent slot PER PHYSICAL DEVICE
 // INSTANCE (index 0 = the one CU6021, index 1..C80F_COUNT_MAX = each Control 80f), not per screen -
-// switching panels only changes which instance is currently being looked at, per manual 5.3.5 "Betrieb
-// mit mehreren Fahrpulten": a locomotive called up on one control panel stays called up there even
+// switching panels only changes which instance is currently being looked at, per manual 5.3.5 "operation
+// with several control panels": a locomotive called up on one control panel stays called up there even
 // while another panel is on screen - see IsAddressOwnedElsewhere() below. Sized to the compile-time
 // MAX (not the runtime g_C80fCount) - array size can't shrink at runtime (SDCC has no VLAs), only the
 // logically-used prefix does (see s_SlotRightMax).

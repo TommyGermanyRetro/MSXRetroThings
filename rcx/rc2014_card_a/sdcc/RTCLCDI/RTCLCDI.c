@@ -10,7 +10,7 @@
 //* real ROM interrupt handler writes into them directly, outside this program's own transient       *
 //* image (see project_rtclcdi_com_page0_interrupt_bug for why that matters).                        *
 //***************************************************************************************************
-//* Datei: RTCLCDI.c                                                                                 *
+//* File:  RTCLCDI.c                                                                                 *
 //***************************************************************************************************
 //* MSX (c) 2026 by Dr.-Ing. Thomas Wiesner                                                          *
 //***************************************************************************************************

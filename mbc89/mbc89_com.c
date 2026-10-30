@@ -1,7 +1,7 @@
 //***************************************************************************************************
 //* SOURCE - mbc89_com.c - CONNECT6021 mapping, system stop/go, loco queries, module config channels *
 //***************************************************************************************************
-//* Datei: mbc89_com.c                                                                                *
+//* File:  mbc89_com.c                                                                                *
 //***************************************************************************************************
 //* MSX (c) 2026 by Dr.-Ing. Thomas Wiesner                                                           *
 //***************************************************************************************************
@@ -23,7 +23,7 @@
 #define CAN_ID_CONNECT6021_R        0x45
 
 // MM accessory address base (0x3000 - DCC's 0x3800 is not offered, protocol is hardcoded MM) plus
-// this simulated Keyboard's own 16 columns (0..15, direct) plus the configurable Basisadressblock
+// this simulated Keyboard's own 16 columns (0..15, direct) plus the configurable base address block
 // (s_Basis, 1..4, KANAL_BASIS).
 #define ZUBEHOER_MM_BASE 0x3000
 #define MM_SPEED_STEP 68
@@ -94,11 +94,11 @@ static u8 s_MsgKonfigOk[MCAN_MSG_LEN] =
 	{0x00,0x01,0x00,0x00,0x07,0x00,0x00,0x00,0x00,0x0b,0x00,0x01,0x00};
 
 // "Zubehoer schalten" template (CAN-ID 0x16, DLC=6, PRIO=0x00,ID=0x16,HASH=0x03/0x00,DLC=6).
-// D2/D3=Adresse, D4=Richtung, D5=Strom, filled in per-call by SendZubehoerSchalten().
+// D2/D3=address, D4=direction, D5=power, filled in per-call by SendZubehoerSchalten().
 static u8 s_MsgZubehoerSchalten[MCAN_MSG_LEN] =
 	{0x00,0x16,0x03,0x00,0x06,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
 
-// Lok-Speed/-Richtung/-Funktion templates used by ResyncAfterConnect() - HASH_H/L stay on the fixed
+// Loco speed/direction/function templates used by ResyncAfterConnect() - HASH_H/L stay on the fixed
 // template value (0x03/0x00), never updated: these messages are GUiD-addressed, not HASH-addressed.
 static const u8 s_MsgLokSpeed[MCAN_MSG_LEN] =
 	{0x00,0x08,0x03,0x00,0x06,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
@@ -153,7 +153,7 @@ static u8 s_Mapping;	// 0=Mapping, 1=Mapping&Direkt
 static u8 s_Basis;	// 1..4
 static u8 s_I2c;	// 40..100 kHz
 
-// Cached module GUiD (guid0=Kennung-group byte aka O_CS2GER, guid1..3=O_UID+1..3), refreshed by
+// Cached module GUiD (guid0=ID group byte aka O_CS2GER, guid1..3=O_UID+1..3), refreshed by
 // McCom_HashInit() every time mbc89_base.c recomputes it - HandleSystemCommand() needs it to
 // recognise a module-specific (as opposed to universal-broadcast) Stopp/Go request.
 static u8 s_Guid[4];
@@ -182,7 +182,7 @@ static void SendMsg(const u8* msg)
 // Also clears a CONNECT6021-mapped loco's MAPPED status (LOK_MAPPED_ECHT set). CONNECT6021 has no
 // explicit "unmap this address" message, only fresh (re-)assignments during the DLC=5 walk that
 // follows every stream-start - without this, a loco removed on the CS3 side (simply absent from that
-// walk) would stay "controllable" here forever. Locos mapped via the separate Zentralentyp/s_Mapping
+// walk) would stay "controllable" here forever. Locos mapped via the separate central-unit type/s_Mapping
 // config channel (LOK_MAPPED_ECHT clear) are left untouched - an unrelated mechanism, not part of the
 // CONNECT6021 stream.
 static void ResetLoks(void)
@@ -547,7 +547,7 @@ void McCom_Cs2IndexParameterExtern(const u8* msg)
 			s_Mapping = (u8) wert;
 			geaendert = TRUE;
 
-			// A CONNECT6021-mapped loco (LOK_MAPPED_ECHT set) is never touched by a Zentralentyp
+			// A CONNECT6021-mapped loco (LOK_MAPPED_ECHT set) is never touched by a central-unit type
 			// change - only the still-default locos follow the new setting live.
 			for (index = 0; index < LOKS_ANZAHL; index++)
 			{
@@ -613,7 +613,7 @@ u8 McCom_GetSw(u8 index)
 //---------------------------------------------------------------------------------------------------
 bool McCom_SetSw(u8 index, u8 value)
 {
-	if ((index == 0) && (value < 1)) return FALSE;	// Major: same "wert >= 1" range as the CS2 path
+	if ((index == 0) && (value < 1)) return FALSE;	// Major: same "value >= 1" range as the CS2 path
 	if (s_Sw[index] == value) return FALSE;
 	s_Sw[index] = value;
 	return TRUE;

@@ -10,7 +10,7 @@
 //* There is no BASIC interpreter here, so unlike the original .ASC the XIO_IO_EXPANDER UNAPI driver*
 //* must be located explicitly through EXTBIO before any XIO call can be made (see xio_io.s).       *
 //***************************************************************************************************
-//* Datei: XIOPIC.c                                                                                 *
+//* File:  XIOPIC.c                                                                                 *
 //***************************************************************************************************
 //* MSX (c) 2026 by Dr.-Ing. Thomas Wiesner                                                         *
 //***************************************************************************************************

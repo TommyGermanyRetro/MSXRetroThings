@@ -6,7 +6,7 @@
 //* discovery, no BASIC interpreter involved. Works against RCX_INTERFACE in ROM (CALSLT) or in       *
 //* mapped RAM (RCXRAM.COM), through the rcx_io library (see MSXgl/lib/rcx_io/).                      *
 //***************************************************************************************************
-//* Datei: MCP23S17.c                                                                               *
+//* File:  MCP23S17.c                                                                               *
 //***************************************************************************************************
 //* MSX (c) 2026 by Dr.-Ing. Thomas Wiesner                                                          *
 //***************************************************************************************************

@@ -7,7 +7,7 @@
 //* interpreter involved. Works against RCX_INTERFACE in ROM (CALSLT) or in mapped RAM (RCXRAM.COM), *
 //* through the rcx_io library (see MSXgl/lib/rcx_io/). Uses RC2014 SC103 as DUT.                    *
 //***************************************************************************************************
-//* Datei: Z80PIO.c                                                                                 *
+//* File:  Z80PIO.c                                                                                 *
 //***************************************************************************************************
 //* MSX (c) 2026 by Dr.-Ing. Thomas Wiesner                                                          *
 //***************************************************************************************************

@@ -1,7 +1,7 @@
 //***************************************************************************************************
 //* SOURCE - mbc89_store.c - File-based persistence (EEPROM replacement) for mbc89_base/mbc89_com     *
 //***************************************************************************************************
-//* Datei: mbc89_store.c                                                                              *
+//* File:  mbc89_store.c                                                                              *
 //***************************************************************************************************
 //* MSX (c) 2026 by Dr.-Ing. Thomas Wiesner                                                           *
 //***************************************************************************************************
@@ -21,9 +21,9 @@
 //   4     CS2-Geraetegruppe
 //   5-16  PC-Datenbanknummer (12 bytes)
 //   17-18 Connect6021 SW Major/Minor
-//   19    Zentralentyp-Mapping
-//   20    Keyboard-Basisadressblock
-//   21    I2C-Takt
+//   19    central-unit type mapping
+//   20    Keyboard base address block
+//   21    I2C clock
 //   22-41 Modulname (20 bytes, O_NAME)
 //   42-127 reserved
 

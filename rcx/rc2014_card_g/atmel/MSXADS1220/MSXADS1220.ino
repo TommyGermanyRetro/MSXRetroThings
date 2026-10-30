@@ -4,7 +4,7 @@
 //* This sketch uses the ARDIuNO IDE LIB "ADS1220_WE" from Wolfgang Ewald as driver for a four  *
 //* channel A/D converter on a RC2014 board                                                     *
 //***********************************************************************************************
-//* Datei: MSXADS1220.ino                                                                       *
+//* File:  MSXADS1220.ino                                                                       *
 //***********************************************************************************************
 //* Changes:                                                                                    *
 //* V1.0.0 - 21.10.2026 - base version                                                          *

@@ -9,7 +9,7 @@
 //* (there is nothing to discover), only the shared dostools library is used, for its               *
 //* Dos_ReadLine/Dos_PrintHex2 helpers (plain MSX-DOS console I/O, no Xio_* call).                       *
 //***************************************************************************************************
-//* Datei: XIOSLT.c                                                                                 *
+//* File:  XIOSLT.c                                                                                 *
 //***************************************************************************************************
 //* MSX (c) 2026 by Dr.-Ing. Thomas Wiesner                                                         *
 //***************************************************************************************************

@@ -6,7 +6,7 @@
 //* directly, so they do not belong in xio_io/rcx_io. Extracted 2026-09-16 after the same functions   *
 //* had accumulated as identical copy-pasted code across six separate .c files.                       *
 //***************************************************************************************************
-//* Datei: dostools.c                                                                                *
+//* File:  dostools.c                                                                                *
 //***************************************************************************************************
 //* MSX (c) 2026 by Dr.-Ing. Thomas Wiesner                                                          *
 //***************************************************************************************************

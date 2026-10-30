@@ -6,7 +6,7 @@
 //* then discovers and initializes the XIO_IO_EXPANDER and RCX_INTERFACE UNAPI drivers and the CAN     *
 //* adapter, before handing control to the GUI (mbc89_gui.c).                                          *
 //***************************************************************************************************
-//* Datei: mbc89.c                                                                                    *
+//* File:  mbc89.c                                                                                    *
 //***************************************************************************************************
 //* MSX (c) 2026 by Dr.-Ing. Thomas Wiesner                                                           *
 //***************************************************************************************************

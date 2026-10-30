@@ -1,15 +1,15 @@
 //***************************************************************************************************
 //* HEADER - mbc89_store.h - File-based persistence (EEPROM replacement) for mbc89_base/mbc89_com     *
 //***************************************************************************************************
-//* Persists GUiD/CS2-Geraetegruppe/PC-Datenbanknummer/Modulname (mbc89_base.c) and simulated          *
-//* Connect6021 SW-Version/Zentralentyp-Mapping/Keyboard-Basisadresse/I2C-Takt (mbc89_com.c) to         *
-//* MBC89.CFG on the boot disk, via the FCB-based DOS1-compatible file functions already implemented   *
-//* in dos.c (DOS_USE_FCB, not gated behind DOS2 like the newer Handle-based DOS_FOpen/DOS_FRead this   *
-//* project's Target="DOS1" cannot use). NOT persisted: the loco database (rebuilt from the             *
-//* CONNECT6021 stream on every CS3 reconnect) and Kennung (mbc89 always forces the fixed               *
-//* MCAN_KENNER_FIXED_H/L constants, never a PC-proposed value).                                        *
+//* Persists GUiD/CS2 device group/PC database number/module name (mbc89_base.c) and the simulated  *
+//* Connect6021 SW version/central-unit type mapping/Keyboard base address/I2C clock (mbc89_com.c)  *
+//* to MBC89.CFG on the boot disk, via the FCB-based DOS1-compatible file functions already         *
+//* implemented in dos.c (DOS_USE_FCB, not gated behind DOS2 like the newer handle-based            *
+//* DOS_FOpen/DOS_FRead this project's Target="DOS1" cannot use). NOT persisted: the loco database  *
+//* (rebuilt from the CONNECT6021 stream on every CS3 reconnect) and the device ID (mbc89 always    *
+//* forces the fixed MCAN_KENNER_FIXED_H/L constants, never a PC-proposed value).                   *
 //***************************************************************************************************
-//* Datei: mbc89_store.h                                                                              *
+//* File:  mbc89_store.h                                                                              *
 //***************************************************************************************************
 //* MSX (c) 2026 by Dr.-Ing. Thomas Wiesner                                                           *
 //***************************************************************************************************

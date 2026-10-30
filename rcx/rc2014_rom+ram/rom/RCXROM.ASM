@@ -54,8 +54,8 @@ OLDSCR:       EQU    #0FCB0         ; The screen mode before change
 EXPTBL:       EQU    #0FCC1         ; Slot expanded
 SLTWRK:       EQU    #0FD09         ; Slot working area
 PROCNM:       EQU    #0FD89         ; Contents the instruction name or device name
-HKEYI:        EQU    #0FD9A         ; Hook zur Interruptverabeitung
-HCLEA:        EQU    #0FED0         ; Hook am Anfang von CLEARC (CLEAR-Befehl)
+HKEYI:        EQU    #0FD9A         ; hook for interrupt handling
+HCLEA:        EQU    #0FED0         ; hook at the start of CLEARC (CLEAR statement)
 HERRO:        EQU    #0FFB1         ; Error handling
 EXTBIO:       EQU    #0FFCA         ; Call to external BIOS
 SUBFLG:       EQU    #0F6A5         ; Array identifier
@@ -540,7 +540,7 @@ FN_TABLE:
 
 ;++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ;+++ MSX start up routine                                             +++
-;+++ Cartridge Header functions from KONAMIMAN und msx.org            +++
+;+++ Cartridge Header functions from KONAMIMAN and msx.org            +++
 ;++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
                                     ;************************************
@@ -922,7 +922,7 @@ CORE1:        PUSH HL               ; Save BASIC Line-Pointer (if CALL is used)
               CALL CLEARSCR
 
               LD HL,PHELP
-              CALL PROMPT           ; Meldung auf Screen ausgeben
+              CALL PROMPT           ; print message on screen
 
               CALL CHGET            ; Get character from keyboard
 

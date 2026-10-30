@@ -1,14 +1,14 @@
 //***************************************************************************************************
-//* HEADER - slotlink.h - PC-Seite des Binaerprotokolls zur USB-Slot-Bridge (Windows)
+//* HEADER - slotlink.h - PC side of the binary protocol to the USB slot bridge (Windows)
 //***************************************************************************************************
-//* Oeffnet die virtuelle COM-Schnittstelle der Bridge (BridgeTeensy) und spricht das Binaer-
-//* protokoll aus ANALYSE.md, Abschnitt 4.3. Schreibzyklen ohne Antwort (MWR, IOWR) werden
-//* gesammelt und mit dem naechsten Zyklus mit Antwort in einem USB-Paket gesendet. /INT-Meldungen
-//* der Bridge koennen zwischen jeder Antwort eintreffen und werden in eine Warteschlange gelegt.
+//* Opens the virtual COM port of the bridge (BridgeTeensy) and speaks the binary protocol from
+//* ANALYSE.md, section 4.3. Write cycles without a response (MWR, IOWR) are collected and sent in
+//* one USB packet together with the next cycle that has a response. /INT messages from the bridge
+//* can arrive between any two responses and are put into a queue.
 //*
-//* Nur Win32-API, keine Zusatzbibliotheken.
+//* Win32 API only, no additional libraries.
 //***************************************************************************************************
-//* Datei: slotlink.h
+//* File:  slotlink.h
 //***************************************************************************************************
 //* MSX (c) 2026 by Dr.-Ing. Thomas Wiesner
 //***************************************************************************************************
@@ -46,30 +46,30 @@ enum Op : uint8_t
     OpCfg   = 0x0B,
     OpTest  = 0x0C,
     OpIowrw = 0x0D,
-    OpMrdng = 0x0E,                                     // ab Protokoll 3
+    OpMrdng = 0x0E,                                     // protocol 3 and up
     EvInt   = 0xC0
 };
 
 enum Status : uint8_t
 {
     StOk    = 0,
-    StOff   = 1,                                        // Bridge im Zustand AUS
-    StClock = 2,                                        // kein CLOCK an der Bridge
-    StArg   = 3                                         // ungueltiger Parameter
+    StOff   = 1,                                        // bridge in state OFF
+    StClock = 2,                                        // no CLOCK at the bridge
+    StArg   = 3                                         // invalid parameter
 };
 
 struct ReadResult
 {
     uint8_t status = StOk;
     uint8_t data   = 0xFF;
-    uint8_t waits  = 0;                                 // durch /WAIT eingefuegte Takte
+    uint8_t waits  = 0;                                 // clocks inserted by /WAIT
 };
 
 struct SyncResult
 {
-    bool    running  = false;                           // true = LAEUFT, false = AUS
-    uint8_t intLevel = 1;                               // 0 = /INT LOW (aktiv)
-    uint8_t errors   = 0;                               // seit dem letzten Sync verworfene Schreibzyklen
+    bool    running  = false;                           // true = RUNNING, false = OFF
+    uint8_t intLevel = 1;                               // 0 = /INT LOW (active)
+    uint8_t errors   = 0;                               // write cycles discarded since the last sync
 };
 
 class Link
@@ -77,7 +77,7 @@ class Link
 public:
     ~Link() { close(); }
 
-    // COM-Port oeffnen, z. B. "COM10"
+    // Open the COM port, e.g. "COM10"
     bool open(const std::string &port)
     {
         close();
@@ -86,14 +86,14 @@ public:
                               nullptr);
         if (handle_ == INVALID_HANDLE_VALUE)
         {
-            error_ = "COM-Port laesst sich nicht oeffnen (Fehler " + std::to_string(GetLastError()) + ")";
+            error_ = "cannot open COM port (error " + std::to_string(GetLastError()) + ")";
             return false;
         }
 
         DCB dcb = {};
         dcb.DCBlength = sizeof(dcb);
         GetCommState(handle_, &dcb);
-        dcb.BaudRate     = 115200;                      // bei USB-CDC ohne Bedeutung
+        dcb.BaudRate     = 115200;                      // irrelevant for USB CDC
         dcb.ByteSize     = 8;
         dcb.Parity       = NOPARITY;
         dcb.StopBits     = ONESTOPBIT;
@@ -131,7 +131,7 @@ public:
     bool isOpen() const { return handle_ != INVALID_HANDLE_VALUE; }
     const std::string &error() const { return error_; }
 
-    // Zeitgrenze fuer eine Antwort in ms
+    // Response timeout in ms
     void setTimeout(DWORD ms)
     {
         timeoutMs_ = ms;
@@ -144,25 +144,25 @@ public:
         }
     }
 
-    // Von Textkommandos ins Binaerprotokoll wechseln ("b", Antwort "BIN") und die Version pruefen
+    // Switch from text commands to the binary protocol ("b", response "BIN") and check the version
     bool enterBinary()
     {
-        // Byte 00 holt eine Bridge aus dem Binaermodus (von einem frueheren Lauf); im Textmodus
-        // ist es ein unbekanntes Zeichen und erzeugt hoechstens eine Fehlerzeile
+        // Byte 00 takes a bridge out of binary mode (left over from an earlier run); in text mode it is
+        // an unknown character and produces at most an error line
         const char cmd[] = "\0\n\nb\n";
         if (!writeAll(reinterpret_cast<const uint8_t *>(cmd), sizeof(cmd) - 1))
         {
             return false;
         }
 
-        // Textzeilen lesen, bis "BIN" kommt; andere Zeilen (Fehlerhinweise, Reste) werden verworfen
+        // Read text lines until "BIN" arrives; other lines (error notes, leftovers) are discarded
         std::string line;
         for (int i = 0; i < 4096; i++)
         {
             uint8_t b;
             if (!readExact(&b, 1, false))
             {
-                error_ = "keine Antwort auf 'b' (Teensy nicht im Textmodus oder nicht angeschlossen)";
+                error_ = "no response to 'b' (Teensy not in text mode or not connected)";
                 return false;
             }
             if (b == '\n')
@@ -178,11 +178,11 @@ public:
                 line.push_back(static_cast<char>(b));
             }
         }
-        error_ = "'BIN' nicht gefunden";
+        error_ = "'BIN' not found";
         return false;
     }
 
-    // Zurueck zu den Textkommandos
+    // Back to the text commands
     bool leaveBinary()
     {
         tx_.push_back(OpText);
@@ -202,14 +202,14 @@ public:
         return r[1] == StOk;
     }
 
-    // Speicher lesen; m1 = Opcode-Fetch mit Refresh
+    // Read memory; m1 = opcode fetch with refresh
     bool memRead(uint8_t slot, uint16_t addr, bool m1, ReadResult &out)
     {
         tx_.insert(tx_.end(), { OpMrd, slot, lo(addr), hi(addr), static_cast<uint8_t>(m1 ? 1 : 0) });
         return readCycle(OpMrd, out);
     }
 
-    // Speicher schreiben ohne Antwort (wird mit dem naechsten Zyklus gesendet oder mit flush())
+    // Write memory without a response (sent with the next cycle or with flush())
     void memWrite(uint8_t slot, uint16_t addr, uint8_t value)
     {
         tx_.insert(tx_.end(), { OpMwr, slot, lo(addr), hi(addr), value });
@@ -226,7 +226,7 @@ public:
         tx_.insert(tx_.end(), { OpIowr, port, value });
     }
 
-    // I/O schreiben mit Antwort: liefert die durch /WAIT eingefuegten Takte
+    // Write I/O with a response: returns the clocks inserted by /WAIT
     bool ioWriteWait(uint8_t port, uint8_t value, uint8_t &status, uint32_t &waits)
     {
         uint8_t r[6];
@@ -241,8 +241,8 @@ public:
         return true;
     }
 
-    // n aufeinanderfolgende Lesezyklen ab addr (n = 1 bis maxBlock); mit gap > 0 (ab Protokoll 3) liegen
-    // gap Takte zwischen den Zyklusanfaengen
+    // n consecutive read cycles starting at addr (n = 1 to maxBlock); with gap > 0 (protocol 3 and
+    // up) there are gap clocks between the starts of the cycles
     bool memReadBlock(uint8_t slot, uint16_t addr, uint16_t n, std::vector<uint8_t> &out, uint16_t &waits,
                       uint8_t &status, uint8_t gap = 0)
     {
@@ -267,7 +267,7 @@ public:
         {
             out.clear();
             waits = 0;
-            return true;                                // Argumentfehler: die Antwort besteht nur aus dem Kopf
+            return true;                                // argument error: the response consists of the header only
         }
 
         out.assign(n, 0);
@@ -284,7 +284,7 @@ public:
         return true;
     }
 
-    // /RESET-Impuls der Bridge (10 ms), Antwort nach dem Impuls
+    // /RESET pulse of the bridge (10 ms), response after the pulse
     bool reset(uint8_t &status)
     {
         uint8_t r[2];
@@ -297,14 +297,14 @@ public:
         return true;
     }
 
-    // Herzschlag; ohne Herzschlag geht die Bridge nach der Zeitgrenze in den Zustand AUS
+    // Heartbeat; without a heartbeat the bridge goes to state OFF after the timeout
     bool run()
     {
         tx_.push_back(OpRun);
         return flush();
     }
 
-    // Wartet, bis alle vorherigen Zyklen ausgefuehrt sind, und liefert den Zustand
+    // Waits until all previous cycles have been executed and returns the state
     bool sync(SyncResult &out)
     {
         uint8_t r[5];
@@ -319,7 +319,7 @@ public:
         return r[1] == StOk;
     }
 
-    // Zeitgrenze fuer den Herzschlag in ms (0 = keine Ueberwachung)
+    // Heartbeat timeout in ms (0 = no monitoring)
     bool config(uint16_t ms, uint8_t &status)
     {
         uint8_t r[2];
@@ -332,7 +332,7 @@ public:
         return true;
     }
 
-    // Testleitung der Bridge (Bruecken nach /WAIT und /INT)
+    // Test line of the bridge (jumpers to /WAIT and /INT)
     bool testLine(bool level)
     {
         uint8_t r[2];
@@ -340,7 +340,7 @@ public:
         return flush() && readReply(OpTest, r, 2);
     }
 
-    // Zeitgrenze abwarten und nur /INT-Meldungen einsammeln (fuer Tests)
+    // Wait for the timeout and only collect /INT messages (for tests)
     void pollEvents(DWORD ms)
     {
         DWORD start = GetTickCount();
@@ -365,7 +365,7 @@ public:
         setTimeout(500);
     }
 
-    // Vorhandene /INT-Meldungen ohne Warten einsammeln (ausserhalb einer Anfrage aufrufen)
+    // Collect pending /INT messages without waiting (call outside a request)
     void poll()
     {
         if (!isOpen())
@@ -394,7 +394,7 @@ public:
         }
     }
 
-    // Naechste /INT-Meldung aus der Warteschlange, false = keine
+    // Next /INT message from the queue, false = none
     bool popInt(uint8_t &level)
     {
         if (ints_.empty())
@@ -406,7 +406,7 @@ public:
         return true;
     }
 
-    // Gesammelte Rahmen senden
+    // Send the collected frames
     bool flush()
     {
         if (tx_.empty())
@@ -427,13 +427,13 @@ private:
         DWORD written = 0;
         if (!WriteFile(handle_, p, static_cast<DWORD>(n), &written, nullptr) || written != n)
         {
-            error_ = "Schreiben zur Bridge fehlgeschlagen";
+            error_ = "write to the bridge failed";
             return false;
         }
         return true;
     }
 
-    // Genau n Bytes lesen; mit skipEvents werden /INT-Meldungen (0xC0, Pegel) dazwischen abgefangen
+    // Read exactly n bytes; with skipEvents, /INT messages (0xC0, level) in between are caught
     bool readExact(uint8_t *p, size_t n, bool skipEvents)
     {
         size_t got = 0;
@@ -442,7 +442,7 @@ private:
             DWORD r = 0;
             if (!ReadFile(handle_, p + got, static_cast<DWORD>(n - got), &r, nullptr) || r == 0)
             {
-                error_ = "Zeitueberschreitung beim Lesen von der Bridge";
+                error_ = "timeout while reading from the bridge";
                 return false;
             }
             got += r;
@@ -451,7 +451,7 @@ private:
         return true;
     }
 
-    // Kopf einer Antwort lesen; /INT-Meldungen davor werden in die Warteschlange gelegt
+    // Read the header of a response; /INT messages before it are put into the queue
     bool readReply(uint8_t op, uint8_t *buf, size_t total)
     {
         for (;;)
@@ -473,7 +473,7 @@ private:
             }
             if (b != (op | 0x80))
             {
-                error_ = "unerwartete Antwortkennung " + std::to_string(b);
+                error_ = "unexpected response ID " + std::to_string(b);
                 return false;
             }
             buf[0] = b;

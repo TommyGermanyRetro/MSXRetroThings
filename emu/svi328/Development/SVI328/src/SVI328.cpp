@@ -2816,7 +2816,7 @@ void selectJoystickSource(AppState& app, std::size_t port, int source)
 }
 
 // A snapshot holds the plain SVI-328 without expander; loading it disconnects the expander like
-// "kein Expander" and switches to the snapshot's video standard. BASIC ROM, module and cassette
+// "No expander" and switches to the snapshot's video standard. BASIC ROM, module and cassette
 // stay in place.
 bool loadStateFile(AppState& app, const std::filesystem::path& path)
 {

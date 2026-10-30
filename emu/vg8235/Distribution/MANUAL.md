@@ -222,7 +222,7 @@ During emulation:
 - ROM contents are kept in a cache on the PC, so ROM software runs in real time. Other accesses take a USB round trip of about 100 microseconds.
 - SD Mapper: the Nextor ROM is cached while the SPI port of the SD cards is switched off; a sector of the SD card comes over USB in one block, so the card is about as fast as on a real MSX.
 - /INT of the cartridges reaches the emulated CPU; /WAIT of memory reads and I/O cycles is added to the emulated time.
-- While the emulation stands still, for example while a menu or dialog is open, the board switches the cartridges off like a powered-down MSX. When the emulation goes on, the machine restarts as after switching it on.
+- While a menu or dialog is open, the emulated machine stands still, but the board keeps the cartridges switched on: they keep their state, and the machine goes on without a restart (for example when a disk is changed). The cartridges are not served meanwhile, so a card that receives data, such as a CAN controller, can run out of buffer space. Only when the connection to the board is lost does the board switch the cartridges off like a powered-down MSX; the machine then restarts as after switching it on.
 - When the USB connection breaks, the slot reads FFh and the status bar shows `(no connection)`; **System > Reset** connects again.
 
 Limits:

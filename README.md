@@ -1,15 +1,23 @@
 # MSXRetroThings
 <i>Some nerdy hard- and software for MSX machines</i>
 
-When I was a child, my first computer was a <a href="https://www.msx.org/wiki/Category:SVI-3x8">SV 318 MKII</a> with a cassette recorder. But not SPECTRON or ARMOURED ASSAULT were my favorites, the expansion port and the table of its pins in the manual took my fully interest.
+When I was a child, my first computer was a <a href="https://www.msx.org/wiki/Category:SVI-3x8">SV 318 MKII</a> with a cassette recorder. But neither SPECTRON nor ARMOURED ASSAULT were my favourites - the expansion port and the table of its pins in the manual caught my full interest.
 
-Unfortunatelly, I had no real clou to connect the signals to my Z80 PIO in a way that it works so I lost the fun on playing around with the hardware.
+Unfortunately, I had no real clue how to connect those signals to my Z80 PIO in a way that worked, so I lost the fun of playing around with the hardware.
 
-Now, 40 years later, I got a <a href="https://www.msx.org/wiki/Spectravideo_SVI-728">SVI 728</a> and a  <a href="https://www.ebay.de/sch/i.html?item=332817640567&rt=nc&_trksid=p4429486.m145687.l2562&_ssn=fractal2000">memory mapper / sd card cartridge</a> from the bay and also a <a href="https://www.8bits4ever.net/product-page/sxe-msx2-fpga-computer">SX-E MSX2+</a> and started over.
+Now, 40 years later, I got a <a href="https://www.msx.org/wiki/Spectravideo_SVI-728">SVI 728</a> and a <a href="https://www.ebay.de/sch/i.html?item=332817640567&rt=nc&_trksid=p4429486.m145687.l2562&_ssn=fractal2000">memory mapper / SD card cartridge</a> from the bay, and also a <a href="https://www.8bits4ever.net/product-page/sxe-msx2-fpga-computer">SX-E MSX2+</a>, and started over.
 
-I had a lot of chips in my basket like Z80 PIO, 8255, 8254, SJA1000, PCF8584 etc. The results are several MSX cartridges, ROM code and <a href="https://rc2014.co.uk/">RC2014 cards</a> which I would like to show you here as retro and nerdy stuff for own developments or just for gambling.
+I had a lot of chips in my basket like Z80 PIO, 8255, 8254, SJA1000, PCF8584 etc. It started with MSX cartridges, ROM code and <a href="https://rc2014.co.uk/">RC2014 cards</a> - and then one thing led to another:
 
-Some of the software stuff comes from KONAMIMAN, especially the UNAPI structure and also the memory allocation in basic for working areas in RAM. Please have a look at his <a href="https://www.konamiman.com/msx/msx-e.html">git</a> for further information.
+- a real application on top of it: an MSX that joins a Maerklin model railway CAN bus as an accessory module,
+- tools to bring old Spectravideo SVI-318/328 software back to life and over to MSX,
+- my own emulators for the machines I grew up with and the ones I own now,
+- a USB board that runs real MSX cartridges inside an emulator on the PC,
+- the MSX1 picture on a PC screen, and a slot expander for more cartridges than slots.
+
+Everything here is retro and nerdy stuff for your own developments - or just for gaming.
+
+Some of the software comes from KONAMIMAN, especially the UNAPI structure and the memory allocation in BASIC for working areas in RAM. Please have a look at his <a href="https://www.konamiman.com/msx/msx-e.html">git</a> for further information.
 
 Have fun and stay healthy,
 
@@ -17,15 +25,17 @@ Thomas
 
 ## Contents
 
-+ [1. The XIO cartridge](#1-msxretrothings---the-xio-cartridge)
-+ [2. The RCX ROM cartridge and RC2014 cards](#2-msxretrothings---the-rcx-rom-cartridge-and-rc2014-cards)
-+ [3. mbc89, a Maerklin Connect6021 CAN accessory module](#3-msxretrothings---mbc89-a-maerklin-connect6021-can-accessory-module)
-+ [4. Tools](#4-msxretrothings---tools)
-+ [5. Emulators](#5-msxretrothings---emulators)
-+ [6. USB2SLOT, real MSX cartridges in openMSX](#6-msxretrothings---usb2slot-real-msx-cartridges-in-openmsx)
-+ [7. TMS9918A, the MSX1 picture on the PC screen](#7-msxretrothings---tms9918a-the-msx1-picture-on-the-pc-screen)
-+ [8. Slot expander, four cartridge slots for one MSX slot](#8-msxretrothings---slot-expander-four-cartridge-slots-for-one-msx-slot)
-+ [9. License](#9-license)
+| | Topic | In short |
+| --- | --- | --- |
+| 1 | [XIO cartridge](#1-msxretrothings---the-xio-cartridge) | switched IO, 8259 interrupt controller, IM2 emulation |
+| 2 | [RCX ROM cartridge and RC2014 cards](#2-msxretrothings---the-rcx-rom-cartridge-and-rc2014-cards) | BASIC/UNAPI driver ROM for I2C/RTC, PIO, 8255, 8254, CAN, SPI, A/D, D/A cards |
+| 3 | [mbc89](#3-msxretrothings---mbc89-a-maerklin-connect6021-can-accessory-module) | Maerklin Connect6021 CAN accessory module as an MSX-DOS 2 program |
+| 4 | [Tools](#4-msxretrothings---tools) | SVI-3x8 TXT/CAS converter, CP/M disk builder, game porter to MSX |
+| 5 | [Emulators](#5-msxretrothings---emulators) | SVI-318, SVI-328, SVI-728 and Philips VG-8235 |
+| 6 | [USB2SLOT](#6-msxretrothings---usb2slot-real-msx-cartridges-in-openmsx) | real MSX cartridges in openMSX and the emulators above |
+| 7 | [TMS9918A](#7-msxretrothings---tms9918a-the-msx1-picture-on-the-pc-screen) | the MSX1 picture on the PC screen |
+| 8 | [Slot expander](#8-msxretrothings---slot-expander-four-cartridge-slots-for-one-msx-slot) | four cartridge slots for one MSX slot |
+| 9 | [License](#9-license) | |
 
 
 ## 1. MSXRetroThings - The XIO cartridge

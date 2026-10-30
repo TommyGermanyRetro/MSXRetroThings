@@ -38,7 +38,10 @@ using vg8235::UiLanguage;
 
 #include <algorithm>
 #include <array>
+#include <atomic>
 #include <cstdint>
+#include <mutex>
+#include <thread>
 #include <utility>
 #include <vector>
 
@@ -1077,6 +1080,13 @@ struct AppState {
     // USB2SLOT board: real cartridges in place of modules, opened when a slot first uses it. Its two
     // slots, with the switching rules found by the probe, exist while a module slot uses them.
     std::unique_ptr<usbslot::Bridge> bridge;
+    // While a dialog stops the emulation timer, the board's heartbeat comes from its own thread: a dialog's
+    // message loop delivers timers too irregularly (gaps above the board's 200 ms switch-off time measured).
+    // bridgeLock guards every use of the board while the emulation stands still.
+    std::recursive_mutex bridgeLock;
+    std::atomic<bool> emulationPaused{false};
+    std::atomic<bool> keeperStop{false};
+    std::thread bridgeKeeper;
     std::array<std::unique_ptr<usbslot::BoardSlot>, 2> boardSlots;
     // What the last probe found in the two board slots (empty: nothing), for the module menu.
     std::array<std::wstring, 2> boardContents;
@@ -1115,6 +1125,31 @@ struct AppState {
     bool videoRecording = false;
     std::vector<std::int16_t> fieldAudio;
 };
+
+// Stops the emulation for a dialog; the board keeps running (see AppState::bridgeKeeper).
+void pauseEmulation(AppState& app)
+{
+    KillTimer(app.window, EmulationTimer);
+    app.emulationPaused = true;
+}
+
+void startBridgeKeeper(AppState& app)
+{
+    app.bridgeKeeper = std::thread([&app] {
+        while (!app.keeperStop) {
+            Sleep(20);
+            if (!app.emulationPaused) continue;
+            std::lock_guard<std::recursive_mutex> lock(app.bridgeLock);
+            if (app.emulationPaused && app.bridge) app.bridge->heartbeat();
+        }
+    });
+}
+
+void stopBridgeKeeper(AppState& app)
+{
+    app.keeperStop = true;
+    if (app.bridgeKeeper.joinable()) app.bridgeKeeper.join();
+}
 
 void writeAyRegister(ay8910::AY8910& ay, std::uint8_t index, std::uint8_t value)
 {
@@ -2098,7 +2133,7 @@ bool loadStateFile(AppState& app, const std::filesystem::path& path)
 // Snapshots live in the snapshot media folder.
 void selectStateFile(AppState& app, bool save)
 {
-    KillTimer(app.window, EmulationTimer);
+    pauseEmulation(app);
     const std::wstring folder = mediaFolder(L"STATE").wstring();
     std::vector<wchar_t> fileName(32768, L'\0');
     OPENFILENAMEW dialog{};
@@ -2132,6 +2167,10 @@ void selectStateFile(AppState& app, bool save)
 
 void resumeAfterDialog(AppState& app)
 {
+    {
+        std::lock_guard<std::recursive_mutex> lock(app.bridgeLock);
+        app.emulationPaused = false;
+    }
     QueryPerformanceCounter(&app.lastCounter);
     app.fieldPhase = 0;
     SetTimer(app.window, EmulationTimer, TimerPeriodMs, nullptr);
@@ -2141,7 +2180,7 @@ void resumeAfterDialog(AppState& app)
 void startVideoRecording(AppState& app)
 {
     if (app.videoRecording) return;
-    KillTimer(app.window, EmulationTimer);
+    pauseEmulation(app);
     SYSTEMTIME time{};
     GetLocalTime(&time);
     // The suggested name carries the folder; otherwise Windows opens the folder used last.
@@ -2198,7 +2237,7 @@ void stopVideoRecording(AppState& app)
 // under a new name; the copy is writable.
 void createDiskCopy(AppState& app)
 {
-    KillTimer(app.window, EmulationTimer);
+    pauseEmulation(app);
     const auto folder = mediaFolder(L"DISK");
     const auto originals = !folder.empty() && std::filesystem::is_directory(folder / L"Original") ? folder / L"Original" : folder;
     const std::wstring originalsText = originals.wstring();
@@ -2267,7 +2306,7 @@ void createDiskCopy(AppState& app)
 bool confirmCassetteDiscard(AppState& app)
 {
     if (!app.machine.cassetteState().modified) return true;
-    KillTimer(app.window, EmulationTimer);
+    pauseEmulation(app);
     const auto answer = MessageBoxW(app.window,
         ui(L"Discard the unsaved CAS recording?", L"Die ungespeicherte CAS-Aufnahme verwerfen?"), ui(L"Cassette", L"Kassette"),
         MB_YESNO | MB_ICONWARNING | MB_DEFBUTTON2);
@@ -2312,7 +2351,7 @@ std::vector<std::uint8_t> readFile(const std::filesystem::path& path, std::size_
 
 void saveCassetteImage(AppState& app)
 {
-    KillTimer(app.window, EmulationTimer);
+    pauseEmulation(app);
     const bool stopped = !app.machine.cassetteState().recording ||
                          app.machine.stopCassetteRecording();
     updateMenus(app);
@@ -2361,7 +2400,7 @@ void saveCassetteImage(AppState& app)
 void selectCassetteImage(AppState& app)
 {
     if (!confirmCassetteDiscard(app)) return;
-    KillTimer(app.window, EmulationTimer);
+    pauseEmulation(app);
     std::vector<wchar_t> fileName(32768, L'\0');
     OPENFILENAMEW dialog{};
     dialog.lStructSize = sizeof(dialog);
@@ -2410,7 +2449,7 @@ bool writeBackDisk(AppState& app)
 
 void reportDiskWriteError(AppState& app)
 {
-    KillTimer(app.window, EmulationTimer);
+    pauseEmulation(app);
     MessageBoxW(app.window,
         ui(L"The changes could not be written to the DSK image. They stay in memory until the disk is ejected.", L"Die Aenderungen konnten nicht in das DSK-Image geschrieben werden. "
         L"Sie bleiben im Speicher, bis die Diskette ausgeworfen wird."),
@@ -2431,7 +2470,7 @@ bool insertDisk(AppState& app, const std::filesystem::path& path)
 
 void selectDiskImage(AppState& app)
 {
-    KillTimer(app.window, EmulationTimer);
+    pauseEmulation(app);
     std::vector<wchar_t> fileName(32768, L'\0');
     OPENFILENAMEW dialog{};
     dialog.lStructSize = sizeof(dialog);
@@ -2462,7 +2501,7 @@ void resetMachine(AppState& app);
 
 void selectCartridge(AppState& app, std::uint8_t slot, unsigned choice)
 {
-    KillTimer(app.window, EmulationTimer);
+    pauseEmulation(app);
     std::vector<wchar_t> fileName(32768, L'\0');
     OPENFILENAMEW dialog{};
     dialog.lStructSize = sizeof(dialog);
@@ -2510,6 +2549,7 @@ void ejectCartridge(AppState& app, std::uint8_t slot)
 // their rules and move to the new connection.
 bool openBridge(AppState& app, bool showError)
 {
+    std::lock_guard<std::recursive_mutex> lock(app.bridgeLock);
     if (app.bridge && app.bridge->connected()) return true;
     std::string error;
     auto transport = usbslot::openSerial(app.bridgePort, error);
@@ -2551,6 +2591,7 @@ void noteDetection(AppState& app, const usbslot::Detection& detection)
 // Probes the board and sets up its slot with the rules for what was found; false when the slot is empty.
 bool setUpBoardSlot(AppState& app, std::uint8_t number)
 {
+    std::lock_guard<std::recursive_mutex> lock(app.bridgeLock);
     const auto detection = usbslot::detectBoard(*app.bridge);
     noteDetection(app, detection);
     if (!detection.occupied[number - 1]) return false;
@@ -2564,6 +2605,7 @@ bool setUpBoardSlot(AppState& app, std::uint8_t number)
 // Resets the machine; a lost connection to the USB2SLOT board is opened again first.
 void resetMachine(AppState& app)
 {
+    std::lock_guard<std::recursive_mutex> lock(app.bridgeLock);
     if (app.bridge && !app.bridge->connected()) (void)openBridge(app, false);
     app.machine.reset();
 }
@@ -2571,7 +2613,7 @@ void resetMachine(AppState& app)
 // Puts slot 1 or 2 of the board into a module slot; like changing a module, the machine is reset.
 void selectBridgeSlot(AppState& app, std::uint8_t slot, std::uint8_t boardSlot)
 {
-    KillTimer(app.window, EmulationTimer);
+    pauseEmulation(app);
     if (openBridge(app, true)) {
         if (setUpBoardSlot(app, boardSlot)) {
             app.machine.ejectCartridge(slot);
@@ -2594,6 +2636,7 @@ void saveMedia(AppState& app);
 // slots that use a board slot keep it, an emptied board slot leaves them without a module.
 bool probeBoard(AppState& app, bool showError)
 {
+    std::lock_guard<std::recursive_mutex> lock(app.bridgeLock);
     if (!openBridge(app, showError)) {
         app.boardContents = {};
         app.boardProbed = false;
@@ -2617,7 +2660,7 @@ bool probeBoard(AppState& app, bool showError)
 // Menu command: probe the board again; the machine is reset like after changing a module.
 void reprobeBoard(AppState& app)
 {
-    KillTimer(app.window, EmulationTimer);
+    pauseEmulation(app);
     if (probeBoard(app, true)) resetMachine(app);
     refreshMenu(app);
     saveMedia(app);
@@ -2753,7 +2796,7 @@ void loadMedia(AppState& app, bool diskFromCommandLine)
 
 void selectPrinterDirectory(AppState& app)
 {
-    KillTimer(app.window, EmulationTimer);
+    pauseEmulation(app);
     const HRESULT comResult = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
     if (FAILED(comResult)) {
         MessageBoxW(app.window, ui(L"The folder dialog could not be initialised.", L"Der Ordnerdialog konnte nicht initialisiert werden."),
@@ -3041,8 +3084,8 @@ LRESULT CALLBACK windowProcedure(HWND window, UINT message, WPARAM wParam, LPARA
             (void)retryAudio(app->audio);
             if (app->bridge) {
                 app->bridge->heartbeat();
-                // The board switched the cartridges off while the emulation stood still (menu, dialog):
-                // they lost their state, so the machine starts again as after switching it on.
+                // The board switched the cartridges off (connection lost or the program stalled): they
+                // lost their state, so the machine starts again as after switching it on.
                 if (app->bridge->takeSwitchedOff()) resetMachine(*app);
             }
             const bool advanced = advanceWallClock(*app);
@@ -3078,7 +3121,7 @@ LRESULT CALLBACK windowProcedure(HWND window, UINT message, WPARAM wParam, LPARA
     case WM_CLOSE:
         if (app && !confirmCassetteDiscard(*app)) return 0;
         if (app && !writeBackDisk(*app)) {
-            KillTimer(window, EmulationTimer);
+            pauseEmulation(*app);
             const auto answer = MessageBoxW(window,
                 ui(L"The disk changes could not be saved. Quit anyway?", L"Die Diskettenaenderungen konnten nicht gespeichert werden. Trotzdem beenden?"),
                 ui(L"Disk", L"Diskette"), MB_YESNO | MB_ICONWARNING | MB_DEFBUTTON2);
@@ -3088,6 +3131,7 @@ LRESULT CALLBACK windowProcedure(HWND window, UINT message, WPARAM wParam, LPARA
         if (app) stopVideoRecording(*app);
         break;
     case WM_DESTROY:
+        if (app) stopBridgeKeeper(*app);
         KillTimer(window, EmulationTimer);
         if (app) {
             closePrinterFile(*app);
@@ -3386,6 +3430,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR, int showCommand)
     if (!stateArgument.empty()) (void)loadStateFile(app, stateArgument);
     app.timerResolutionRaised = timeBeginPeriod(1) == TIMERR_NOERROR;
     SetTimer(window, EmulationTimer, TimerPeriodMs, nullptr);
+    startBridgeKeeper(app);
 
     MSG message{};
     while (GetMessageW(&message, nullptr, 0, 0) > 0) {

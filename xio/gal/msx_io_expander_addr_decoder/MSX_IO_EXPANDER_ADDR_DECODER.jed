@@ -7,7 +7,7 @@ Partno          xxx
 Revision        01
 Date            01/09/23
 Designer        Wiesner
-Company         Wiesnertec
+Company         None
 Assembly        None
 Location        None
 *QP24 
@@ -60,4 +60,4 @@ Location        None
 *L05792 00000000000000000111010111010111
 *L05824 11110111100001111000011110000000
 *C7AFF
-*B647
+*B3BE

@@ -27,7 +27,6 @@
 #include "mbc89_store.h"
 #include "mbc89_memory.h"
 
-#include "font/font_mgl_sample6.h"
 
 //===================================================================================================
 // DATA
@@ -37,10 +36,11 @@
 // high bytes are never read. Targeted (not accept-all): PRIO is fully wildcarded (the protocol
 // specifies that prio bits are not evaluated), HASH is fully wildcarded (this module filters only on
 // the GUiD bytes in D0-D7), RTR is fixed to 0 (this protocol never uses RTR frames). Within the 8-bit
-// MCAN_ID byte itself (straddling PeliCAN ID1's bottom 3 bits and ID2's top 5 bits), only bits 7 and
-// 0 are fixed to 0, bits 6-1 are wildcarded - this accepts every even MCAN_ID below 0x80. Bit 0 fixed
-// to 0 excludes every _RESPONSE echo of this module's own IDs (0x01/0x31/0x3B/0x45 are all odd).
-static const u16 s_AccBuf[8] = { 0x0000, 0x0000, 0x0000, 0x0000, 0x00FB, 0x00F7, 0x00FF, 0x00FB };
+// MCAN_ID byte itself (straddling PeliCAN ID1's bottom 3 bits and ID2's top 5 bits), only bit 7 is
+// fixed to 0, bits 6-0 are wildcarded - this accepts every MCAN_ID below 0x80. Bit 0 (response) is open
+// for the S88 events (0x23) of the Memory-6043 automatic mode; every handler compares exact even IDs and
+// mbc89_base.c drops odd ones itself, so the responses of other modules are ignored.
+static const u16 s_AccBuf[8] = { 0x0000, 0x0000, 0x0000, 0x0000, 0x00FB, 0x00FF, 0x00FF, 0x00FB };
 
 // Fixed page-3 addresses - CALSLT switches page 1 during Can_Tx()/Can_Rx(), so a regular static
 // buffer here would become unreachable once the .COM file grows large enough for SDCC's linker to
@@ -85,6 +85,8 @@ static const c8 s_MsgEnvInt[]  = "SET INT=0..7 (PIC interrupt channel) missing o
 static const c8 s_MsgEnvKeyb[] = "SET KEYB=0..16 (Keyboard-6040 count) missing or invalid.\r\n$";
 static const c8 s_MsgEnvC80f[] = "SET C80F=0..8 (Control80f count) missing or invalid.\r\n$";
 static const c8 s_MsgEnvMemb[] = "SET MEMB=0..4 (Memory-6043 count) missing or invalid.\r\n$";
+static const c8 s_MsgEnvMemv[] = "SET MEMV=0..1 (Memory-6043 route interlock) missing or invalid.\r\n$";
+static const c8 s_MsgEnvS88[]  = "SET S881..S884=0..93 (s88 module of row A per Memory, 0 = none) missing or invalid.\r\n$";
 
 // Number of simulated Keyboard-6040/Control80f panel instances (0..KEYBOARD_COUNT_MAX/
 // 0..C80F_COUNT_MAX), read from the KEYB/C80F environment variables. Shared with mbc89_com.c and
@@ -96,6 +98,11 @@ u8 g_C80fCount;
 // environment variable - same convention as g_KeyboardCount/g_C80fCount above. Shared with
 // mbc89_gui.c via mbc89_memory.h's extern declaration.
 u8 g_MemoryCount;
+// Memory-6043 route interlock (0/1), read from the MEMV env var - see mbc89_memory.h.
+u8 g_MemInterlock;
+// s88 module address of row A per Memory (1-93, 0 = none), read from the S881-S884 env vars - see
+// mbc89_memory.h.
+u8 g_S88Module[MEMORY_COUNT_MAX];
 
 //===================================================================================================
 // HELPER FUNCTIONS
@@ -173,6 +180,40 @@ static bool GetEnvDecimal(const c8* name, u16 maxVal, u8* out)
 //===================================================================================================
 
 //---------------------------------------------------------------------------------------------------
+// Character set of the machine for the SCREEN0 boot info screen: CGPNT (F91Fh, page 3) holds slot and
+// address of the font; under MSX-DOS page 0 is RAM, so it is read with RDSLT into the pattern table.
+// Pattern index = character code (CharFirst 0, PatternOffset 0), like BDOS's own console output.
+static void UseBiosFont(void)
+{
+	const u8  slot = *(const u8*)M_CGPNT;
+	const u16 font = *(const u16*)(M_CGPNT + 1);
+	u16 i;
+	for (i = 0; i < 256 * 8; i++)
+		VDP_Poke(Bios_InterSlotRead(slot, (u16)(font + i)), (u16)(g_ScreenPatternLow + i), 0);
+	Print_SetFontEx(8, 8, 1, 1, 0, 255, NULL);
+	g_PrintData.PatternOffset = 0;
+	Print_Initialize();
+	Print_SetMode(PRINT_MODE_TEXT);
+}
+
+//---------------------------------------------------------------------------------------------------
+// Reads S881..S884 (s88 module of row A per Memory, 0..93) for the g_MemoryCount Memory instances; the
+// others stay 0 (no s88). FALSE when one of the needed variables is missing or invalid.
+static bool GetEnvS88Modules(void)
+{
+	c8 name[5];
+	u8 i;
+	name[0] = 'S'; name[1] = '8'; name[2] = '8'; name[4] = 0;
+	for (i = 0; i < MEMORY_COUNT_MAX; i++)
+	{
+		g_S88Module[i] = 0;
+		name[3] = (c8)('1' + i);
+		if ((i < g_MemoryCount) && !GetEnvDecimal(name, 93, &g_S88Module[i])) return FALSE;
+	}
+	return TRUE;
+}
+
+//---------------------------------------------------------------------------------------------------
 // Program entry point
 void main(void)
 {
@@ -197,6 +238,8 @@ void main(void)
 	if (!GetEnvDecimal("KEYB", KEYBOARD_COUNT_MAX, &g_KeyboardCount)) { DOS_StringOutput(s_MsgEnvKeyb); DOS_Exit0(); }
 	if (!GetEnvDecimal("C80F", C80F_COUNT_MAX, &g_C80fCount))         { DOS_StringOutput(s_MsgEnvC80f); DOS_Exit0(); }
 	if (!GetEnvDecimal("MEMB", MEMORY_COUNT_MAX, &g_MemoryCount))     { DOS_StringOutput(s_MsgEnvMemb); DOS_Exit0(); }
+	if (!GetEnvDecimal("MEMV", 1, &g_MemInterlock))                   { DOS_StringOutput(s_MsgEnvMemv); DOS_Exit0(); }
+	if (!GetEnvS88Modules())                                         { DOS_StringOutput(s_MsgEnvS88);  DOS_Exit0(); }
 
 	// Splash screen - its own standalone SCREEN2 excursion, shown before anything else visible, only
 	// reachable once all 4 env vars are valid.
@@ -209,11 +252,9 @@ void main(void)
 	Store_Load();
 	McMem_Init();
 
-	// PatternOffset=0 (not 1): this font's CharFirst is 0, so offset 0 keeps Print_*'s pattern-table
-	// index equal to the raw ASCII code, matching what BDOS's own console driver writes unshifted.
 	VDP_SetMode(VDP_MODE_SCREEN0);
 	VDP_ClearVRAM();
-	Print_SetTextFont(g_Font_MGL_Sample6, 0);
+	UseBiosFont();
 	Print_SetColor(COLOR_WHITE, COLOR_BLACK);
 	s_Row = 0;
 	Status(s_MsgTitle);
@@ -240,7 +281,10 @@ void main(void)
 		name[i] = 0;
 
 		Print_SetPosition(0, s_Row++);
-		Print_DrawFormat("IO=%u INT=%u KEYB=%u C80F=%u MEMB=%u", g_CanAddr, canChan, g_KeyboardCount, g_C80fCount, g_MemoryCount);
+		Print_DrawFormat("IO=%u INT=%u KEYB=%u C80F=%u MEMB=%u MEMV=%u", g_CanAddr, canChan, g_KeyboardCount, g_C80fCount, g_MemoryCount, g_MemInterlock);
+
+		Print_SetPosition(0, s_Row++);
+		Print_DrawFormat("S881=%u S882=%u S883=%u S884=%u", g_S88Module[0], g_S88Module[1], g_S88Module[2], g_S88Module[3]);
 
 		Print_SetPosition(0, s_Row++);
 		Print_DrawFormat("GUiD=%2x%2x%2x%2x CS2GER=%2x", guid[0], guid[1], guid[2], guid[3], cs2Ger);

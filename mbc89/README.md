@@ -73,10 +73,22 @@ and the same bidirectional CAN wiring:
   route (`in`, route button, keyboard presses, `end`; `clr` during recording removes the last
   command, `in`+`clr`+route button deletes the whole route) and plays a route back as a burst of
   `CAN_ID_ZUBEHOER_SCHALTEN` (0x16) messages. Routes are stored in `MBC89R.CFG` (one 128-byte
-  record per route) and survive a restart. Interlocking and S88-triggered automatic routes are not
-  implemented yet.
+  record per route) and survive a restart. Follows the original Memory 6043 manual:
+  - Two routes cross when they switch the same accessory in different directions. A valid route goes
+    out as soon as one of its accessories is switched the other way (keyboard, central station, another
+    route); `clr` + route button releases a valid route.
+  - Interlocking (`MEMV=1`, the DIP switches 3+4 of the real device): a route that crosses a valid one of
+    the same Memory is not set; both blink for about 5 seconds, a second press on a blinking route sets it.
+    Crossing follow-up routes are skipped.
+  - Automatic mode (`extern`, back with `off`): three s88 feedback modules per Memory, one per button row
+    A/B/C; contacts 1-8 request routes 1-8 of the row, contacts 9-16 release them and block their request
+    while occupied. With interlocking, requests are served A1 first and stored until the crossing route is
+    released. mbc89 only listens to the s88 events of mbc88/mbc90 modules (CAN-ID 0x23).
+  - Valid routes and the automatic/manual mode of each Memory survive a restart.
 
-Startup configuration (`IO`/`INT`/`KEYB`/`C80F`/`MEMB`) is read from environment variables via
+Startup configuration (`IO`/`INT`/`KEYB`/`C80F`/`MEMB`/`MEMV`, and `S881`-`S884` = s88 module address
+1-93 of button row A per Memory, 0 = no feedback modules, rows B/C on the next two addresses) is read
+from environment variables via
 a raw BDOS `GENV` call (function 6Bh) - a MSX-DOS 2 extension with no MSX-DOS 1 equivalent, so this
 is the module's actual compatibility floor (see "Compatibility" below), not the machine generation.
 Config values changed via ParaCenter or a real CS2/CS3 central station (SW version,
@@ -109,7 +121,8 @@ compatible, and just as usable under MSX-DOS 2), and reloaded on every startup -
   Memory-6043 carousel).
 - `mbc89_sim.c`/`.h` - simulated plug/voltage/temperature sensor values (`P`/arrow keys).
 - `mbc89_store.c`/`.h` - `MBC89.CFG` file-based persistence (FCB, MSX-DOS 1 compatible).
-- `mbc89_memory.c`/`.h` - Memory-6043 route recording/playback, `MBC89R.CFG` (FCB random block I/O).
+- `mbc89_memory.c`/`.h` - Memory-6043 route recording/playback, interlocking, automatic mode with s88
+  feedback, `MBC89R.CFG` (FCB random block I/O).
 - `content/` - embedded panel graphics/sprite data (RLE-packed screen data, generated content
   headers).
 

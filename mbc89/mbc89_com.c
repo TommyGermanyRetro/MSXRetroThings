@@ -690,6 +690,7 @@ void McCom_HandleKeyboardEvent(u8 kbIndex, u8 col, bool green)
 	u16 addr = (u16)(KeyboardBaseAddr(kbIndex) + col);
 	SendZubehoerSchalten(addr, green ? 1 : 0, TRUE);
 	McMem_TapKeyboardCommand(addr, green);
+	(void)McMem_NoteSwitch(addr, green);
 }
 
 //---------------------------------------------------------------------------------------------------

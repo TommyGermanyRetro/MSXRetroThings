@@ -21,7 +21,7 @@
 #define MCCOM_ANZKONFIGMODUL 5
 
 // Compile-time MAX number of simulated Keyboard-6040 instances (array sizing only - mbc89_gui.c's
-// s_KbColStatus[]/s_DigitPattern[]) - shared here so McCom_DecodeKeyboardEvent()'s address-range
+// s_KbColStatus[]) - shared here so McCom_DecodeKeyboardEvent()'s address-range
 // check and mbc89_gui.c's array sizes can never drift apart. The actual runtime count
 // (0..KEYBOARD_COUNT_MAX, read from the KEYB env var at startup) is g_KeyboardCount below.
 #define KEYBOARD_COUNT_MAX 16

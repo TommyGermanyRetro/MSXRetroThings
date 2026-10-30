@@ -17,6 +17,8 @@
 #include "content/panel_cu.h"
 #include "content/panel_memory.h"
 #include "content/knob_sprite.h"
+
+#define CAN_ID_S88_EVENT 0x23
 #include "content/ui_frame.h"
 #include "content/ui_tri_left.h"
 #include "content/ui_tri_right.h"
@@ -148,28 +150,6 @@ static const u8 s_FontLetterF[8] = {8,20,16,124,16,16,16,0};
 // into the shared image) - see RenderPanelLabel().
 #define LABEL_CELL_OFF_ROW0 5472 // (21*32+12)*8
 #define LABEL_CELL_OFF_ROW1 5728 // (22*32+12)*8
-
-// Precomputed pattern bytes for the Keyboard slot-number display ("01".."16", keyed by slot-1) - all
-// KEYBOARD_COUNT_MAX (16) entries. UpdateSlotDisplay() below also rewrites the matching COLOR bytes
-// when applying one of these (the pattern alone is not enough to draw the digit correctly).
-static const u8 s_DigitPattern[KEYBOARD_COUNT_MAX][64] = {
-	{0,1,1,6,6,6,6,6,0,248,248,6,6,30,30,102,0,6,6,30,30,102,102,6,0,0,0,0,0,0,0,0,6,7,7,6,6,1,1,0,102,134,134,6,6,248,248,0,6,6,6,6,6,127,127,0,0,0,0,0,0,224,224,0}, // 01
-	{0,1,1,6,6,6,6,6,0,248,248,6,6,30,30,102,0,31,31,96,96,0,0,7,0,128,128,96,96,96,96,128,6,7,7,6,6,1,1,0,102,134,134,6,6,248,248,0,7,24,24,96,96,127,127,0,128,0,0,0,0,224,224,0}, // 02
-	{0,1,1,6,6,6,6,6,0,248,248,6,6,30,30,102,0,31,31,96,96,0,0,7,0,128,128,96,96,96,96,128,6,7,7,6,6,1,1,0,102,134,134,6,6,248,248,0,7,0,0,96,96,31,31,0,128,96,96,96,96,128,128,0}, // 03
-	{0,1,1,6,6,6,6,6,0,248,248,6,6,30,30,102,0,6,6,24,24,97,97,127,0,0,0,0,0,128,128,224,6,7,7,6,6,1,1,0,102,134,134,6,6,248,248,0,127,1,1,1,1,1,1,0,224,128,128,128,128,128,128,0}, // 04
-	{0,1,1,6,6,6,6,6,0,248,248,6,6,30,30,102,0,127,127,96,96,127,127,0,0,224,224,0,0,128,128,96,6,7,7,6,6,1,1,0,102,134,134,6,6,248,248,0,0,0,0,96,96,31,31,0,96,96,96,96,96,128,128,0}, // 05
-	{0,1,1,6,6,6,6,6,0,248,248,6,6,30,30,102,0,31,31,96,96,96,96,127,0,128,128,96,96,0,0,128,6,7,7,6,6,1,1,0,102,134,134,6,6,248,248,0,127,96,96,96,96,31,31,0,128,96,96,96,96,128,128,0}, // 06
-	{0,1,1,6,6,6,6,6,0,248,248,6,6,30,30,102,0,127,127,0,0,1,1,1,0,224,224,96,96,128,128,128,6,7,7,6,6,1,1,0,102,134,134,6,6,248,248,0,1,6,6,6,6,6,6,0,128,0,0,0,0,0,0,0}, // 07
-	{0,1,1,6,6,6,6,6,0,248,248,6,6,30,30,102,0,31,31,96,96,96,96,31,0,128,128,96,96,96,96,128,6,7,7,6,6,1,1,0,102,134,134,6,6,248,248,0,31,96,96,96,96,31,31,0,128,96,96,96,96,128,128,0}, // 08
-	{0,1,1,6,6,6,6,6,0,248,248,6,6,30,30,102,0,31,31,96,96,96,96,31,0,128,128,96,96,96,96,224,6,7,7,6,6,1,1,0,102,134,134,6,6,248,248,0,31,0,0,96,96,31,31,0,224,96,96,96,96,128,128,0}, // 09
-	{0,0,0,1,1,6,6,0,0,96,96,224,224,96,96,96,0,31,31,96,96,97,97,102,0,128,128,96,96,224,224,96,0,0,0,0,0,7,7,0,96,96,96,96,96,254,254,0,102,120,120,96,96,31,31,0,96,96,96,96,96,128,128,0}, // 10
-	{0,0,0,1,1,6,6,0,0,96,96,224,224,96,96,96,0,6,6,30,30,102,102,6,0,0,0,0,0,0,0,0,0,0,0,0,0,7,7,0,96,96,96,96,96,254,254,0,6,6,6,6,6,127,127,0,0,0,0,0,0,224,224,0}, // 11
-	{0,0,0,1,1,6,6,0,0,96,96,224,224,96,96,96,0,31,31,96,96,0,0,7,0,128,128,96,96,96,96,128,0,0,0,0,0,7,7,0,96,96,96,96,96,254,254,0,7,24,24,96,96,127,127,0,128,0,0,0,0,224,224,0}, // 12
-	{0,0,0,1,1,6,6,0,0,96,96,224,224,96,96,96,0,31,31,96,96,0,0,7,0,128,128,96,96,96,96,128,0,0,0,0,0,7,7,0,96,96,96,96,96,254,254,0,7,0,0,96,96,31,31,0,128,96,96,96,96,128,128,0}, // 13
-	{0,0,0,1,1,6,6,0,0,96,96,224,224,96,96,96,0,6,6,24,24,97,97,127,0,0,0,0,0,128,128,224,0,0,0,0,0,7,7,0,96,96,96,96,96,254,254,0,127,1,1,1,1,1,1,0,224,128,128,128,128,128,128,0}, // 14
-	{0,0,0,1,1,6,6,0,0,96,96,224,224,96,96,96,0,127,127,96,96,127,127,0,0,224,224,0,0,128,128,96,0,0,0,0,0,7,7,0,96,96,96,96,96,254,254,0,0,0,0,96,96,31,31,0,96,96,96,96,96,128,128,0}, // 15
-	{0,0,0,1,1,6,6,0,0,96,96,224,224,96,96,96,0,31,31,96,96,96,96,127,0,128,128,96,96,0,0,128,0,0,0,0,0,7,7,0,96,96,96,96,96,254,254,0,127,96,96,96,96,31,31,0,128,96,96,96,96,128,128,0}, // 16
-};
 
 static const u16 s_KbLedOffset[112] = {2876,2877,2878,2883,2884,2885,2886,2887,2899,2900,2901,2902,2903,2915,2916,2917,2918,2919,2931,2932,2933,2934,2935,2939,2940,2941,2942,2943,2948,2949,2950,2955,2956,2957,2958,2959,2971,2972,2973,2974,2975,2987,2988,2989,2990,2991,3003,3004,3005,3006,3007,3011,3012,3013,3014,3015,4668,4669,4670,4675,4676,4677,4678,4679,4691,4692,4693,4694,4695,4707,4708,4709,4710,4711,4723,4724,4725,4726,4727,4731,4732,4733,4734,4735,4740,4741,4742,4747,4748,4749,4750,4751,4763,4764,4765,4766,4767,4779,4780,4781,4782,4783,4795,4796,4797,4798,4799,4803,4804,4805,4806,4807};
 static const u8  s_KbLedStart[16] = {0,8,13,18,28,36,41,46,56,64,69,74,84,92,97,102};
@@ -468,12 +448,17 @@ static void ApplyKeyboardState(u8 kbIndex, u8 col, bool green)
 }
 
 //---------------------------------------------------------------------------------------------------
+static void RefreshMemoryLeds(u8 instance);
+
 static void ApplyIncomingKeyboardMessage(const u8* msg)
 {
 	u8 kbIndex, col;
 	bool green;
-	if (McCom_DecodeKeyboardEvent(msg, &kbIndex, &col, &green))
-		ApplyKeyboardState(kbIndex, col, green);
+	if (!McCom_DecodeKeyboardEvent(msg, &kbIndex, &col, &green)) return;
+	ApplyKeyboardState(kbIndex, col, green);
+	// A switched accessory may break a valid Memory route (its LED goes out)
+	if (McMem_NoteSwitch((u16)(((u16)msg[MCAN_D2] << 8) | msg[MCAN_D3]), green) && (s_PanelType == PANEL_MEMORY))
+		RefreshMemoryLeds((u8)(s_SlotNumber - 1));
 }
 
 //---------------------------------------------------------------------------------------------------
@@ -797,8 +782,8 @@ static void RecomputePanelFromSlot(void)
 //---------------------------------------------------------------------------------------------------
 // Patches the baked "01" address-number display with the current slot's own 1-based number - only
 // meaningful for Keyboard. CU6021/Control80f use RefreshCu6021Display() instead, which reads each
-// instance's own persistent state. Rewrites the COLOR bytes too, not just the pattern bits - the
-// digit shape in this table depends on both.
+// instance's own persistent state. The number is drawn with DrawDigitGlyph() (same glyphs as the CU6021
+// address) into s_RleChunk; the COLOR bytes are rewritten too, not just the pattern bits.
 static void UpdateSlotDisplay(void)
 {
 	if ((s_PanelType == PANEL_KEYBOARD) || (s_PanelType == PANEL_MEMORY))
@@ -807,8 +792,12 @@ static void UpdateSlotDisplay(void)
 		// one visual difference between the two panels besides the content itself, per explicit
 		// instruction, so the two panel families stay distinguishable at a glance from the number alone.
 		u8 numberColor = (s_PanelType == PANEL_MEMORY) ? 0xB1 : 0xF1;
-		VDP_WriteVRAM(&s_DigitPattern[s_SlotNumber - 1][0],  VDP_GetPatternTable_GM2(0) + DIGIT_CELL_OFF_ROW0, 0, 32);
-		VDP_WriteVRAM(&s_DigitPattern[s_SlotNumber - 1][32], VDP_GetPatternTable_GM2(0) + DIGIT_CELL_OFF_ROW1, 0, 32);
+		u8 i;
+		for (i = 0; i < 64; i++) s_RleChunk[i] = 0;
+		DrawDigitGlyph(s_RleChunk, 3, 1, (u8)(s_SlotNumber / 10));
+		DrawDigitGlyph(s_RleChunk, 15, 1, (u8)(s_SlotNumber % 10));
+		VDP_WriteVRAM(s_RleChunk,      VDP_GetPatternTable_GM2(0) + DIGIT_CELL_OFF_ROW0, 0, 32);
+		VDP_WriteVRAM(s_RleChunk + 32, VDP_GetPatternTable_GM2(0) + DIGIT_CELL_OFF_ROW1, 0, 32);
 		VDP_FillVRAM(numberColor, VDP_GetColorTable_GM2(0) + DIGIT_CELL_OFF_ROW0, 0, 32);
 		VDP_FillVRAM(numberColor, VDP_GetColorTable_GM2(0) + DIGIT_CELL_OFF_ROW1, 0, 32);
 		if (s_PanelType == PANEL_MEMORY) RefreshMemoryLeds((u8)(s_SlotNumber - 1));
@@ -924,7 +913,7 @@ void Gui_Init(void)
 
 	// Derived once, together, from the runtime instance counts (g_KeyboardCount/g_C80fCount, set in
 	// main() from the KEYB/C80F env vars before this runs) - both the carousel navigation bound AND
-	// the array-index safety of s_KbColStatus[]/s_DigitPattern[]/s_CuState[] depend on the SAME
+	// the array-index safety of s_KbColStatus[]/s_CuState[] depend on the SAME
 	// underlying counts staying in sync, so they're computed here, in one place.
 	s_SlotLeftMin  = -(i8)(g_KeyboardCount + g_MemoryCount);
 	s_SlotRightMax = (i8)g_C80fCount;
@@ -989,6 +978,11 @@ void Gui_Run(void)
 
 	while (!Keyboard_IsKeyPressed(KEY_ESC))
 	{
+		// Warning blink of crossing Memory routes
+		nxt = McMem_Tick();
+		if ((nxt != 0xFF) && (s_PanelType == PANEL_MEMORY) && (nxt == (u8)(s_SlotNumber - 1)))
+			RefreshMemoryLeds(nxt);
+
 		// Incoming (CAN -> panel) - absorbs McBaseRun()'s CAN pump, plus LED/loco-state sync.
 		if (Can_Check(g_CanAddr))
 		{
@@ -996,6 +990,11 @@ void Gui_Run(void)
 			McanDecode(g_CanRxBuf, rxMsg);
 			McBase_Check(rxMsg);
 			McCom_Check(rxMsg);
+			// S88 event (CAN-ID 0x22 with response bit, sent by mbc88/mbc90): Memory-6043 automatic mode
+			if ((rxMsg[MCAN_ID] == CAN_ID_S88_EVENT) && (rxMsg[MCAN_DLC] == 8) &&
+			    McMem_S88Event((u16)(((u16)rxMsg[MCAN_D2] << 8) | rxMsg[MCAN_D3]), (bool)(rxMsg[MCAN_D5] != 0)) &&
+			    (s_PanelType == PANEL_MEMORY))
+				RefreshMemoryLeds((u8)(s_SlotNumber - 1));
 			// Every Keyboard instance's state follows the bus, whichever panel is on screen - only the
 			// visible Keyboard instance is redrawn right away, the others when carouselled to.
 			ApplyIncomingKeyboardMessage(rxMsg);

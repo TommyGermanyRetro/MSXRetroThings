@@ -699,21 +699,28 @@ void McCom_SendZubehoer(u16 addr, u8 richtung)
 }
 
 //---------------------------------------------------------------------------------------------------
-bool McCom_DecodeKeyboardEvent(const u8* msg, u8* kbIndex, u8* col, bool* green)
+bool McCom_DecodeKeyboardAddr(u16 addr, u8* kbIndex, u8* col)
 {
-	u16 familyBase, addr, offset;
-
-	if (msg[MCAN_ID] != CAN_ID_ZUBEHOER_SCHALTEN) return FALSE;
-	if (msg[MCAN_DLC] != 6) return FALSE; // other 0x16 sub-messages (MD_ALIVE etc.) use DLC=8
+	u16 familyBase, offset;
 
 	familyBase = KeyboardBaseAddr(0);
-	addr = (u16)(((u16)msg[MCAN_D2] << 8) | msg[MCAN_D3]);
 	if (addr < familyBase) return FALSE;
 	offset = (u16)(addr - familyBase);
 	if (offset >= (u16)(g_KeyboardCount * 16)) return FALSE; // runtime count (KEYB env var), not MAX
 
 	*kbIndex = (u8)(offset / 16);
 	*col = (u8)(offset % 16);
+	return TRUE;
+}
+
+//---------------------------------------------------------------------------------------------------
+bool McCom_DecodeKeyboardEvent(const u8* msg, u8* kbIndex, u8* col, bool* green)
+{
+	if (msg[MCAN_ID] != CAN_ID_ZUBEHOER_SCHALTEN) return FALSE;
+	if (msg[MCAN_DLC] != 6) return FALSE; // other 0x16 sub-messages (MD_ALIVE etc.) use DLC=8
+
+	if (!McCom_DecodeKeyboardAddr((u16)(((u16)msg[MCAN_D2] << 8) | msg[MCAN_D3]), kbIndex, col))
+		return FALSE;
 	*green = (bool)(msg[MCAN_D4] != 0);
 	return TRUE;
 }

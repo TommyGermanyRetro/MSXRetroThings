@@ -57,26 +57,8 @@ static void OpenFile(void)
 }
 
 //---------------------------------------------------------------------------------------------------
-// Raw BDOS DISK RESET (function 0Dh, no parameters/results). RAM survives a warm restart on this
-// hardware (only a real power-cycle clears it) - if MSX-DOS's own internal disk-buffer state is
-// among what survives, a warm-restarted program could see stale, pre-write data on its very first
-// read even though the file on disk is already correct. Resets the transfer address back to its
-// default (0x80) as a side effect, so the caller must set it again afterward. Call once at the start
-// of both Store_Load() and Store_Save(), before touching s_File.
-static void DiskReset(void)
-{
-__asm
-	push	ix
-	ld		c, #DOS_FUNC_DSKRST
-	call	BDOS
-	pop		ix
-__endasm;
-}
-
-//---------------------------------------------------------------------------------------------------
 void Store_Load(void)
 {
-	DiskReset();
 	OpenFile();
 
 	// The coupled CAN interrupt can fire at any point during this FCB session - disk I/O on MSX is
@@ -109,7 +91,6 @@ void Store_Save(void)
 	McBase_GetPersist(&s_Buf[O_GUID], &s_Buf[O_CS2GER], &s_Buf[O_DB], &s_Buf[O_NAME]);
 	McCom_GetPersist(&s_Buf[O_SW], &s_Buf[O_MAPPING], &s_Buf[O_BASIS], &s_Buf[O_I2C]);
 
-	DiskReset();
 	OpenFile();
 
 	// Same reasoning as Store_Load() - the whole FCB session (Open/Create through Close) runs with

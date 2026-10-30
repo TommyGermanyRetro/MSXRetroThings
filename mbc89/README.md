@@ -20,14 +20,18 @@ panel's LEDs/knob live).
 
 ## Impressions
 
+All screenshots and the video come from the built-in video recording of the VG-8235 emulator
+([`../emu/`](../emu/)), running mbc89 with the real XIO/RCX cartridges and `RC2014 card E` on the
+[USB2SLOT board](../usb2slot/), connected to a CS3.
+
 Splash screen
 
-![mbc89 splash](images/splash.jpg)
+![mbc89 splash](images/splash.png)
 
 Boot info screen - startup configuration (environment variables), persisted configuration, and
 discovery/init results for the XIO/RCX/CAN chain
 
-![mbc89 boot info](images/init.jpg)
+![mbc89 boot info](images/init.png)
 
 CU6021 panel - locomotive control (speed knob, direction toggle, functions F0-F4), one instance -
 original Maerklin device (left) vs. mbc89 emulation (right)
@@ -46,7 +50,14 @@ control, up to 8 independent instances - original Maerklin device (left) vs. mbc
 
 ![mbc89 Control80f](images/c80f_combo.jpg)
 
-A full startup-to-panel video is included: [`images/startup.mp4`](images/startup.mp4).
+Memory-6043 panel - route memory (record keyboard presses as a route, play it back with one
+button), up to 4 independent instances with 24 routes each - original Maerklin device (left) vs.
+mbc89 emulation (right)
+
+![mbc89 Memory-6043](images/6043_combo.jpg)
+
+A full video from the Nextor prompt through the splash and boot info screens to all four panel
+types is included: [`images/startup.mp4`](images/startup.mp4).
 
 ## Panels
 

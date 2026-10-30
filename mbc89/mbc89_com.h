@@ -74,6 +74,10 @@ void McCom_HandleKeyboardEvent(u8 kbIndex, u8 col, bool green);
 // touching the screen if it happens to be the visible one.
 bool McCom_DecodeKeyboardEvent(const u8* msg, u8* kbIndex, u8* col, bool* green);
 
+// Address part of McCom_DecodeKeyboardEvent(): if addr is one of the g_KeyboardCount simulated
+// Keyboard instances' own accessory addresses, writes instance and column and returns TRUE.
+bool McCom_DecodeKeyboardAddr(u16 addr, u8* kbIndex, u8* col);
+
 // Low-level Zubehoer-Schalten-Versand, fuer mbc89_memory.c's Fahrstraßen-Wiedergabe exportiert (CAN-ID
 // 0x16, DLC 6, Strom=an) - gleiches Drahtformat wie McCom_HandleKeyboardEvent()'s eigener Versand, nur
 // direkt adressiert statt ueber eine Keyboard-Spalte.

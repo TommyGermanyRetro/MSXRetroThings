@@ -38,3 +38,8 @@ void Gui_Init(void);
 // cursor navigation, SPACE-to-toggle, and both CAN directions (outgoing on button press, incoming LED
 // sync). Returns when ESC is pressed.
 void Gui_Run(void);
+
+// Mirrors an accessory command mbc89 sent itself (Memory-6043 route playback) onto the simulated
+// Keyboard instances - the own CAN message never comes back, so without this their LEDs would stay
+// on the old state. Counterpart of the original's I2C mirroring between devices on the same bus.
+void Gui_MirrorZubehoer(u16 addr, u8 richtung);

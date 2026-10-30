@@ -360,11 +360,11 @@ Details coming soon. Card page: [rcx/rc2014_card_i/README.md](rcx/rc2014_card_i/
 
 Splash screen
 
-![mbc89 splash](mbc89/images/splash.jpg)
+![mbc89 splash](mbc89/images/splash.png)
 
 Boot info screen - startup configuration, persisted configuration, and discovery/init results
 
-![mbc89 boot info](mbc89/images/init.jpg)
+![mbc89 boot info](mbc89/images/init.png)
 
 CU6021 panel - locomotive control (speed knob, direction toggle, functions F0-F4), one instance - original Maerklin device (left) vs. mbc89 emulation (right)
 
@@ -378,7 +378,11 @@ Control80f panel - a second locomotive controller alongside CU6021, same speed/d
 
 ![mbc89 Control80f](mbc89/images/c80f_combo.jpg)
 
-A full startup-to-panel video is included: [`mbc89/images/startup.mp4`](mbc89/images/startup.mp4).
+Memory-6043 panel - route memory (record keyboard presses as a route, play it back with one button), up to 4 independent instances with 24 routes each - original Maerklin device (left) vs. mbc89 emulation (right)
+
+![mbc89 Memory-6043](mbc89/images/6043_combo.jpg)
+
+A full video from the Nextor prompt through the splash and boot info screens to all four panel types is included: [`mbc89/images/startup.mp4`](mbc89/images/startup.mp4). Screenshots and video come from the built-in video recording of the VG-8235 emulator, running mbc89 with the real cartridges on the USB2SLOT board.
 
 #### <b>3.3 Hardware:</b>
 

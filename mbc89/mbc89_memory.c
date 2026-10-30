@@ -7,6 +7,7 @@
 //***************************************************************************************************
 #include "mbc89_memory.h"
 #include "mbc89_com.h"
+#include "mbc89_gui.h"
 #include "dos.h"
 #include "memory.h"
 
@@ -80,23 +81,10 @@ static void OpenFile(void)
 }
 
 //---------------------------------------------------------------------------------------------------
-// Siehe mbc89_store.c's DiskReset() - gleiche Begruendung (Warmstart-Stale-Buffer-Risiko).
-static void DiskReset(void)
-{
-__asm
-	push	ix
-	ld		c, #DOS_FUNC_DSKRST
-	call	BDOS
-	pop		ix
-__endasm;
-}
-
-//---------------------------------------------------------------------------------------------------
 // Oeffnet MBC89R.CFG fuer eine Folge von Random-Zugriffen. Der Aufrufer schliesst mit EndSession().
 // Gibt FALSE zurueck, wenn die Datei nicht existiert (Aufrufer entscheidet, ob das ein Fehler ist).
 static bool BeginSession(void)
 {
-	DiskReset();
 	OpenFile();
 	DisableInterrupt();
 	if (DOS_OpenFCB(&s_MemFile) != DOS_ERR_NONE)
@@ -167,7 +155,6 @@ void McMem_Init(void)
 		// Datei existiert noch nicht (Erststart) - anlegen, leer lassen. Jeder spaetere WriteRoute()
 		// materialisiert ihren eigenen Satz on demand, kein Vorab-Befuellen aller MEM_TOTAL_ROUTES
 		// Saetze noetig.
-		DiskReset();
 		OpenFile();
 		DisableInterrupt();
 		DOS_CreateFCB(&s_MemFile);
@@ -272,6 +259,7 @@ static void PlayRoute(u8 globalRoute)
 			u16 addr     = (u16)(((u16)s_MemBuf[O_CMDS + i * 3] << 8) | s_MemBuf[O_CMDS + i * 3 + 1]);
 			u8  richtung = s_MemBuf[O_CMDS + i * 3 + 2];
 			McCom_SendZubehoer(addr, richtung);
+			Gui_MirrorZubehoer(addr, richtung);
 		}
 		BitSet(s_Active, cur, TRUE);
 		if (follow == FOLLOW_NONE) break;

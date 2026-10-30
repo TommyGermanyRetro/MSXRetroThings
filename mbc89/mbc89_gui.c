@@ -458,17 +458,30 @@ static void HandleKeyboardPress(void)
 // exactly like the real device. A message for a DIFFERENT keyboard instance updates that instance's
 // own s_KbColStatus[] entry silently (via McCom_DecodeKeyboardEvent()'s returned kbIndex) so it's
 // correct next time you carousel to it, without touching the screen now.
-static void ApplyIncomingKeyboardMessage(const u8* msg)
+static void ApplyKeyboardState(u8 kbIndex, u8 col, bool green)
 {
-	u8 kbIndex, col;
-	bool green;
-	u16 mask;
-	if (!McCom_DecodeKeyboardEvent(msg, &kbIndex, &col, &green)) return;
-	mask = (u16)(1 << col);
+	u16 mask = (u16)(1 << col);
 	if (green) s_KbColStatus[kbIndex] = (u16)(s_KbColStatus[kbIndex] | mask);
 	else       s_KbColStatus[kbIndex] = (u16)(s_KbColStatus[kbIndex] & ~mask);
 	if ((s_PanelType == PANEL_KEYBOARD) && (kbIndex == (u8)(s_SlotNumber - 1)))
 		SetKeyboardLed(col, green);
+}
+
+//---------------------------------------------------------------------------------------------------
+static void ApplyIncomingKeyboardMessage(const u8* msg)
+{
+	u8 kbIndex, col;
+	bool green;
+	if (McCom_DecodeKeyboardEvent(msg, &kbIndex, &col, &green))
+		ApplyKeyboardState(kbIndex, col, green);
+}
+
+//---------------------------------------------------------------------------------------------------
+void Gui_MirrorZubehoer(u16 addr, u8 richtung)
+{
+	u8 kbIndex, col;
+	if (McCom_DecodeKeyboardAddr(addr, &kbIndex, &col))
+		ApplyKeyboardState(kbIndex, col, (bool)(richtung != 0));
 }
 
 //===================================================================================================
@@ -983,11 +996,10 @@ void Gui_Run(void)
 			McanDecode(g_CanRxBuf, rxMsg);
 			McBase_Check(rxMsg);
 			McCom_Check(rxMsg);
-			if (s_PanelType == PANEL_KEYBOARD)
-			{
-				ApplyIncomingKeyboardMessage(rxMsg);
-			}
-			else if ((s_PanelType == PANEL_CU6021) || (s_PanelType == PANEL_C80F))
+			// Every Keyboard instance's state follows the bus, whichever panel is on screen - only the
+			// visible Keyboard instance is redrawn right away, the others when carouselled to.
+			ApplyIncomingKeyboardMessage(rxMsg);
+			if ((s_PanelType == PANEL_CU6021) || (s_PanelType == PANEL_C80F))
 			{
 				// Stopp/Go is not address-gated (track power, same as the real CU6021) - sync the
 				// GO-LED to the bus-wide state regardless of who sent it (own button OR CS2/ParaCenter).

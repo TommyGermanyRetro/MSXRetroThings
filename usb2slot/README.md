@@ -90,7 +90,7 @@ read byte by byte, as before, and much slower. After an update of this folder, f
 
 ```text
 slottest COM16 hello       version and state of the board
-slottest COM16 scan        what is plugged in: slot expander, ROM/data/empty per subslot, Nextor driver name, I/O ports
+slottest COM16 scan        what is plugged in: slot expander, ROM/data/empty per subslot, Nextor driver name, MegaROM mapper, I/O ports
 slottest COM16 selftest    protocol self test
 slottest COM16 dump 1 4000 4000 rom.bin    read 16 KB from slot 1, address 4000h, into rom.bin
 slottest COM16 clock 0     set the clock of RC2014 card A (PCF8584 at I/O address 0) to the PC time
@@ -117,7 +117,8 @@ The script first asks the board what is plugged in (`slottest scan`), writes mat
 `Documents\openMSX\share\extensions` (`USBSlotAuto1`, `USBSlotAuto2`, `USBSlotAutoIO`) and then starts
 `openmsx\bin\openmsx.exe` with them. It detects:
 
-- a cartridge without slot expander,
+- a cartridge without slot expander; for a MegaROM the mapper type (Konami, Konami SCC, ASCII8, ASCII16) is guessed
+  like openMSX does, from the `LD (nnnn),A` to the bank registers in the 32 KB at 4000h-BFFFh (at least three hits),
 - a cartridge with its own slot expander (contents of each subslot),
 - the SD Mapper/Megaram 512K cartridge, either as Memory Mapper (ports FCh-FFh) or as MegaRAM (ports 8Eh/8Fh);
   only when ROM bank 7 holds the Nextor driver "SDMapper Driver", otherwise it counts as a plain slot expander,
@@ -214,6 +215,7 @@ Rules inside `<USBSlot>` that tell the read cache how the cartridge switches its
 | `<bank page="1" address="0x6000" mask="0x07"/>` | a write to the address selects the ROM bank of the page |
 | `<mapper port="0xFC" mask="0x1F"/>` | Memory Mapper RAM, segments selected by ports FCh-FFh |
 | `<megaram port="0x8E"/>` | MegaRAM with four 8 KB bank registers, switched by ports 8Eh/8Fh |
+| `<rommapper type="konami"/>` | ROM mapper of a MegaROM: `konami`, `konamiscc` (3Fh at 9000h shows the SCC at 9800h-9FFFh, never cached), `ascii8` or `ascii16`; writes to 4000h-BFFFh switch the 8 KB banks, one cache image per bank. Checked with simulated cartridges only so far |
 
 ## 6. Build openMSX yourself
 

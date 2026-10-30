@@ -17,6 +17,14 @@ inline constexpr unsigned WindowSize = 0x2000;
 inline constexpr unsigned LineSize = 256;
 inline constexpr unsigned LinesPerWindow = WindowSize / LineSize;
 
+// ROM mapper of a MegaROM cartridge (8 KiB windows 4000h-BFFFh), as documented in the MSX wiki "MegaROM Mappers":
+// Konami: 4000h fixed bank 0, writes to 6000h-7FFFh, 8000h-9FFFh, A000h-BFFFh switch their window, start 0-3.
+// KonamiScc: writes to 5000h-57FFh, 7000h-77FFh, 9000h-97FFh, B000h-B7FFh switch the windows, start 0-3;
+// 3Fh written to 9000h-97FFh shows the SCC at 9800h-9FFFh (reading it changes the chip, never cached).
+// Ascii8: writes to 6000h, 6800h, 7000h, 7800h (2 KiB each) switch the four windows, start 0.
+// Ascii16: writes to 6000h-67FFh and 7000h-77FFh switch 16 KiB at 4000h and 8000h, start 0.
+enum class RomMapper : std::uint8_t { None, Konami, KonamiScc, Ascii8, Ascii16 };
+
 // How a cartridge switches its memory, for the read cache: one set for a plain cartridge, one per
 // subslot behind its own slot expander.
 struct Rules {
@@ -46,6 +54,9 @@ struct Rules {
     // switching, IN to RAM writes.
     bool megaram = false;
     std::uint8_t megaramPort = 0x8E;
+    // MegaROM: writes to 4000h-BFFFh switch ROM banks and never change the ROM; 0000h-3FFFh and C000h-FFFFh
+    // (mirrors on some cartridges) are read on the board.
+    RomMapper romMapper = RomMapper::None;
 
     void noCache(std::uint16_t base, std::uint32_t size);
     void noCacheWhenSwitched(std::uint16_t base, std::uint32_t size);
@@ -143,6 +154,10 @@ private:
     int cachedByte(std::uint16_t address);
     // Number of bytes the LDI chain around the last instruction fetch will read from address on.
     unsigned ldiChainLength(std::uint16_t address, unsigned limit);
+    // ROM banks and SCC of a MegaROM subslot after power-on.
+    void resetRomMapper(unsigned sub);
+    // Follows a write of the CPU to the ROM banks of a MegaROM subslot.
+    void romMapperWrite(unsigned sub, RomMapper mapper, std::uint16_t address, std::uint8_t value);
 
     Bridge& board;
     std::uint8_t slotNumber;
@@ -153,6 +168,9 @@ private:
     std::array<std::uint8_t, 4> segment{0, 1, 2, 3};
     std::array<std::uint8_t, 4> megaramBank{0, 1, 2, 3};
     bool megaramWrite = false;
+    // MegaROM: 8 KiB bank shown in the windows 4000h, 6000h, 8000h and A000h, per subslot; SCC shown.
+    std::array<std::array<std::uint16_t, 4>, 4> romBank{};
+    std::array<bool, 4> sccOn{};
     std::array<bool, 4> switchedOn{};
     std::uint16_t lastFetch = 0;
     bool fetched = false;

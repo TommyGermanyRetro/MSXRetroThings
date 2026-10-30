@@ -64,6 +64,7 @@ Available rules (per subslot):
 | `mapper` / `<mapper>` | memory mapper switched by ports, writes go through to the cache |
 | `megaram` / `<megaram>` | MegaRAM with four 8 KB bank registers |
 | `spiBlock*` / `<spiblock>` | block read from an SPI window with a fixed clock spacing |
+| `romMapper` / `<rommapper>` | ROM mapper of a MegaROM (Konami, Konami SCC with its SCC area, ASCII8, ASCII16), one cache image per 8 KB bank |
 
 Add a new rule only when no existing one fits, and then in all three places at once (component, openMSX,
 detection), with a test.

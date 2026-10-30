@@ -128,6 +128,80 @@ private:
     std::uint32_t waits_ = 0;
 };
 
+// Guesses the ROM mapper like openMSX (RomFactory): counts LD (nnnn),A (32h nn nn) to the bank registers in the
+// 32 KiB seen at 4000h-BFFFh after /RESET. The winner needs at least three hits, otherwise it is a plain ROM - a
+// 16 or 32 KiB game may store to such an address by chance.
+RomMapper guessRomMapper(Bridge& bridge, std::uint8_t slot)
+{
+    std::vector<std::uint8_t> rom;
+    for (std::uint32_t base = 0x4000; base < 0xC000; base += 0x400) {
+        std::vector<std::uint8_t> block;
+        if (!bridge.readBlock(slot, static_cast<std::uint16_t>(base), 0x400, block) || block.size() != 0x400) {
+            return RomMapper::None;
+        }
+        rom.insert(rom.end(), block.begin(), block.end());
+    }
+    std::array<unsigned, 5> hits{};
+    const auto count = [&hits](RomMapper mapper) { ++hits[static_cast<unsigned>(mapper)]; };
+    for (std::size_t i = 0; i + 2 < rom.size(); ++i) {
+        if (rom[i] != 0x32) continue;
+        switch (rom[i + 1] | (rom[i + 2] << 8)) {
+        case 0x5000:
+        case 0x9000:
+        case 0xB000:
+            count(RomMapper::KonamiScc);
+            break;
+        case 0x4000:
+        case 0x8000:
+        case 0xA000:
+            count(RomMapper::Konami);
+            break;
+        case 0x6800:
+        case 0x7800:
+            count(RomMapper::Ascii8);
+            break;
+        case 0x6000:
+            count(RomMapper::Konami);
+            count(RomMapper::Ascii8);
+            count(RomMapper::Ascii16);
+            break;
+        case 0x7000:
+            count(RomMapper::KonamiScc);
+            count(RomMapper::Ascii8);
+            count(RomMapper::Ascii16);
+            break;
+        case 0x77FF:
+            count(RomMapper::Ascii16);
+            break;
+        default:
+            break;
+        }
+    }
+    auto& ascii8 = hits[static_cast<unsigned>(RomMapper::Ascii8)];
+    if (ascii8 > 0) --ascii8;
+    unsigned best = 0;
+    for (unsigned mapper = 1; mapper < hits.size(); ++mapper) {
+        if (hits[mapper] > 0 && hits[mapper] >= hits[best]) best = mapper;
+    }
+    return hits[best] >= 3 ? static_cast<RomMapper>(best) : RomMapper::None;
+}
+
+const char* mapperName(RomMapper mapper) noexcept
+{
+    switch (mapper) {
+    case RomMapper::Konami:
+        return "Konami";
+    case RomMapper::KonamiScc:
+        return "Konami SCC";
+    case RomMapper::Ascii8:
+        return "ASCII8";
+    case RomMapper::Ascii16:
+        return "ASCII16";
+    default:
+        return "";
+    }
+}
+
 std::uint8_t bcd(int value) noexcept
 {
     return static_cast<std::uint8_t>((((value / 10) % 10) << 4) | (value % 10));
@@ -156,6 +230,7 @@ Detection detectBoard(Bridge& bridge)
     std::array<bool, 2> expander{};
     std::array<bool, 2> sdMapper{};
     std::array<std::array<Content, 4>, 2> contents{};
+    std::array<RomMapper, 2> romMapper{};
     for (std::uint8_t slot = 1; slot <= 2; ++slot) {
         std::uint32_t waits = 0;
         const auto old = bridge.readMemory(slot, 0xFFFF, false, waits);
@@ -174,6 +249,7 @@ Detection detectBoard(Bridge& bridge)
             bridge.writeMemory(slot, 0xFFFF, old);
             contents[slot - 1][0] = classify(bridge, slot);
             if (contents[slot - 1][0] == Content::Rom && hasRcxRom(bridge, slot)) detection.rcxRom = true;
+            if (contents[slot - 1][0] == Content::Rom) romMapper[slot - 1] = guessRomMapper(bridge, slot);
         }
     }
 
@@ -195,6 +271,10 @@ Detection detectBoard(Bridge& bridge)
         if (!expander[index]) {
             if (sub[0] == Content::Empty) continue;
             config.description = "Cartridge";
+            if (romMapper[index] != RomMapper::None) {
+                config.rules[0].romMapper = romMapper[index];
+                config.description += std::string(" (") + mapperName(romMapper[index]) + ")";
+            }
         } else if (sdMapper[index]) {
             // SD Mapper/Megaram 512K: Nextor ROM with its bank register at 6000h in subslot 1; a write
             // to 6001h (bit 0) switches 4000h-47FFh and 4800h to the SPI port of the SD cards. Its driver
@@ -268,6 +348,7 @@ ClockResult setCardClock(Bridge& bridge, const Detection& detection, std::uint8_
 BoardSlot::BoardSlot(Bridge& bridge, std::uint8_t number, SlotConfig config)
     : board(bridge), slotNumber(number), settings(std::move(config))
 {
+    for (unsigned sub = 0; sub < 4; ++sub) resetRomMapper(sub);
 }
 
 Bridge& BoardSlot::bridge() noexcept
@@ -309,6 +390,10 @@ std::uint32_t BoardSlot::imageKey(unsigned window) const noexcept
     if (rules.bankPage == static_cast<int>(page)) {
         return (sub << 24) | (2u << 20) | (page << 16) | (static_cast<unsigned>(bank[sub]) << 1) | half;
     }
+    // A MegaROM bank is the same 8 KiB of ROM in whichever window it is shown
+    if (rules.romMapper != RomMapper::None && window >= 2 && window <= 5) {
+        return (sub << 24) | (4u << 20) | romBank[sub][window - 2];
+    }
     return (sub << 24) | (window << 16);
 }
 
@@ -330,6 +415,10 @@ bool BoardSlot::isUncached(std::uint16_t address) const noexcept
     const unsigned sub = subslotOf(address / PageSize);
     const Rules& rules = settings.rules[sub];
     const unsigned line = address / LineSize;
+    if (rules.romMapper != RomMapper::None) {
+        if (address < 0x4000 || address >= 0xC000) return true;
+        if (rules.romMapper == RomMapper::KonamiScc && sccOn[sub] && address >= 0x9800 && address < 0xA000) return true;
+    }
     return rules.uncached.test(line) || (switchedOn[sub] && rules.switchedUncached.test(line));
 }
 
@@ -416,6 +505,10 @@ void BoardSlot::write(std::uint16_t address, std::uint8_t value)
     const unsigned page = address / PageSize;
     const unsigned sub = subslotOf(page);
     const Rules& rules = settings.rules[sub];
+    if (rules.romMapper != RomMapper::None) {
+        if (address >= 0x4000 && address < 0xC000) romMapperWrite(sub, rules.romMapper, address, value);
+        return;
+    }
     if (rules.bankPage >= 0 && address == rules.bankAddress) {
         bank[sub] = static_cast<std::uint8_t>(value & rules.bankMask);
         return;
@@ -505,6 +598,52 @@ void BoardSlot::reset()
     segment = {0, 1, 2, 3};
     megaramBank = {0, 1, 2, 3};
     megaramWrite = false;
+    for (unsigned sub = 0; sub < 4; ++sub) resetRomMapper(sub);
+}
+
+void BoardSlot::resetRomMapper(unsigned sub)
+{
+    switch (settings.rules[sub].romMapper) {
+    case RomMapper::Konami:
+    case RomMapper::KonamiScc:
+        romBank[sub] = {0, 1, 2, 3};
+        break;
+    case RomMapper::Ascii16:
+        romBank[sub] = {0, 1, 0, 1};
+        break;
+    default:
+        romBank[sub] = {0, 0, 0, 0};
+        break;
+    }
+    sccOn[sub] = false;
+}
+
+void BoardSlot::romMapperWrite(unsigned sub, RomMapper mapper, std::uint16_t address, std::uint8_t value)
+{
+    auto& banks = romBank[sub];
+    switch (mapper) {
+    case RomMapper::Konami:
+        // 4000h-5FFFh is fixed at bank 0
+        if (address >= 0x6000) banks[(address >> 13) - 2] = value;
+        break;
+    case RomMapper::KonamiScc:
+        if (sccOn[sub] && address >= 0x9800 && address < 0xA000) break; // SCC register
+        if ((address & 0xF800) == 0x9000) sccOn[sub] = (value & 0x3F) == 0x3F;
+        if ((address & 0x1800) == 0x1000) banks[(address >> 13) - 2] = value;
+        break;
+    case RomMapper::Ascii8:
+        if (address >= 0x6000 && address < 0x8000) banks[(address >> 11) & 3] = value;
+        break;
+    case RomMapper::Ascii16:
+        if (address >= 0x6000 && address < 0x7800 && (address & 0x0800) == 0) {
+            const unsigned half = ((address >> 12) & 1) * 2;
+            banks[half] = static_cast<std::uint16_t>(value * 2);
+            banks[half + 1] = static_cast<std::uint16_t>(value * 2 + 1);
+        }
+        break;
+    default:
+        break;
+    }
 }
 
 void BoardSlot::dropSpiBlock()

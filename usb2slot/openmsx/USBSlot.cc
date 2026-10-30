@@ -171,6 +171,20 @@ void USBSlot::parseRules(const XMLElement& element, Rules& r)
 		r.megaram = true;
 		r.megaramPort = static_cast<uint16_t>(m->getAttributeValueAsInt("port", 0x8E) & 0xFE);
 	}
+	if (const auto* m = element.findChild("rommapper")) {
+		const auto type = m->getAttributeValue("type");
+		if (type == "konami") {
+			r.romMapper = RomMapper::Konami;
+		} else if (type == "konamiscc") {
+			r.romMapper = RomMapper::KonamiScc;
+		} else if (type == "ascii8") {
+			r.romMapper = RomMapper::Ascii8;
+		} else if (type == "ascii16") {
+			r.romMapper = RomMapper::Ascii16;
+		} else {
+			throw MSXException("USBSlot: <rommapper type=\"konami|konamiscc|ascii8|ascii16\">");
+		}
+	}
 }
 
 void USBSlot::linkFailed()
@@ -266,6 +280,10 @@ uint32_t USBSlot::imageKey(unsigned window) const
 	if (r.bankPage == static_cast<int>(page)) {
 		return (sub << 24) | (2u << 20) | (page << 16) | (bank[sub] << 1) | half;
 	}
+	// A MegaROM bank is the same 8 KB of ROM in whichever window it is shown
+	if (r.romMapper != RomMapper::None && window >= 2 && window <= 5) {
+		return (sub << 24) | (4u << 20) | romBank[sub][window - 2];
+	}
 	return (sub << 24) | (window << 16);
 }
 
@@ -288,6 +306,14 @@ bool USBSlot::isUncached(uint16_t address) const
 {
 	unsigned sub = subslotOf(address / PAGE_SIZE);
 	unsigned line = address / LINE_SIZE;
+	if (rules[sub].romMapper != RomMapper::None) {
+		if (address < 0x4000 || address >= 0xC000) {
+			return true;
+		}
+		if (rules[sub].romMapper == RomMapper::KonamiScc && sccOn[sub] && address >= 0x9800 && address < 0xA000) {
+			return true;
+		}
+	}
 	return rules[sub].uncached.test(line) || (switchedOn[sub] && rules[sub].switchedUncached.test(line));
 }
 
@@ -340,6 +366,80 @@ void USBSlot::resetState()
 	megaramWrite = false;
 	switchedOn.fill(false);
 	spiBuffer.clear();
+	for (unsigned sub = 0; sub < 4; ++sub) {
+		resetRomMapper(sub);
+	}
+}
+
+void USBSlot::resetRomMapper(unsigned sub)
+{
+	switch (rules[sub].romMapper) {
+	case RomMapper::Konami:
+	case RomMapper::KonamiScc:
+		romBank[sub] = {0, 1, 2, 3};
+		break;
+	case RomMapper::Ascii16:
+		romBank[sub] = {0, 1, 0, 1};
+		break;
+	default:
+		romBank[sub] = {0, 0, 0, 0};
+		break;
+	}
+	sccOn[sub] = false;
+}
+
+// Follows a write of the CPU to the ROM banks of a MegaROM subslot; a window that now shows another
+// bank, and the SCC area when it appears or goes away, must not be read from the CPU cache any more
+void USBSlot::romMapperWrite(unsigned sub, uint16_t address, byte value)
+{
+	auto& banks = romBank[sub];
+	const auto setBank = [&](unsigned index, uint16_t number) {
+		if (banks[index] != number) {
+			banks[index] = number;
+			if (subslotOf((index + 2) / 2) == sub) {
+				invalidateWindow(index + 2);
+			}
+		}
+	};
+	switch (rules[sub].romMapper) {
+	case RomMapper::Konami:
+		// 4000h-5FFFh is fixed at bank 0
+		if (address >= 0x6000) {
+			setBank((address >> 13) - 2, value);
+		}
+		break;
+	case RomMapper::KonamiScc:
+		if (sccOn[sub] && address >= 0x9800 && address < 0xA000) {
+			break; // SCC register
+		}
+		if ((address & 0xF800) == 0x9000) {
+			const bool on = (value & 0x3F) == 0x3F;
+			if (on != sccOn[sub]) {
+				sccOn[sub] = on;
+				if (subslotOf(2) == sub) {
+					invalidateDeviceRCache(0x9800, 0x0800);
+				}
+			}
+		}
+		if ((address & 0x1800) == 0x1000) {
+			setBank((address >> 13) - 2, value);
+		}
+		break;
+	case RomMapper::Ascii8:
+		if (address >= 0x6000 && address < 0x8000) {
+			setBank((address >> 11) & 3, value);
+		}
+		break;
+	case RomMapper::Ascii16:
+		if (address >= 0x6000 && address < 0x7800 && (address & 0x0800) == 0) {
+			const unsigned half = ((address >> 12) & 1) * 2;
+			setBank(half, static_cast<uint16_t>(value * 2));
+			setBank(half + 1, static_cast<uint16_t>(value * 2 + 1));
+		}
+		break;
+	default:
+		break;
+	}
 }
 
 // The sector read was broken off: the bridge has clocked bytes the CPU will not read
@@ -559,6 +659,12 @@ void USBSlot::writeMem(uint16_t address, byte value, EmuTime /*time*/)
 	const unsigned page = address / PAGE_SIZE;
 	const unsigned sub = subslotOf(page);
 	const Rules& r = rules[sub];
+	if (r.romMapper != RomMapper::None) {
+		if (address >= 0x4000 && address < 0xC000) {
+			romMapperWrite(sub, address, value);
+		}
+		return;
+	}
 	if (r.bankPage >= 0 && address == r.bankAddress) {
 		bank[sub] = value & r.bankMask;
 		if (subslotOf(r.bankPage) == sub) {

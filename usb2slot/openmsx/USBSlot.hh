@@ -51,6 +51,14 @@ struct USBSlotLink;
   *   <megaram port="0x8E"/>                 MegaRAM: four 8 KB bank registers selected by A14-A13;
   *                                          OUT to port/port+1 enables bank switching (any write
   *                                          sets the register), IN enables RAM writes
+  *   <rommapper type="konami|konamiscc|ascii8|ascii16"/>
+  *                                          ROM mapper of a MegaROM (MSX wiki "MegaROM Mappers"):
+  *                                          writes to 4000h-BFFFh switch the 8 KB banks and never
+  *                                          change the ROM; konami: 6000h/8000h/A000h (4000h fixed),
+  *                                          konamiscc: 5000h/7000h/9000h/B000h, 3Fh at 9000h shows
+  *                                          the SCC at 9800h-9FFFh (never cached), ascii8: 6000h/
+  *                                          6800h/7000h/7800h, ascii16: 6000h/7000h (16 KB); the
+  *                                          mirrors outside 4000h-BFFFh are read from the cartridge
   * The cache works on 8 KB windows, so that every bank register of a MegaRAM has its own image.
   */
 class USBSlot final : public MSXDevice
@@ -81,6 +89,8 @@ private:
 	static constexpr unsigned WINDOW_LINES = WINDOW_SIZE / LINE_SIZE;
 	static constexpr uint64_t OFF_CHECK_US = 100000;    // half the heartbeat time limit of the bridge
 
+	enum class RomMapper : uint8_t { None, Konami, KonamiScc, Ascii8, Ascii16 };
+
 	// Switching rules of one subslot (or of the whole slot without expander)
 	struct Rules {
 		std::bitset<0x10000 / LINE_SIZE> uncached;
@@ -97,6 +107,7 @@ private:
 		byte mapperMask = 0xFF;
 		bool megaram = false;
 		uint16_t megaramPort = 0;
+		RomMapper romMapper = RomMapper::None;
 	};
 
 	// Cached contents of one 8 KB window image (half of a ROM bank or mapper segment, one MegaRAM
@@ -129,6 +140,8 @@ private:
 	void spiBroken();
 	int cachedByte(uint16_t address);
 	unsigned ldiChainLength(unsigned limit);
+	void resetRomMapper(unsigned sub);
+	void romMapperWrite(unsigned sub, uint16_t address, byte value);
 
 	struct SyncRun final : Schedulable {
 		explicit SyncRun(USBSlot& owner_, Scheduler& s)
@@ -151,6 +164,9 @@ private:
 	std::array<byte, 4> megaramBank = {0, 1, 2, 3};
 	bool megaramWrite = false;
 	std::array<bool, 4> switchedOn = {};
+	// MegaROM: 8 KB bank shown at 4000h, 6000h, 8000h and A000h, and whether the SCC is shown, per subslot
+	std::array<std::array<uint16_t, 4>, 4> romBank = {};
+	std::array<bool, 4> sccOn = {};
 	std::vector<byte> spiBuffer;
 	size_t spiPosition = 0;
 	uint16_t spiNext = 0;

@@ -10,6 +10,7 @@
 #include <memory>
 #include <string>
 #include <thread>
+#include <utility>
 #include <vector>
 
 namespace {
@@ -640,6 +641,233 @@ void testMegaram()
 
 } // namespace
 
+// Simulated board with a MegaROM cartridge in slot 1 (512 KiB, byte = bank number XOR offset low byte, "AB" at the
+// start of bank 0), switched like the real mapper types; with KonamiScc and 3Fh in bank register 3 every read of
+// 9800h-9FFFh returns the next value of a counter (the SCC changes on reads). Bank 0 holds the LD (nnnn),A
+// instructions a game of that type uses.
+class MegaRomBoard final : public usbslot::Transport {
+public:
+    int singleReads = 0;
+    int blockReads = 0;
+
+    explicit MegaRomBoard(usbslot::RomMapper mapper) : type(mapper)
+    {
+        for (std::size_t i = 0; i < rom.size(); ++i) rom[i] = static_cast<std::uint8_t>((i >> 13) ^ (i & 0xFF));
+        rom[0] = 'A';
+        rom[1] = 'B';
+        std::vector<std::uint16_t> registers;
+        switch (mapper) {
+        case usbslot::RomMapper::Konami: registers = {0x6000, 0x8000, 0xA000, 0x8000}; break;
+        case usbslot::RomMapper::KonamiScc: registers = {0x5000, 0x7000, 0x9000, 0xB000}; break;
+        case usbslot::RomMapper::Ascii8: registers = {0x6000, 0x6800, 0x7000, 0x7800}; break;
+        default: registers = {0x6000, 0x77FF, 0x6000, 0x77FF}; break;
+        }
+        std::size_t at = 0x100;
+        for (const auto address : registers) {
+            rom[at++] = 0x32;
+            rom[at++] = static_cast<std::uint8_t>(address & 0xFF);
+            rom[at++] = static_cast<std::uint8_t>(address >> 8);
+        }
+        reset();
+    }
+
+    [[nodiscard]] std::uint8_t romByte(unsigned number, unsigned offset) const { return rom[(number << 13) | offset]; }
+
+    bool memRead(std::uint8_t slot, std::uint16_t address, bool, std::uint8_t& data, std::uint32_t& waits) override
+    {
+        ++singleReads;
+        data = load(slot, address);
+        waits = 0;
+        return true;
+    }
+    bool memReadBlock(std::uint8_t slot, std::uint16_t address, std::uint16_t count, std::vector<std::uint8_t>& data) override
+    {
+        ++blockReads;
+        data.resize(count);
+        for (std::uint16_t i = 0; i < count; ++i) data[i] = load(slot, static_cast<std::uint16_t>(address + i));
+        return true;
+    }
+    bool memReadBlockSpaced(std::uint8_t, std::uint16_t, std::uint16_t, std::uint8_t, std::vector<std::uint8_t>& data) override
+    {
+        data.clear();
+        return true;
+    }
+    bool memWrite(std::uint8_t slot, std::uint16_t address, std::uint8_t value) override
+    {
+        if (slot != 1 || address < 0x4000 || address >= 0xC000) return true;
+        switch (type) {
+        case usbslot::RomMapper::Konami:
+            if (address >= 0x6000) bank[(address >> 13) - 2] = value;
+            break;
+        case usbslot::RomMapper::KonamiScc:
+            if ((address & 0xF800) == 0x9000) scc = (value & 0x3F) == 0x3F;
+            if ((address & 0x1800) == 0x1000) bank[(address >> 13) - 2] = value;
+            break;
+        case usbslot::RomMapper::Ascii8:
+            if (address >= 0x6000 && address < 0x8000) bank[(address >> 11) & 3] = value;
+            break;
+        default:
+            if (address >= 0x6000 && address < 0x7800 && (address & 0x0800) == 0) {
+                const unsigned half = ((address >> 12) & 1) * 2;
+                bank[half] = static_cast<std::uint16_t>(value * 2);
+                bank[half + 1] = static_cast<std::uint16_t>(value * 2 + 1);
+            }
+            break;
+        }
+        return true;
+    }
+    bool ioRead(std::uint8_t, std::uint8_t& data, std::uint32_t& waits) override
+    {
+        data = 0xFF;
+        waits = 0;
+        return true;
+    }
+    bool ioWrite(std::uint8_t, std::uint8_t, std::uint32_t& waits) override
+    {
+        waits = 0;
+        return true;
+    }
+    bool reset() override
+    {
+        if (type == usbslot::RomMapper::Ascii8) bank = {0, 0, 0, 0};
+        else if (type == usbslot::RomMapper::Ascii16) bank = {0, 1, 0, 1};
+        else bank = {0, 1, 2, 3};
+        scc = false;
+        return true;
+    }
+    bool run() override { return true; }
+    bool sync(bool& running, std::uint8_t& intLevel) override
+    {
+        running = true;
+        intLevel = 1;
+        return true;
+    }
+    bool poll() override { return true; }
+    bool popInterrupt(std::uint8_t&) override { return false; }
+    std::string error() const override { return {}; }
+
+private:
+    std::uint8_t load(std::uint8_t slot, std::uint16_t address) const
+    {
+        if (slot != 1 || address < 0x4000 || address >= 0xC000) return 0xFF;
+        if (type == usbslot::RomMapper::KonamiScc && scc && address >= 0x9800 && address < 0xA000) return sccCounter++;
+        return rom[(static_cast<std::size_t>(bank[(address >> 13) - 2] & 0x3F) << 13) | (address & 0x1FFF)];
+    }
+
+    usbslot::RomMapper type;
+    std::array<std::uint8_t, 512 * 1024> rom{};
+    std::array<std::uint16_t, 4> bank{};
+    bool scc = false;
+    mutable std::uint8_t sccCounter = 0;
+};
+
+void testMegaRomDetection()
+{
+    const std::pair<usbslot::RomMapper, const char*> types[] = {
+        {usbslot::RomMapper::Konami, "Cartridge (Konami)"},
+        {usbslot::RomMapper::KonamiScc, "Cartridge (Konami SCC)"},
+        {usbslot::RomMapper::Ascii8, "Cartridge (ASCII8)"},
+        {usbslot::RomMapper::Ascii16, "Cartridge (ASCII16)"},
+    };
+    for (const auto& [mapper, name] : types) {
+        usbslot::Bridge bridge(std::make_unique<MegaRomBoard>(mapper));
+        const auto detection = usbslot::detectBoard(bridge);
+        require(detection.occupied[0] && detection.slots[0].rules[0].romMapper == mapper &&
+                    detection.slots[0].description == name,
+                "the mapper of a MegaROM is guessed from the LD (nnnn),A to its bank registers");
+    }
+}
+
+void testMegaRomCache()
+{
+    auto transport = std::make_unique<MegaRomBoard>(usbslot::RomMapper::Konami);
+    auto* board = transport.get();
+    usbslot::Bridge bridge(std::move(transport));
+    usbslot::SlotConfig config;
+    config.rules[0].romMapper = usbslot::RomMapper::Konami;
+    usbslot::BoardSlot slot(bridge, 1, config);
+    std::uint32_t waits = 0;
+
+    require(slot.read(0x8010, false, waits) == board->romByte(2, 0x10), "Konami starts with bank 2 at 8000h");
+    slot.write(0x8000, 7);
+    require(slot.read(0x8010, false, waits) == board->romByte(7, 0x10), "a write to 8000h-9FFFh switches the bank");
+    const int blocks = board->blockReads;
+    slot.write(0x6000, 7);
+    require(slot.read(0x6010, false, waits) == board->romByte(7, 0x10) && board->blockReads == blocks,
+            "a bank shown in another window comes from the same image");
+    slot.write(0x8000, 2);
+    require(slot.read(0x8010, false, waits) == board->romByte(2, 0x10) && board->blockReads == blocks,
+            "switching back serves the old bank from the cache");
+    slot.write(0x4000, 9);
+    require(slot.read(0x4010, false, waits) == board->romByte(0, 0x10), "4000h-5FFFh stays at bank 0");
+    const int singles = board->singleReads;
+    slot.write(0x4010, 0x55);
+    (void)slot.read(0x4010, false, waits);
+    require(board->singleReads == singles, "a write to MegaROM does not mark the byte as stale");
+    (void)slot.read(0x0010, false, waits);
+    require(board->singleReads == singles + 1, "the mirror areas outside 4000h-BFFFh are read on the board");
+    // Machine reset as in the frontends: /RESET on the board, then the slot
+    (void)bridge.reset();
+    slot.reset();
+    require(slot.read(0x6010, false, waits) == board->romByte(1, 0x10), "reset sets the start banks again");
+}
+
+void testAscii16AndScc()
+{
+    {
+        auto transport = std::make_unique<MegaRomBoard>(usbslot::RomMapper::Ascii16);
+        auto* board = transport.get();
+        usbslot::Bridge bridge(std::move(transport));
+        usbslot::SlotConfig config;
+        config.rules[0].romMapper = usbslot::RomMapper::Ascii16;
+        usbslot::BoardSlot slot(bridge, 1, config);
+        std::uint32_t waits = 0;
+        slot.write(0x6000, 3);
+        require(slot.read(0x4020, false, waits) == board->romByte(6, 0x20) &&
+                    slot.read(0x6020, false, waits) == board->romByte(7, 0x20),
+                "ASCII16 switches 16 KiB at 4000h with 6000h");
+        slot.write(0x77FF, 5);
+        require(slot.read(0x8020, false, waits) == board->romByte(10, 0x20) &&
+                    slot.read(0xA020, false, waits) == board->romByte(11, 0x20),
+                "ASCII16 switches 16 KiB at 8000h with 77FFh");
+        slot.write(0x6800, 1);
+        require(slot.read(0x4020, false, waits) == board->romByte(6, 0x20), "6800h-6FFFh is no ASCII16 register");
+    }
+    {
+        auto transport = std::make_unique<MegaRomBoard>(usbslot::RomMapper::Ascii8);
+        auto* board = transport.get();
+        usbslot::Bridge bridge(std::move(transport));
+        usbslot::SlotConfig config;
+        config.rules[0].romMapper = usbslot::RomMapper::Ascii8;
+        usbslot::BoardSlot slot(bridge, 1, config);
+        std::uint32_t waits = 0;
+        require(slot.read(0xA030, false, waits) == board->romByte(0, 0x30), "ASCII8 starts with bank 0 everywhere");
+        slot.write(0x7800, 4);
+        require(slot.read(0xA030, false, waits) == board->romByte(4, 0x30), "7800h switches A000h-BFFFh");
+    }
+    {
+        auto transport = std::make_unique<MegaRomBoard>(usbslot::RomMapper::KonamiScc);
+        auto* board = transport.get();
+        usbslot::Bridge bridge(std::move(transport));
+        usbslot::SlotConfig config;
+        config.rules[0].romMapper = usbslot::RomMapper::KonamiScc;
+        usbslot::BoardSlot slot(bridge, 1, config);
+        std::uint32_t waits = 0;
+        slot.write(0x7000, 6);
+        require(slot.read(0x6040, false, waits) == board->romByte(6, 0x40), "Konami SCC switches 6000h with 7000h");
+        slot.write(0x6000, 9);
+        require(slot.read(0x6040, false, waits) == board->romByte(6, 0x40), "6000h is no Konami SCC register");
+        slot.write(0x9000, 0x3F);
+        const int singles = board->singleReads;
+        const auto first = slot.read(0x9800, false, waits);
+        const auto second = slot.read(0x9800, false, waits);
+        require(board->singleReads == singles + 2 && first != second,
+                "with 3Fh at 9000h every read of the SCC goes to the board");
+        slot.write(0x9000, 2);
+        require(slot.read(0x9810, false, waits) == board->romByte(2, 0x1810), "without the SCC 9800h is ROM again");
+    }
+}
+
 int main()
 {
     testForwarding();
@@ -655,6 +883,9 @@ int main()
     testSdMapperSpiSwitch();
     testSdMapperSectorBlock();
     testMegaram();
+    testMegaRomDetection();
+    testMegaRomCache();
+    testAscii16AndScc();
     std::cout << "usbslot_tests passed\n";
     return EXIT_SUCCESS;
 }

@@ -24,7 +24,7 @@
 //***************************************************************************************************
 //* MSX (c) 2026 by Dr.-Ing. Thomas Wiesner
 //***************************************************************************************************
-//* VERSION: 28/10/26
+//* VERSION: 30/10/26
 //***************************************************************************************************
 
 #define _CRT_SECURE_NO_WARNINGS
@@ -348,7 +348,60 @@ static void scan(Link &link)
             {
                 link.memWrite(slot, 0xFFFF, static_cast<uint8_t>(old));
             }
-            printf("SUB %u 0 %s\n", slot, classify(slot));
+            const char *kind = classify(slot);
+            printf("SUB %u 0 %s\n", slot, kind);
+            // MegaROM: Mapper wie openMSX raten - LD (nnnn),A (32h nn nn) auf die Bankregister der Typen in den
+            // 32 KB bei 4000h-BFFFh nach /RESET zaehlen; mindestens 3 Treffer, sonst einfaches ROM
+            if (strcmp(kind, "ROM") == 0)
+            {
+                std::vector<uint8_t> rom;
+                bool ok = true;
+                for (uint32_t base = 0x4000; base < 0xC000 && ok; base += 0x400)
+                {
+                    std::vector<uint8_t> blk;
+                    uint16_t waits = 0;
+                    uint8_t status = 0;
+                    ok = link.memReadBlock(slot, static_cast<uint16_t>(base), 0x400, blk, waits, status) &&
+                         status == StOk && blk.size() == 0x400;
+                    rom.insert(rom.end(), blk.begin(), blk.end());
+                }
+                // 0 konami, 1 konamiscc, 2 ascii8, 3 ascii16
+                unsigned hits[4] = {};
+                for (size_t i = 0; ok && i + 2 < rom.size(); i++)
+                {
+                    if (rom[i] != 0x32)
+                    {
+                        continue;
+                    }
+                    switch (rom[i + 1] | (rom[i + 2] << 8))
+                    {
+                    case 0x5000: case 0x9000: case 0xB000: hits[1]++; break;
+                    case 0x4000: case 0x8000: case 0xA000: hits[0]++; break;
+                    case 0x6800: case 0x7800: hits[2]++; break;
+                    case 0x6000: hits[0]++; hits[2]++; hits[3]++; break;
+                    case 0x7000: hits[1]++; hits[2]++; hits[3]++; break;
+                    case 0x77FF: hits[3]++; break;
+                    default: break;
+                    }
+                }
+                if (hits[2] > 0)
+                {
+                    hits[2]--;
+                }
+                static const char *const names[4] = { "konami", "konamiscc", "ascii8", "ascii16" };
+                int best = -1;
+                for (int t = 0; t < 4; t++)
+                {
+                    if (hits[t] > 0 && (best < 0 || hits[t] >= hits[best]))
+                    {
+                        best = t;
+                    }
+                }
+                if (best >= 0 && hits[best] >= 3)
+                {
+                    printf("ROMMAPPER %u %s\n", slot, names[best]);
+                }
+            }
         }
     }
 

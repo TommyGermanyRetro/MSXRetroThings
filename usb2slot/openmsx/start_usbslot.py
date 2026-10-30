@@ -11,7 +11,8 @@ Benutzerverzeichnis von openMSX:
         Nextor-Treiber "SDMapper Driver"): Nextor-Bank und SPI-Schalter 6001h in Unterslot 1 mit Sektorblock
         (Bridge-Protokoll 3), Unterslot 3 als Memory Mapper (Ports FCh-FFh antworten mit E0h..) oder MegaRAM
       - anderer Expander: <expander>true</expander> ohne weitere Regeln
-      - ohne Expander: einfache Cartridge
+      - ohne Expander: einfache Cartridge; MegaROM (slottest meldet ROMMAPPER konami/konamiscc/ascii8/ascii16)
+        mit <rommapper type="..."/>
       - leerer Slot: keine Erweiterung
   USBSlotAutoIO.xml  I/O-Ports 40h-47h, wenn an Port 40h die Kennung C0h antwortet
 
@@ -82,7 +83,8 @@ def scan():
     """Fuehrt slottest scan aus und liefert (slots, swio, mapperports)."""
     ausgabe = subprocess.run([SLOTTEST, PORT, "scan"], capture_output=True, text=True, check=False,
                              creationflags=OHNE_FENSTER).stdout
-    slots = {1: {"expander": False, "sub": {}, "treiber": ""}, 2: {"expander": False, "sub": {}, "treiber": ""}}
+    slots = {1: {"expander": False, "sub": {}, "treiber": "", "rommapper": ""},
+             2: {"expander": False, "sub": {}, "treiber": "", "rommapper": ""}}
     swio = False
     mapperports = []
     for zeile in ausgabe.splitlines():
@@ -93,6 +95,8 @@ def scan():
             slots[int(teile[1])]["expander"] = teile[3] == "1"
         elif teile[0] == "SUB":
             slots[int(teile[1])]["sub"][int(teile[2])] = teile[3]
+        elif teile[0] == "ROMMAPPER":
+            slots[int(teile[1])]["rommapper"] = teile[2]
         elif teile[0] == "DRIVER":
             slots[int(teile[1])]["treiber"] = " ".join(teile[2:])
         elif teile[0] == "SWIO":
@@ -119,6 +123,9 @@ def erweiterung_slot(nr, info, mapper_aktiv):
     if not info["expander"]:
         if sub.get(0) == "EMPTY":
             return None
+        if info["rommapper"]:
+            regeln = "          <rommapper type=\"{}\"/>\n".format(info["rommapper"])
+            return "Cartridge ({})".format(info["rommapper"]), geraet(nr, regeln)
         return "Cartridge", geraet(nr, "")
     if sub.get(1) == "ROM" and sub.get(3) == "DATA" and info["treiber"] == "SDMapper Driver":
         nextor = ("          <subslot id=\"1\">\n"

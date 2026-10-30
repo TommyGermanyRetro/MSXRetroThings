@@ -20,15 +20,21 @@ module slot to the board, so the CPU reads and writes the real cartridge.
   first read of a 256-byte line fetches the whole line, further reads cost no USB transfer. A write marks only its
   byte as stale (RAM of a Memory Mapper or MegaRAM takes the value at once); a stale byte is read on the board
   again. The cache follows the switching of the cartridge through `Rules`: its own slot expander (FFFFh, answered
-  from the register), a ROM bank register, Memory Mapper segments (ports), MegaRAM banks, and areas without cache.
-  Every mapper segment, MegaRAM bank and ROM bank has its own window image.
+  from the register), a ROM bank register, Memory Mapper segments (ports), MegaRAM banks, the ROM mapper of a
+  MegaROM (`RomMapper`: Konami, Konami SCC, ASCII8, ASCII16 - writes to 4000h-BFFFh switch banks and leave the
+  cache alone; with Konami SCC and 3Fh at 9000h the SCC at 9800h-9FFFh is read on the board), and areas without
+  cache. Every mapper segment, MegaRAM bank and ROM bank has its own window image; a MegaROM bank shares one image
+  in whichever window it is shown.
 - `detectBoard()` probes the board like the start script of the USB2SLOT project: slot expander, ROM, data or
   empty per (sub)slot, switched I/O ID C0h at port 40h, Memory Mapper answers at FCh-FFh. It returns the rules,
   the I/O ports to forward and a description per slot. Known profile: the SD Mapper/Megaram 512K (Nextor bank
   register at 6000h; 4000h-47FFh and 4800h are read on the board only while bit 0 of the last write to 6001h
   switches them to the SPI port of the SD cards, otherwise the Nextor ROM there is cached; Memory Mapper or
   MegaRAM in subslot 3). It is only given when ROM bank 7 holds the Nextor driver header "NEXTOR_DRIVER"
-  with the name "SDMapper Driver"; otherwise the cartridge is a plain slot expander.
+  with the name "SDMapper Driver"; otherwise the cartridge is a plain slot expander. For a ROM cartridge
+  without expander the mapper is guessed like openMSX does: LD (nnnn),A (32h nn nn) to the bank registers of
+  each type are counted in the 32 KiB at 4000h-BFFFh after /RESET; at least three hits are needed, otherwise it
+  is a plain ROM.
 - With bridge protocol 3 the SD Mapper reads a sector or card register in one spaced block: when the LDI
   fetched from the slot reads 4001h through the SPI port, the LDI behind it in the code give the number of
   bytes to come, read 24 clocks apart (`Rules::spiBlock*`, `BoardSlot::spiBlocks()`/`spiBlockErrors()`).
@@ -73,7 +79,8 @@ host project and add this project's `include` directory to the host's include di
 - Write cycles are sent without answer; /WAIT of a memory write is not reported.
 - Cached reads never reach the board: a cartridge sees /M1 only in areas without cache.
 - Cartridges with an unknown expander or mapper run without switching rules; after a bank switch the cache may
-  then show stale contents.
+  then show stale contents. The MegaROM rules are checked against simulated cartridges only, not yet with a real
+  MegaROM; a guess can be wrong for a game that stores to bank register addresses only rarely.
 
 ## Build and Test
 
@@ -93,4 +100,6 @@ are in [Common.props](../Common.props), on top of the chip settings in
 I/O cycles with slot, address, /M1 and wait clocks, the heartbeat before the /RESET pulse and along with cycles,
 the behaviour after a lost connection and the cycle detection of `CycleTracker`. A simulated board (ROM cartridge,
 SD Mapper with expander, Nextor banks and 512 KiB RAM as Memory Mapper or MegaRAM) checks the detection, line
-fetches, uncached areas, stale bytes, the expander register, ROM banks, mapper segments and MegaRAM banks.
+fetches, uncached areas, stale bytes, the expander register, ROM banks, mapper segments and MegaRAM banks. A
+simulated MegaROM checks the mapper guess and the switching of all four mapper types, shared bank images, the
+start banks after reset and the SCC area.

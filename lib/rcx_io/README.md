@@ -4,8 +4,8 @@ Precompiled SDCC library (`rcx_io.h`/`rcx_io.s`, assembled with `sdasz80` into `
 archived with `sdar` into `rcx_io.lib`) providing `RCX_INTERFACE` UNAPI/EXTBIOS access: dual
 dispatch per call (`SEG=0xFF` -> direct `CALSLT` for a ROM cartridge, `SEG<>0xFF` -> a
 self-modifying-trampoline `CALL` through the mapped-RAM driver's own RAM helper, restoring the C
-caller's `IX`/`IY` afterward either way). Covers the full 62-function `RCX_INTERFACE` surface
-(`FN_CORE2`-`62`, i.e. every function except `FN_CORE1`'s BASIC-only help menu), grouped by
+caller's `IX`/`IY` afterward either way). Covers the full 67-function `RCX_INTERFACE` surface
+(`FN_CORE2`-`67`, i.e. every function except `FN_CORE1`'s BASIC-only help menu), grouped by
 peripheral. Card address (and, for I2C, the chip address; for SPI, the bus number) is passed
 explicitly on **every** call, matching the BASIC/UNAPI original exactly - up to 16 cards of most
 types can be installed at once, so nothing about which card an operation targets is cached
@@ -13,7 +13,8 @@ anywhere in this library.
 
 Functions with 3 or more logical parameters exceed `sdcccall(1)`'s 2-argument register limit and
 use `__sdcccall(0)` instead (a real stack-based call - see each function below): `I2c_Write`/
-`I2c_Wrb`/`I2c_Rdb`, `Can_Write`, `Spi_Write`/`Spi_Wrb`/`Spi_Rdb`/`Spi_Rdh`/`Spi_Mode`, `Ads_Get`.
+`I2c_Wrb`/`I2c_Rdb`, `Can_Write`, `Spi_Write`/`Spi_Wrb`/`Spi_Rdb`/`Spi_Rdh`/`Spi_Mode`, `Ads_Get`,
+`Dac_Set`/`Dac_Hold`/`Dac_Conf`.
 Every other function fits `sdcccall(1)`'s default register convention.
 
 ## Discovery
@@ -115,6 +116,17 @@ Every other function fits `sdcccall(1)`'s default register convention.
 - `Ads_Read(u8 addr)` - reads one raw RESULT byte.
 - `Ads_Get(u8 addr, u8 type, void* val)` **sdcccall(0)** - reads a full conversion result into a
   4-byte SNG (MSX single-precision float) for the given `type`.
+
+## MCP4822 D/A (FN_CORE63-67)
+
+- `Dac_Init(u8 addr)` - registers the card's IO base address in the RCX table.
+- `Dac_Set(u8 addr, u8 ch, u16 val)` **sdcccall(0)** - writes `val` (`0..4095`) to channel `ch`
+  (`0..3`) and updates all outputs.
+- `Dac_Hold(u8 addr, u8 ch, u16 val)` **sdcccall(0)** - writes `val` to channel `ch`, the output
+  follows with the next `Dac_Set`/`Dac_Conf`.
+- `Dac_Conf(u8 addr, u8 ch, u8 cfg)` **sdcccall(0)** - sets the configuration of channel `ch`
+  (bit 0 = gain x2, bit 1 = shutdown) and updates all outputs.
+- `Dac_Get(u8 addr, u8 ch)` - returns the last value written to channel `ch`.
 
 ## Rebuilding
 

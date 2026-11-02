@@ -134,7 +134,7 @@ PCB files: Eagle schematic and layout, Gerber and drill files (also as zip for t
 
 The BIOS for the card functions is provided in the on board ROM (EEPROM). It contains the additional BASIC commands and an instance of UNAPI.
 
-As a software-only alternative to the physical ROM cartridge, [`RCXRAM.COM`](rcx/rc2014_rom+ram/drv/RCXRAM.COM) installs the same `RCX_INTERFACE` UNAPI driver into mapped RAM at runtime instead of requiring a burned EEPROM - useful for testing and development without the actual cartridge. It is UNAPI/EXTBIOS-only (no BASIC `CALL` support, since that relies on BASIC's own boot-time scan of ROM header slots, which does not apply to a RAM segment). Covers all card types A through G.
+As a software-only alternative to the physical ROM cartridge, [`RCXRAM.COM`](rcx/rc2014_rom+ram/drv/RCXRAM.COM) installs the same `RCX_INTERFACE` UNAPI driver into mapped RAM at runtime instead of requiring a burned EEPROM - useful for testing and development without the actual cartridge. It is UNAPI/EXTBIOS-only (no BASIC `CALL` support, since that relies on BASIC's own boot-time scan of ROM header slots, which does not apply to a RAM segment). Covers all card types A through G and I.
 
 For SDCC developments, a library was created as bridge to the ROM/DRV.
 
@@ -335,13 +335,23 @@ Details coming soon. Card page: [rcx/rc2014_card_h/README.md](rcx/rc2014_card_h/
 
 RC2014 card with 2x MCP4822. Up to 16 cards are possible. The interrupt pin of ATMEGA8 can be assigned to one of the XIO PIC interrupt channels.
 
-#### <b>I.1 Hardware:</b>
+#### <b>I.1 Impressions:</b>
+
+RC2014 card on backplane
+
+![RCX system](rcx/rc2014_card_i/pcb/rc2014_mcp4822_board.png)
+
+#### <b>I.2 Hardware:</b>
 
 ![RCX schematics](rcx/rc2014_card_i/pcb/rc2014_mcp4822.png)
 
 PCB files: Eagle schematic and layout, Gerber and drill files (also as zip for the PCB maker) and bill of materials in [rcx/rc2014_card_i/pcb](rcx/rc2014_card_i/pcb).
 
-Details coming soon. Card page: [rcx/rc2014_card_i/README.md](rcx/rc2014_card_i/README.md)
+#### <b>I.3 Software:</b>
+
+The BIOS for the card functions is provided in the RCX slot ROM. It contains the additional BASIC commands (`DAC INIT/SET/HOLD/CONF/GET`) and an instance of UNAPI, so the same functions are callable directly via UNAPI/EXTBIOS from a `.COM` program without the BASIC interpreter. Four outputs 0...4.095 V with 1 mV resolution; `DAC HOLD` and `DAC SET` together change several outputs at exactly the same moment.
+
+Command reference (syntax, parameters, UNAPI numbers, SDCC functions): [rcx/rc2014_card_i/README.md](rcx/rc2014_card_i/README.md#command-reference)
 
 [↑ 2.1](#21-the-rcx-rom-cartridge-contains-these-functions)
 

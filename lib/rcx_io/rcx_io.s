@@ -37,7 +37,7 @@
 ;***************************************************************************************************
 ;* MSX (c) 2026 by Dr.-Ing. Thomas Wiesner                                                          *
 ;***************************************************************************************************
-;* VERSION: 23/09/26                                                                                *
+;* VERSION: 02/11/26                                                                                *
 ;***************************************************************************************************
 	.module rcx_io
 
@@ -104,6 +104,11 @@
 	.globl _Ads_GetStatus
 	.globl _Ads_Read
 	.globl _Ads_Get
+	.globl _Dac_Init
+	.globl _Dac_Set
+	.globl _Dac_Hold
+	.globl _Dac_Conf
+	.globl _Dac_Get
 	.globl _g_RSlot
 	.globl _g_RSeg
 	.globl _g_RCount
@@ -176,6 +181,11 @@ ADS_FN_CMD	=	59
 ADS_FN_STATUS	=	60
 ADS_FN_READ	=	61
 ADS_FN_GET	=	62
+DAC_FN_INIT	=	63
+DAC_FN_SET	=	64
+DAC_FN_HOLD	=	65
+DAC_FN_CONF	=	66
+DAC_FN_GET	=	67
 
 	.area _DATA
 _g_RSlot::
@@ -209,6 +219,8 @@ _RTIMERBUF:
 _RSPIREADBUF:
 	.dw	0
 _RADSBUF:
+	.dw	0
+_RDACBUF:
 	.dw	0
 
 	.area _CODE
@@ -1226,6 +1238,83 @@ _Ads_Get::
 	ld	a, #ADS_FN_GET
 	call	_RcxCall
 	pop	ix
+	ret
+
+;=====================================================================================================
+; MCP4822 D/A (CORE63-67)
+;=====================================================================================================
+
+;---------------------------------------------------------------------------------------------------
+; bool Dac_Init(u8 addr)
+;---------------------------------------------------------------------------------------------------
+_Dac_Init::
+	ld	c, a
+	ld	a, #DAC_FN_INIT
+	call	_RcxCall
+	jr	c, dacinit_fail
+	ld	a, #1
+	ret
+dacinit_fail:
+	xor	a
+	ret
+
+;---------------------------------------------------------------------------------------------------
+; void Dac_Set(u8 addr, u8 ch, u16 val) __sdcccall(0)
+; sdcccall(0): 0 (ix)=addr, 1 (ix)=ch, 2/3 (ix)=val (lo/hi). FN_CORE64 wants
+; C=DAC ADDR, B=DAC CHANNEL, DE=DAC VAL.
+;---------------------------------------------------------------------------------------------------
+_Dac_Set::
+	ld	a, #DAC_FN_SET
+	jr	dac_val
+
+;---------------------------------------------------------------------------------------------------
+; void Dac_Hold(u8 addr, u8 ch, u16 val) __sdcccall(0)
+; Same stack layout and registers as Dac_Set (FN_CORE65).
+;---------------------------------------------------------------------------------------------------
+_Dac_Hold::
+	ld	a, #DAC_FN_HOLD
+
+dac_val:
+	push	ix
+	ld	ix, #4
+	add	ix, sp
+	ld	c, 0 (ix)
+	ld	b, 1 (ix)
+	ld	e, 2 (ix)
+	ld	d, 3 (ix)
+	call	_RcxCall
+	pop	ix
+	ret
+
+;---------------------------------------------------------------------------------------------------
+; void Dac_Conf(u8 addr, u8 ch, u8 cfg) __sdcccall(0)
+; sdcccall(0): 0 (ix)=addr, 1 (ix)=ch, 2 (ix)=cfg. FN_CORE66 wants
+; C=DAC ADDR, B=DAC CHANNEL, E=DAC CFG.
+;---------------------------------------------------------------------------------------------------
+_Dac_Conf::
+	push	ix
+	ld	ix, #4
+	add	ix, sp
+	ld	c, 0 (ix)
+	ld	b, 1 (ix)
+	ld	e, 2 (ix)
+	ld	a, #DAC_FN_CONF
+	call	_RcxCall
+	pop	ix
+	ret
+
+;---------------------------------------------------------------------------------------------------
+; u16 Dac_Get(u8 addr, u8 ch)
+; sdcccall(1) "8+8": A=addr, L=ch, result in DE. FN_CORE67 wants C=DAC
+; ADDR, B=DAC CHANNEL, DE=varptr(DAC VAL) - a 16-bit word written to *(DE).
+;---------------------------------------------------------------------------------------------------
+_Dac_Get::
+	ld	c, a
+	ld	b, l
+	ld	de, #_RDACBUF
+	ld	a, #DAC_FN_GET
+	call	_RcxCall
+	ld	de, (_RDACBUF)
 	ret
 
 	.area _CODE

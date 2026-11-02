@@ -12,7 +12,7 @@
 //* 16-bit DE value, not just a byte in D as CORE35's own comment claims; PPI SET/RESET BIT both      *
 //* take D=Byte, not DE=varptr as CORE31's own comment claims) - see rcx_io.s for the exact evidence. *
 //*                                                                                                   *
-//* Card-address/bus/chip parameters (I2C bus address, I2C chip address, PIO/PPI/TIMER/CAN/SPI/ADS    *
+//* Card-address/bus/chip parameters (I2C bus address, I2C chip address, PIO/PPI/TIMER/CAN/SPI/ADS/DAC*
 //* base address, SPI bus number) are passed explicitly on EVERY call, exactly matching the BASIC/    *
 //* UNAPI original - up to 16 cards of most types can be installed simultaneously (SJA1000 excepted,  *
 //* single-use only), so nothing about which card an operation targets may be cached client-side.     *
@@ -23,7 +23,7 @@
 //***************************************************************************************************
 //* MSX (c) 2026 by Dr.-Ing. Thomas Wiesner                                                          *
 //***************************************************************************************************
-//* VERSION: 23/09/26                                                                                *
+//* VERSION: 02/11/26                                                                                *
 //***************************************************************************************************
 #pragma once
 
@@ -164,3 +164,14 @@ void Ads_Cmd(u8 addr, u8 val);			// CORE59
 u8   Ads_GetStatus(u8 addr);			// CORE60
 u8   Ads_Read(u8 addr);			// CORE61 - one RESULT byte
 void Ads_Get(u8 addr, u8 type, void* val) __sdcccall(0);	// CORE62 - full conversion into a 4-byte SNG
+
+//===================================================================================================
+// MCP4822 D/A (CORE63-67) - ch 0..3, val 0..4095 (gain x2: val = mV), cfg bit 0 = gain x2,
+// bit 1 = shutdown. Out-of-range values are rejected by the driver (output unchanged).
+//===================================================================================================
+
+bool Dac_Init(u8 addr);			// CORE63 - registers the card in the RCX table
+void Dac_Set(u8 addr, u8 ch, u16 val) __sdcccall(0);	// CORE64 - write + /LDAC (all outputs update)
+void Dac_Hold(u8 addr, u8 ch, u16 val) __sdcccall(0);	// CORE65 - write only, output follows later
+void Dac_Conf(u8 addr, u8 ch, u8 cfg) __sdcccall(0);	// CORE66 - configuration + /LDAC
+u16  Dac_Get(u8 addr, u8 ch);				// CORE67 - last written value (ATMEGA8 mirror)

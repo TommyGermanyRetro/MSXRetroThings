@@ -5,10 +5,10 @@
                                     ;* RCX_INTERFACE - full Kartentyp A *
                                     ;* (I2C/RTC), B (Z80 PIO), C (82C55 *
                                     ;* PPI), D (82C54 timer), E (CAN/   *
-                                    ;* SJA1000), F (SPI) and G          *
-                                    ;* (ADS1220), functions             *
+                                    ;* SJA1000), F (SPI), G (ADS1220)   *
+                                    ;* and I (MCP4822), functions       *
                                     ;* 2,3,4,5-15,16-22,23-32,33-42,    *
-                                    ;* 43-56,57-62.                     *
+                                    ;* 43-56,57-62,63-67.               *
                                     ;************************************
                                     ;* Installation code adapted from   *
                                     ;* Konamiman's unapi-ram.asm        *
@@ -16,7 +16,7 @@
                                     ;* Driver routines                  *
                                     ;* (RCXINIT/GETRCXSLT/SETRCXSLT/    *
                                     ;* IOEN/IODIS/FN_CORE2-15/16-22/    *
-                                    ;* 23-32/33-42/43-56/57-62/CANOUT/  *
+                                    ;* 23-32/33-42/43-56/57-67/CANOUT/  *
                                     ;* CANINP/I2CBCTRL/I2CPCTRL)        *
                                     ;* are taken from RCXROM.ASM, ORG   *
                                     ;* #04000 in both cases so the      *
@@ -38,7 +38,8 @@
                                     ;* 2) Error paths that used to jump *
                                     ;* into BASIC's error trap          *
                                     ;* (CORE58ERR, CORETIMERR/          *
-                                    ;* CORETIMERR1, SETRCXSLT's         *
+                                    ;* CORETIMERR1, COREDACERR,         *
+                                    ;* SETRCXSLT's                      *
                                     ;* FRERCXERR) now just return Carry *
                                     ;* set - there is no BASIC          *
                                     ;* interpreter to jump into.        *
@@ -53,7 +54,7 @@
                                     ;* fires asynchronously. See        *
                                     ;* DRV/README.md.                   *
                                     ;************************************
-                                    ;* VERSION: 29/10/26                *
+                                    ;* VERSION: 02/11/26                *
                                     ;************************************
 
 ;*******************
@@ -72,7 +73,7 @@ API_V_S:        EQU     0
 ROM_V_P:        EQU     1
 ROM_V_S:        EQU     0
 
-MAX_FN:         EQU     62              ; highest implemented function number
+MAX_FN:         EQU     67              ; highest implemented function number
 MAX_IMPFN:      EQU     0
 
 ;---------------------------
@@ -612,6 +613,11 @@ FN_TABLE:
         DEFW    FN_CORE60       ; 60 ADS STATUS
         DEFW    FN_CORE61       ; 61 ADS READ
         DEFW    FN_CORE62       ; 62 ADS GET
+        DEFW    FN_CORE63       ; 63 DAC INIT
+        DEFW    FN_CORE64       ; 64 DAC SET
+        DEFW    FN_CORE65       ; 65 DAC HOLD
+        DEFW    FN_CORE66       ; 66 DAC CONF
+        DEFW    FN_CORE67       ; 67 DAC GET
 
 ;========================================================
 ;===  RCXROM.ASM routines, ported unchanged unless   ===
@@ -638,6 +644,7 @@ SPPI:         EQU  'C'         ; 82C55 PPI card
 SCNT:         EQU  'D'         ; 82C54 TIMER card
 SCAN:         EQU  'E'         ; SJA1000 card (only once allowed)
 SSPI:         EQU  'F'         ; SPI master card
+SDAC:         EQU  'I'         ; MCP4822 D/A board
 
 X_CD:         EQU  #010
 X_FREE:       EQU  #010
@@ -5457,6 +5464,232 @@ ADSCHANMAP:   DEFB  0,1,2,3,0,0,0,1,1,2,1,3
 ;---------------------------
 
                                     ;************************************
+                                    ;* FN_CORE63 - DAC INIT, unchanged  *
+                                    ;* from RCXROM.ASM (no shared       *
+                                    ;* CORE63 body in the original)     *
+                                    ;************************************
+
+FN_CORE63:    CALL  RCXINIT
+              JP    Z,FN_CORE63SLT
+              SCF
+              RET
+
+FN_CORE63SLT: PUSH  BC
+              LD    B,SDAC
+              PUSH  IX
+              CALL  SETRCXSLT
+              POP   IX
+              POP   BC
+              JP    C,FN_CORE63OK
+              SCF
+              RET
+
+FN_CORE63OK:  CCF
+              RET
+
+                                    ;************************************
+                                    ;* FN_CORE64 / CORE64 - DAC SET.    *
+                                    ;* Adapted: COREDACERRC/V (CHANNEL  *
+                                    ;* or VAL out of range) return      *
+                                    ;* Carry set instead of the BASIC   *
+                                    ;* PROMPT/CHPUT/B_ERRTYPE sequence  *
+                                    ;* - no BASIC interpreter here.     *
+                                    ;************************************
+
+FN_CORE64:    CALL  FN_COREDAC
+              JP    C,CORE64
+              SCF
+              RET
+
+CORE64:       PUSH  HL
+
+              LD    L,#000
+
+CORE64CHK:    LD    A,B
+              CP    #004
+              JP    NC,COREDACERR
+
+              LD    A,D
+              CP    #010
+              JP    NC,COREDACERR
+
+              DI
+
+              CALL  IOEN
+
+              LD    A,C
+              OUT   (ALE),A
+              LD    A,B
+              OUT   (SWIO),A
+
+              LD    A,C
+              ADD   A,#02
+              OUT   (ALE),A
+              LD    A,E
+              OUT   (SWIO),A
+
+              LD    A,C
+              ADD   A,#03
+              OUT   (ALE),A
+              LD    A,D
+              OR    L
+              OUT   (SWIO),A
+
+              CALL  IODIS
+
+              EI
+
+              POP   HL
+
+              OR    A
+              RET
+
+                                    ;************************************
+                                    ;* FN_CORE65 / CORE65 - DAC HOLD,   *
+                                    ;* unchanged from RCXROM.ASM        *
+                                    ;************************************
+
+FN_CORE65:    CALL  FN_COREDAC
+              JP    C,CORE65
+              SCF
+              RET
+
+CORE65:       PUSH  HL
+
+              LD    L,#040
+
+              JP    CORE64CHK
+
+                                    ;************************************
+                                    ;* FN_CORE66 / CORE66 - DAC CONF.   *
+                                    ;* Adapted: COREDACERR returns      *
+                                    ;* Carry set (see FN_CORE64)        *
+                                    ;************************************
+
+FN_CORE66:    CALL  FN_COREDAC
+              JP    C,CORE66
+              SCF
+              RET
+
+CORE66:       PUSH  HL
+
+              LD    A,B
+              CP    #004
+              JP    NC,COREDACERR
+
+              LD    A,E
+              CP    #004
+              JP    NC,COREDACERR
+
+              DI
+
+              CALL  IOEN
+
+              LD    A,C
+              OUT   (ALE),A
+              LD    A,B
+              OUT   (SWIO),A
+
+              LD    A,C
+              ADD   A,#01
+              OUT   (ALE),A
+              LD    A,E
+              OUT   (SWIO),A
+
+              CALL  IODIS
+
+              EI
+
+              POP   HL
+
+              OR    A
+              RET
+
+                                    ;************************************
+                                    ;* FN_CORE67 / CORE67 - DAC GET.    *
+                                    ;* Adapted: COREDACERR returns      *
+                                    ;* Carry set (see FN_CORE64)        *
+                                    ;************************************
+
+FN_CORE67:    CALL  FN_COREDAC
+              JP    C,CORE67
+              SCF
+              RET
+
+CORE67:       PUSH  HL
+
+              LD    A,B
+              CP    #004
+              JP    NC,COREDACERR
+
+              PUSH  DE
+              EX    DE,HL
+
+              DI
+
+              CALL  IOEN
+
+              LD    A,C
+              OUT   (ALE),A
+              LD    A,B
+              OUT   (SWIO),A
+
+              LD    A,C
+              ADD   A,#02
+              OUT   (ALE),A
+              IN    A,(SWIO)
+              LD    (HL),A
+              INC   HL
+
+              LD    A,C
+              ADD   A,#03
+              OUT   (ALE),A
+              IN    A,(SWIO)
+              LD    (HL),A
+
+              CALL  IODIS
+
+              EI
+
+              POP   DE
+              POP   HL
+
+              OR    A
+              RET
+
+                                    ;************************************
+                                    ;* FN_COREDAC - module installed    *
+                                    ;* and card found, unchanged from   *
+                                    ;* RCXROM.ASM                       *
+                                    ;************************************
+
+FN_COREDAC:   CALL  RCXINIT
+              JR    Z,FN_COREDACSLT
+              OR    A
+              RET
+
+FN_COREDACSLT:
+              PUSH  BC
+              LD    B,SDAC
+              PUSH  IX
+              CALL  GETRCXSLT
+              POP   IX
+              POP   BC
+              RET
+
+                                    ;************************************
+                                    ;* COREDACERR - replaces RCXROM's   *
+                                    ;* COREDACERRC/COREDACERRV/         *
+                                    ;* CORE66ERR: Carry set, no BASIC   *
+                                    ;************************************
+
+COREDACERR:   POP   HL
+              SCF
+              RET
+
+;---------------------------
+
+                                    ;************************************
                                     ;* Auxiliary routines               *
                                     ;************************************
 
@@ -5479,7 +5712,7 @@ MY_SEG:       DEFB  0
 UNAPI_ID:     DEFM  "RCX_INTERFACE",0
 UNAPI_ID_END:
 
-APIINFO:      DEFM  "RCX Interface UNAPI RAM implementation (Kartentyp A/D/E/F/G)",0
+APIINFO:      DEFM  "RCX Interface UNAPI RAM implementation (Kartentyp A-G/I)",0
 
                                     ;************************************
                                     ;* WORKTEMPLATE - pristine copy of  *

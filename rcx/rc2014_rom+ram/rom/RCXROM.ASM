@@ -9,7 +9,7 @@
                                     ;* https://www.msx.org              *
                                     ;* Assembled with pasmo.            *
                                     ;************************************
-                                    ;* VERSION: 29/10/26                *
+                                    ;* VERSION: 02/11/26                *
                                     ;************************************
 
               ORG    #04000
@@ -95,6 +95,8 @@ SCAN:         EQU    'E'            ; SJA1000 card (only once allowed)
 SSPI:         EQU    'F'            ; SPI master card
 
 SADS:         EQU    'G'            ; ADS1220 measurement board
+
+SDAC:         EQU    'I'            ; MCP4822 D/A board
 
 
 
@@ -185,7 +187,7 @@ ROM_V_S:      EQU  0
                                     ;* specific function numbers        *
                                     ;************************************
 
-MAX_FN:       EQU  62               ; Must be 0 to 127
+MAX_FN:       EQU  67               ; Must be 0 to 127
 
 MAX_IMPFN:    EQU  0                ; Must be either zero (if no 
                                     ; implementation-specific functions 
@@ -387,6 +389,21 @@ B_CMDS:
               DEFM "ADS GET",0      ; Call ADS GET
               DEFW B_CORE62
 
+              DEFM "DAC INIT",0     ; Call DAC INIT
+              DEFW B_CORE63
+
+              DEFM "DAC SET",0      ; Call DAC SET
+              DEFW B_CORE64
+
+              DEFM "DAC HOLD",0     ; Call DAC HOLD
+              DEFW B_CORE65
+
+              DEFM "DAC CONF",0     ; Call DAC CONF
+              DEFW B_CORE66
+
+              DEFM "DAC GET",0      ; Call DAC GET
+              DEFW B_CORE67
+
               DEFB 0                ; No more instructions
 
 ;---------------------------
@@ -525,6 +542,16 @@ FN_TABLE:
               DEFW  FN_CORE61       ; Call ADS READ
 
               DEFW  FN_CORE62       ; Call ADS GET
+
+              DEFW  FN_CORE63       ; Call DAC INIT
+
+              DEFW  FN_CORE64       ; Call DAC SET
+
+              DEFW  FN_CORE65       ; Call DAC HOLD
+
+              DEFW  FN_CORE66       ; Call DAC CONF
+
+              DEFW  FN_CORE67       ; Call DAC GET
 
 
                                     ; Implementation-specific routines
@@ -1810,7 +1837,7 @@ IODIS:        PUSH AF
 
                                     ;************************************
                                     ;* BASIC                            * 
-                                    ;* CALL I2C INIT(ADDR)              *
+                                    ;* CALL I2C INIT(IOADDR)            *
                                     ;************************************ 
                                     ;* Initialise PCF8584               *
                                     ;************************************
@@ -1957,13 +1984,13 @@ CORE6END:     POP HL                ; Get BASIC Line-Pointer (if CALL is used)
 
                                     ;************************************
                                     ;* BASIC                            * 
-                                    ;* CALL I2C WR(BUS,CHIP,DATA)       *
+                                    ;* CALL I2C WR(IOADDR,CHIP,DATA)    *
                                     ;************************************ 
                                     ;* Write data to PCF8584            *
                                     ;************************************
                                     ;* INPUT:                           *
                                     ;************************************
-                                    ;* PARA1: BUS ADDR                  *
+                                    ;* PARA1: IOADDR                    *
                                     ;* PARA2: I2C CHIP                  *
                                     ;* PARA3: I2C DATA                  *
                                     ;************************************
@@ -2069,7 +2096,7 @@ FN_CORE7SLT:  PUSH BC               ; Save I2C CHIP & I2C DATA to stack
               RET                   ; Go back to main routine
 
                                     ;************************************ 
-                                    ;* I2C WR(BUS,CHIP,DATA)            *
+                                    ;* I2C WR(IOADDR,CHIP,DATA)         *
                                     ;************************************ 
                                     ;* Write data to PCF8584            *
                                     ;************************************
@@ -2146,13 +2173,14 @@ CORE7STOP:    LD A,E                ; Yes? Send STOP on I2C
 
                                     ;************************************
                                     ;* BASIC                            * 
-                                    ;* CALL I2C WRB(BUS,CHIP,LEN,DATA)  *
+                                    ;* CALL I2C WRB(IOADDR,CHIP,LEN,    *
+                                    ;*              DATA)               *
                                     ;************************************ 
                                     ;* Write block data to PCF8584      *
                                     ;************************************
                                     ;* INPUT:                           *
                                     ;************************************
-                                    ;* PARA1: BUS ADDR                  *
+                                    ;* PARA1: IOADDR                    *
                                     ;* PARA2: I2C CHIP                  *
                                     ;* PARA3: I2C LEN                   *
                                     ;* PARA4: I2C DATA                  *
@@ -2269,7 +2297,7 @@ FN_CORE8SLT:  LD A,H                ; Get BUS address
               RET                   ; Go back to main routine
 
                                     ;************************************ 
-                                    ;* I2C WRB(BUS,CHIP,LEN,DATA)       *
+                                    ;* I2C WRB(IOADDR,CHIP,LEN,DATA)    *
                                     ;************************************ 
                                     ;* Write block data to PCF8584      *
                                     ;************************************
@@ -2359,13 +2387,13 @@ CORE8STOP:    LD A,E                ; Yes? Send STOP on I2C
 
                                     ;************************************
                                     ;* BASIC                            * 
-                                    ;* CALL I2C RD(BUS,CHIP,DATA)       *
+                                    ;* CALL I2C RD(IOADDR,CHIP,DATA)    *
                                     ;************************************ 
                                     ;* Read data from PCF8584           *
                                     ;************************************
                                     ;* INPUT:                           *
                                     ;************************************
-                                    ;* PARA1: BUS ADDR                  *
+                                    ;* PARA1: IOADDR                    *
                                     ;* PARA2: I2C CHIP                  *
                                     ;* PARA3: I2C DATA                  *
                                     ;************************************
@@ -2467,7 +2495,7 @@ FN_CORE9SLT:  PUSH BC
               RET                   ; Go back to main routine
 
                                     ;************************************ 
-                                    ;* I2C RD(BUS,CHIP,DATA)            *
+                                    ;* I2C RD(IOADDR,CHIP,DATA)         *
                                     ;************************************ 
                                     ;* Read data from PCF8584           *
                                     ;************************************
@@ -2561,13 +2589,14 @@ CORE9STOP:    LD A,E                ; Yes? Send STOP on I2C
 
                                     ;************************************
                                     ;* BASIC                            * 
-                                    ;* CALL I2C RDB(BUS,CHIP,LEN,DATA)  *
+                                    ;* CALL I2C RDB(IOADDR,CHIP,LEN,    *
+                                    ;*              DATA)               *
                                     ;************************************ 
                                     ;* Read block data from PCF8584     *
                                     ;************************************
                                     ;* INPUT:                           *
                                     ;************************************
-                                    ;* PARA1: BUS ADDR                  *
+                                    ;* PARA1: IOADDR                    *
                                     ;* PARA2: I2C CHIP                  *
                                     ;* PARA3: I2C LEN                   *
                                     ;* PARA4: I2C DATA                  *
@@ -2684,7 +2713,7 @@ FN_CORE10SLT: LD A,H                ; Get BUS address
               RET                   ; Go back to main routine
 
                                     ;************************************ 
-                                    ;* I2C RDB(BUS,CHIP,LEN,DATA)       *
+                                    ;* I2C RDB(IOADDR,CHIP,LEN,DATA)    *
                                     ;************************************ 
                                     ;* Read block data from PCF8584     *
                                     ;************************************
@@ -2812,13 +2841,13 @@ CORE10STOP:   LD A,E                ; Yes? Send STOP on I2C
 
                                     ;************************************
                                     ;* BASIC                            * 
-                                    ;* CALL I2C RESET(BUS)              *
+                                    ;* CALL I2C RESET(IOADDR)           *
                                     ;************************************ 
                                     ;* Resets I2C BUS at PCF8584        *
                                     ;************************************
                                     ;* INPUT:                           *
                                     ;************************************
-                                    ;* PARA1: BUS ADDR                  *
+                                    ;* PARA1: IOADDR                    *
                                     ;************************************
                                     ;* OUTPUT:                          *
                                     ;************************************
@@ -2889,7 +2918,7 @@ FN_CORE11SLT: PUSH BC
               RET                   ; Go back to main routine
 
                                     ;************************************ 
-                                    ;* I2C RESET(BUS)                   *
+                                    ;* I2C RESET(IOADDR)                *
                                     ;************************************ 
                                     ;* Resets I2C BUS at PCF8584        *
                                     ;************************************
@@ -2945,13 +2974,13 @@ CORE11:       PUSH HL               ; Save BASIC Line-Pointer (if CALL is used)
 
                                     ;************************************
                                     ;* BASIC                            * 
-                                    ;* SET TIME (BUS,TIME)              *
+                                    ;* SET TIME (IOADDR,TIME)           *
                                     ;************************************ 
                                     ;* Write TIME to PFC8583            *
                                     ;************************************
                                     ;* INPUT:                           *
                                     ;************************************
-                                    ;* PARA1: BUS ADDR                  *
+                                    ;* PARA1: IOADDR                    *
                                     ;* PARA2: TIME                      *
                                     ;************************************
                                     ;* OUTPUT:                          *
@@ -3045,7 +3074,7 @@ FN_CORE12SLT: PUSH BC               ; Save BC to stack
               RET                   ; Go back to main routine
 
                                     ;************************************ 
-                                    ;* SET TIME (BUS,TIME)              *
+                                    ;* SET TIME (IOADDR,TIME)           *
                                     ;************************************ 
                                     ;* Write TIME to PFC8583            *
                                     ;************************************
@@ -3128,13 +3157,13 @@ CORE12BCD:    LD A,(DE)
 
                                     ;************************************
                                     ;* BASIC                            * 
-                                    ;* GET TIME (BUS,TIME)              *
+                                    ;* GET TIME (IOADDR,TIME)           *
                                     ;************************************ 
                                     ;* Read TIME from PFC8583           *
                                     ;************************************
                                     ;* INPUT:                           *
                                     ;************************************
-                                    ;* PARA1: BUS ADDR                  *
+                                    ;* PARA1: IOADDR                    *
                                     ;* PARA2: TIME                      *
                                     ;************************************
                                     ;* OUTPUT:                          *
@@ -3226,7 +3255,7 @@ FN_CORE13SLT: PUSH BC               ; Save bus address to stack
               RET                   ; Go back to main routine
 
                                     ;************************************ 
-                                    ;* GET TIME (BUS,TIME)              *
+                                    ;* GET TIME (IOADDR,TIME)           *
                                     ;************************************ 
                                     ;* Read TIME from PFC8583           *
                                     ;************************************
@@ -3323,13 +3352,13 @@ CORE13BCD:    LD B,A
 
                                     ;************************************
                                     ;* BASIC                            * 
-                                    ;* SET DATE (BUS,DATE)              *
+                                    ;* SET DATE (IOADDR,DATE)           *
                                     ;************************************ 
                                     ;* Write DATE to PFC8583            *
                                     ;************************************
                                     ;* INPUT:                           *
                                     ;************************************
-                                    ;* PARA1: BUS ADDR                  *
+                                    ;* PARA1: IOADDR                    *
                                     ;* PARA2: DATE                      *
                                     ;************************************
                                     ;* OUTPUT:                          *
@@ -3423,7 +3452,7 @@ FN_CORE14SLT: PUSH BC               ; Save bus address to stack
               RET                   ; Go back to main routine
 
                                     ;************************************ 
-                                    ;* SET DATE (BUS,DATE)              *
+                                    ;* SET DATE (IOADDR,DATE)           *
                                     ;************************************ 
                                     ;* Write DATE to PFC8583            *
                                     ;************************************
@@ -3521,13 +3550,13 @@ CORE14BCD:    LD A,(DE)
 
                                     ;************************************
                                     ;* BASIC                            * 
-                                    ;* GET DATE (BUS,DATE)              *
+                                    ;* GET DATE (IOADDR,DATE)           *
                                     ;************************************ 
                                     ;* Read DATE from PFC8583           *
                                     ;************************************
                                     ;* INPUT:                           *
                                     ;************************************
-                                    ;* PARA1: BUS ADDR                  *
+                                    ;* PARA1: IOADDR                    *
                                     ;* PARA2: DATE                      *
                                     ;************************************
                                     ;* OUTPUT:                          *
@@ -3619,7 +3648,7 @@ FN_CORE15SLT: PUSH BC               ; Save bus address to stack
               RET                   ; Go back to main routine
 
                                     ;************************************ 
-                                    ;* GET DATE (BUS,DATE)              *
+                                    ;* GET DATE (IOADDR,DATE)           *
                                     ;************************************ 
                                     ;* Read DATE from PFC8583           *
                                     ;************************************
@@ -3874,7 +3903,7 @@ PTESTOK:      POP BC                ; Get BC back from stack
 
                                     ;************************************
                                     ;* BASIC                            * 
-                                    ;* CALL PIO INIT(ADDR)              *
+                                    ;* CALL PIO INIT(IOADDR)            *
                                     ;************************************ 
                                     ;* Initialise Z80 PIO               *
                                     ;************************************
@@ -3966,7 +3995,7 @@ FN_CORE16OK:  CCF                   ; Clear CARRY flag
 
                                     ;************************************
                                     ;* BASIC                            * 
-                                    ;* PIO A RD (ADDR,VALUE)            *
+                                    ;* PIO A RD (IOADDR,VALUE)          *
                                     ;************************************ 
                                     ;* Get Byte from Z80 PIO PORT A     *
                                     ;************************************
@@ -3991,7 +4020,7 @@ B_CORE17:     LD B,0                ; Z80 PIO A RD
 
                                     ;************************************
                                     ;* BASIC                            * 
-                                    ;* PIO A WR (ADDR,VALUE)            *
+                                    ;* PIO A WR (IOADDR,VALUE)          *
                                     ;************************************ 
                                     ;* Write Byte to Z80 PIO PORT A     *
                                     ;************************************
@@ -4016,7 +4045,7 @@ B_CORE18:     LD B,1                ; Z80 PIO A WR
 
                                     ;************************************
                                     ;* BASIC                            * 
-                                    ;* PIO B RD (ADDR,VALUE)            *
+                                    ;* PIO B RD (IOADDR,VALUE)          *
                                     ;************************************ 
                                     ;* Get Byte from Z80 PIO PORT B     *
                                     ;************************************
@@ -4041,7 +4070,7 @@ B_CORE19:     LD B,2                ; Z80 PIO B RD
 
                                     ;************************************
                                     ;* BASIC                            * 
-                                    ;* PIO B WR (ADDR,VALUE)            *
+                                    ;* PIO B WR (IOADDR,VALUE)          *
                                     ;************************************ 
                                     ;* Write Byte to Z80 PIO PORT B     *
                                     ;************************************
@@ -4066,7 +4095,7 @@ B_CORE20:     LD B,3                ; Z80 PIO B WR
 
                                     ;************************************
                                     ;* BASIC                            * 
-                                    ;* PIO A CTRL (ADDR,VALUE)          *
+                                    ;* PIO A CTRL (IOADDR,VALUE)        *
                                     ;************************************ 
                                     ;* Write Byte to Z80 PIO CTRL A     *
                                     ;************************************
@@ -4091,7 +4120,7 @@ B_CORE21:     LD B,4                ; Z80 PIO A CTRL
 
                                     ;************************************
                                     ;* BASIC                            * 
-                                    ;* PIO B CTRL (ADDR,VALUE)          *
+                                    ;* PIO B CTRL (IOADDR,VALUE)        *
                                     ;************************************ 
                                     ;* Write Byte to Z80 PIO CTRL B     *
                                     ;************************************
@@ -4116,7 +4145,7 @@ B_CORE22:     LD B,5                ; Z80 PIO B CTRL
 
                                     ;************************************
                                     ;* BASIC                            * 
-                                    ;* PIO xxx (ADDR,VALUE)             *
+                                    ;* PIO xxx (IOADDR,VALUE)           *
                                     ;************************************ 
                                     ;* Check parameters                 *
                                     ;************************************
@@ -4378,7 +4407,7 @@ FN_COREPIOST: PUSH BC               ; Save bus address to stack
               RET                   ; Go back to main routine
 
                                     ;************************************ 
-                                    ;* PIO xxx (ADDR,VALUE)             *
+                                    ;* PIO xxx (IOADDR,VALUE)           *
                                     ;************************************ 
                                     ;* Do activity with Z80 PIO         *
                                     ;************************************
@@ -4489,7 +4518,7 @@ COREPIOEND:   CALL IODIS            ; Switched IO disabled
 
                                     ;************************************
                                     ;* BASIC                            * 
-                                    ;* CALL PPI INIT(ADDR)              *
+                                    ;* CALL PPI INIT(IOADDR)            *
                                     ;************************************ 
                                     ;* Initialise 82C55                 *
                                     ;************************************
@@ -4583,7 +4612,7 @@ FN_CORE23OK:  CCF                   ; Clear CARRY flag
 
                                     ;************************************
                                     ;* BASIC                            * 
-                                    ;* PPI A RD (ADDR,VALUE)            *
+                                    ;* PPI A RD (IOADDR,VALUE)          *
                                     ;************************************ 
                                     ;* Get Byte from 82C55 PORT A       *
                                     ;************************************
@@ -4608,7 +4637,7 @@ B_CORE24:     LD B,0                ; 82C55 A RD
 
                                     ;************************************
                                     ;* BASIC                            * 
-                                    ;* PPI A WR (ADDR,VALUE)            *
+                                    ;* PPI A WR (IOADDR,VALUE)          *
                                     ;************************************ 
                                     ;* Write Byte to 82C55 PORT A       *
                                     ;************************************
@@ -4633,7 +4662,7 @@ B_CORE25:     LD B,1                ; 82C55 A WR
 
                                     ;************************************
                                     ;* BASIC                            * 
-                                    ;* PPI B RD (ADDR,VALUE)            *
+                                    ;* PPI B RD (IOADDR,VALUE)          *
                                     ;************************************ 
                                     ;* Read Byte from 82C55 PORT B      *
                                     ;************************************
@@ -4658,7 +4687,7 @@ B_CORE26:     LD B,2                ; 82C55 B RD
 
                                     ;************************************
                                     ;* BASIC                            * 
-                                    ;* PPI B WR (ADDR,VALUE)            *
+                                    ;* PPI B WR (IOADDR,VALUE)          *
                                     ;************************************ 
                                     ;* Write Byte to 82C55 PORT B       *
                                     ;************************************
@@ -4683,7 +4712,7 @@ B_CORE27:     LD B,3                ; 82C55 B WR
 
                                     ;************************************
                                     ;* BASIC                            * 
-                                    ;* PPI C RD (ADDR,VALUE)            *
+                                    ;* PPI C RD (IOADDR,VALUE)          *
                                     ;************************************ 
                                     ;* Get Byte from 82C55 PORT C       *
                                     ;************************************
@@ -4708,7 +4737,7 @@ B_CORE28:     LD B,4                ; 82C55 C RD
 
                                     ;************************************
                                     ;* BASIC                            * 
-                                    ;* PPI C WR (ADDR,VALUE)            *
+                                    ;* PPI C WR (IOADDR,VALUE)          *
                                     ;************************************ 
                                     ;* Write Byte to 82C55 PORT C       *
                                     ;************************************
@@ -4733,7 +4762,7 @@ B_CORE29:     LD B,5                ; 82C55 C WR
 
                                     ;************************************
                                     ;* BASIC                            * 
-                                    ;* PPI CTRL (ADDR,VALUE)            *
+                                    ;* PPI CTRL (IOADDR,VALUE)          *
                                     ;************************************ 
                                     ;* Write Byte to 82C55 CTRL         *
                                     ;************************************
@@ -4758,7 +4787,7 @@ B_CORE30:     LD B,6                ; 82C55 CTRL
 
                                     ;************************************
                                     ;* BASIC                            * 
-                                    ;* PPI SET (ADDR,VALUE)             *
+                                    ;* PPI SET (IOADDR,VALUE)           *
                                     ;************************************ 
                                     ;* Set Bit PORT C 82C55             *
                                     ;************************************
@@ -4783,7 +4812,7 @@ B_CORE31:     LD B,7                ; 82C55 SET BIT
 
                                     ;************************************
                                     ;* BASIC                            * 
-                                    ;* PPI RESET (ADDR,VALUE)           *
+                                    ;* PPI RESET (IOADDR,VALUE)         *
                                     ;************************************ 
                                     ;* Reset Bit PORT C 82C55           *
                                     ;************************************
@@ -4808,7 +4837,7 @@ B_CORE32:     LD B,8                ; 82C55 RESET BIT
 
                                     ;************************************
                                     ;* BASIC                            * 
-                                    ;* PPI xxx (ADDR,VALUE)             *
+                                    ;* PPI xxx (IOADDR,VALUE)           *
                                     ;************************************ 
                                     ;* Check parameters                 *
                                     ;************************************
@@ -5147,7 +5176,7 @@ FN_COREPPIST: PUSH BC               ; Save bus address to stack
               RET                   ; Go back to main routine
 
                                     ;************************************ 
-                                    ;* PPI xxx (ADDR,VALUE)             *
+                                    ;* PPI xxx (IOADDR,VALUE)           *
                                     ;************************************ 
                                     ;* Do activity with 82C55           *
                                     ;************************************
@@ -5316,7 +5345,7 @@ COREPPIERR:   LD HL,PERRTYPE
 
                                     ;************************************
                                     ;* BASIC                            * 
-                                    ;* CALL TIMER INIT(ADDR)            *
+                                    ;* CALL TIMER INIT(IOADDR)          *
                                     ;************************************ 
                                     ;* Initialise 82C54                 *
                                     ;************************************
@@ -5457,7 +5486,7 @@ FN_CORE33OK:  DI
 
                                     ;************************************
                                     ;* BASIC                            * 
-                                    ;* TIMER 0 RD (ADDR,VALUE)          *
+                                    ;* TIMER 0 RD (IOADDR,VALUE)        *
                                     ;************************************ 
                                     ;* Get Byte from 82C54 TIMER 0      *
                                     ;************************************
@@ -5482,7 +5511,7 @@ B_CORE34:     LD B,0                ; 82C54 0 RD
 
                                     ;************************************
                                     ;* BASIC                            * 
-                                    ;* TIMER 0 WR (ADDR,VALUE)          *
+                                    ;* TIMER 0 WR (IOADDR,VALUE)        *
                                     ;************************************ 
                                     ;* Write Byte to 82C54 TIMER 0      *
                                     ;************************************
@@ -5507,7 +5536,7 @@ B_CORE35:     LD B,1                ; 82C54 0 WR
 
                                     ;************************************
                                     ;* BASIC                            * 
-                                    ;* TIMER 1 RD (ADDR,VALUE)          *
+                                    ;* TIMER 1 RD (IOADDR,VALUE)        *
                                     ;************************************ 
                                     ;* Read Byte from 82C54 TIMER 1     *
                                     ;************************************
@@ -5532,7 +5561,7 @@ B_CORE36:     LD B,2                ; 82C54 1 RD
 
                                     ;************************************
                                     ;* BASIC                            * 
-                                    ;* TIMER 1 WR (ADDR,VALUE)          *
+                                    ;* TIMER 1 WR (IOADDR,VALUE)        *
                                     ;************************************ 
                                     ;* Write Byte to 82C54 TIMER 1      *
                                     ;************************************
@@ -5557,7 +5586,7 @@ B_CORE37:     LD B,3                ; 82C54 1 WR
 
                                     ;************************************
                                     ;* BASIC                            * 
-                                    ;* TIMER 2 RD (ADDR,VALUE)          *
+                                    ;* TIMER 2 RD (IOADDR,VALUE)        *
                                     ;************************************ 
                                     ;* Get Byte from 82C54 TIMER 2      *
                                     ;************************************
@@ -5582,7 +5611,7 @@ B_CORE38:     LD B,4                ; 82C54 2 RD
 
                                     ;************************************
                                     ;* BASIC                            * 
-                                    ;* TIMER 2 WR (ADDR,VALUE)          *
+                                    ;* TIMER 2 WR (IOADDR,VALUE)        *
                                     ;************************************ 
                                     ;* Write Byte to 82C55 TIMER 2      *
                                     ;************************************
@@ -5607,7 +5636,7 @@ B_CORE39:     LD B,5                ; 82C54 2 WR
 
                                     ;************************************
                                     ;* BASIC                            * 
-                                    ;* TIMER CTRL (ADDR,VALUE)          *
+                                    ;* TIMER CTRL (IOADDR,VALUE)        *
                                     ;************************************ 
                                     ;* Write Byte to 82C54 CTRL         *
                                     ;************************************
@@ -5632,7 +5661,7 @@ B_CORE40:     LD B,6                ; 82C54 CTRL
 
                                     ;************************************
                                     ;* BASIC                            * 
-                                    ;* TIMER SET GATE (ADDR,VALUE)      *
+                                    ;* TIMER SET GATE (IOADDR,VALUE)    *
                                     ;************************************ 
                                     ;* Set Bit for GATE 0..2            *
                                     ;************************************
@@ -5657,7 +5686,7 @@ B_CORE41:     LD B,7                ; 82C54 SET GATE
 
                                     ;************************************
                                     ;* BASIC                            * 
-                                    ;* TIMER RESET GATE (ADDR,VALUE)    *
+                                    ;* TIMER RESET GATE (IOADDR,VALUE)  *
                                     ;************************************ 
                                     ;* Reset Bit for GATE 0..2          *
                                     ;************************************
@@ -5682,7 +5711,7 @@ B_CORE42:     LD B,8                ; 82C54 RESET GATE
 
                                     ;************************************
                                     ;* BASIC                            * 
-                                    ;* TIMER xxx (ADDR,VALUE)           *
+                                    ;* TIMER xxx (IOADDR,VALUE)         *
                                     ;************************************ 
                                     ;* Do activity with 82C54           *
                                     ;************************************
@@ -6022,7 +6051,7 @@ FN_CORETIMST: PUSH BC               ; Save bus address to stack
               RET                   ; Go back to main routine
 
                                     ;************************************ 
-                                    ;* TIMER xxx (ADDR,VALUE)           *
+                                    ;* TIMER xxx (IOADDR,VALUE)         *
                                     ;************************************ 
                                     ;* Do activity with 82C54           *
                                     ;************************************
@@ -6291,7 +6320,7 @@ CANNORMMODE:  EQU #0002             ; Normal Mode
 
                                     ;************************************
                                     ;* BASIC                            * 
-                                    ;* CALL CAN INIT(ADDR,ACC)          *
+                                    ;* CALL CAN INIT(IOADDR,ACC)        *
                                     ;************************************ 
                                     ;* Initialise SJA1000               *
                                     ;************************************
@@ -6520,7 +6549,7 @@ FN_CORE4302:  POP DE                ; Get varptr(DE) back from stack
               RET
 
                                     ;************************************ 
-                                    ;* CAN INIT(ADDR,ACC)               *
+                                    ;* CAN INIT(IOADDR,ACC)             *
                                     ;************************************ 
                                     ;* Initialise SJA1000               *
                                     ;************************************
@@ -6733,7 +6762,7 @@ CORE43S05:    LD D,CANCMDREG        ; COMMAND REG
 
                                     ;************************************
                                     ;* BASIC                            * 
-                                    ;* CALL CAN WR(ADDR,REG,DATA)       *
+                                    ;* CALL CAN WR(IOADDR,REG,DATA)     *
                                     ;************************************ 
                                     ;* Transfer Data to SJA1000         *
                                     ;************************************
@@ -6833,7 +6862,7 @@ FN_CORE44SLT: PUSH BC               ; Save BC to stack
               RET                   ; Go back to main routine
 
                                     ;************************************
-                                    ;* CAN WR(ADDR,REG,DATA)            *                            
+                                    ;* CAN WR(IOADDR,REG,DATA)          *                            
                                     ;************************************
                                     ;* Transfer Data to SJA1000         *
                                     ;************************************
@@ -6888,7 +6917,7 @@ CANOUT:       PUSH HL               ; Save BASIC Line-Pointer (if CALL is used)
 
                                     ;************************************
                                     ;* BASIC                            * 
-                                    ;* CALL CAN RD(ADDR,REG,DATA)       *
+                                    ;* CALL CAN RD(IOADDR,REG,DATA)     *
                                     ;************************************ 
                                     ;* Read data from SJA1000           *
                                     ;************************************
@@ -7020,7 +7049,7 @@ FN_CORE45SLT: PUSH BC               ; Save BC to stack
               RET                   ; Go back to main routine
 
                                     ;************************************
-                                    ;* CAN RD(ADDR,REG,DATA)            *
+                                    ;* CAN RD(IOADDR,REG,DATA)          *
                                     ;************************************
                                     ;* Read data from SJA1000           *
                                     ;************************************
@@ -7073,7 +7102,7 @@ CANINP:       PUSH HL               ; Save BASIC Line-Pointer (if CALL is used)
 
                                     ;************************************
                                     ;* BASIC                            * 
-                                    ;* CALL CAN CHECK(ADDR,RMC)         *
+                                    ;* CALL CAN CHECK(IOADDR,RMC)       *
                                     ;************************************ 
                                     ;* Checks for new msg to read       *
                                     ;************************************
@@ -7229,7 +7258,7 @@ FN_CORE46DONE: POP DE               ; Get DE back from stack
 
                                     ;************************************
                                     ;* BASIC                            * 
-                                    ;* CALL CAN RX(ADDR,DATA)           *
+                                    ;* CALL CAN RX(IOADDR,DATA)         *
                                     ;************************************ 
                                     ;* Read RX data from SJA1000        *
                                     ;************************************
@@ -7359,7 +7388,7 @@ FN_CORE47SLT: PUSH BC               ; Save BC to stack
               RET                   ; Go back to main routine
 
                                     ;************************************
-                                    ;* CAN RX(ADDR,DATA)                *
+                                    ;* CAN RX(IOADDR,DATA)              *
                                     ;************************************
                                     ;* Read RX data from SJA1000        *
                                     ;************************************
@@ -7444,7 +7473,7 @@ CORE47_01:    LD (HL),A             ; Save read msg count
 
                                     ;************************************
                                     ;* BASIC                            * 
-                                    ;* CALL CAN GET ADDR(ADDR,INTADDR)  *
+                                    ;* CALL CAN GET ADDR(IOADDR,INTADDR)*
                                     ;************************************ 
                                     ;* Get addr of INT routine          *
                                     ;************************************
@@ -7582,7 +7611,7 @@ FN_CORE48ADR: PUSH HL               ; Save HL to stack
 
                                     ;************************************
                                     ;* BASIC                            * 
-                                    ;* CALL CAN TX(ADDR,DATA)           *
+                                    ;* CALL CAN TX(IOADDR,DATA)         *
                                     ;************************************ 
                                     ;* Write TX data to SJA1000         *
                                     ;************************************
@@ -7712,7 +7741,7 @@ FN_CORE49SLT: PUSH BC               ; Save BC to stack
               RET                   ; Go back to main routine
 
                                     ;************************************
-                                    ;* CAN TX(ADDR,DATA)                *
+                                    ;* CAN TX(IOADDR,DATA)              *
                                     ;************************************
                                     ;* Write TX data to SJA1000         *
                                     ;************************************
@@ -7812,7 +7841,7 @@ CORE49L1:     LD A,C                ; C contains IO addr
 
                                     ;************************************
                                     ;* BASIC                            * 
-                                    ;* CALL SPI INIT(ADDR)              *
+                                    ;* CALL SPI INIT(IOADDR)            *
                                     ;************************************ 
                                     ;* Initialise SPI                   *
                                     ;************************************
@@ -7904,7 +7933,7 @@ FN_CORE50OK:  CCF                   ; Clear CARRY flag
 
                                     ;************************************
                                     ;* BASIC                            * 
-                                    ;* CALL SPI WR(ADDR,BUS,DATA)       *
+                                    ;* CALL SPI WR(IOADDR,BUS,DATA)     *
                                     ;************************************ 
                                     ;* Write data to SPI                *
                                     ;************************************
@@ -8014,7 +8043,7 @@ FN_CORE51SLT: PUSH BC               ; Save SPI Bus address & I2C DATA to stack
               RET                   ; Go back to main routine
 
                                     ;************************************ 
-                                    ;* SPI WR(ADDR,BUS,DATA)            *
+                                    ;* SPI WR(IOADDR,BUS,DATA)          *
                                     ;************************************ 
                                     ;* Write data to SPI                *
                                     ;************************************
@@ -8079,7 +8108,7 @@ CORE51:       PUSH HL               ; Save BASIC Line-Pointer (if CALL is used)
 
                                     ;************************************
                                     ;* BASIC                            * 
-                                    ;* CALL SPI WRB(ADDR,BUS,LEN,DATA)  *
+                                    ;* CALL SPI WRB(IOADDR,BUS,LEN,DATA)*
                                     ;************************************ 
                                     ;* Write block data to SPI          *
                                     ;************************************
@@ -8201,7 +8230,7 @@ FN_CORE52SLT: PUSH BC               ; Save SPI BUS & LEN to stack
               RET                   ; Go back to main routine
 
                                     ;************************************ 
-                                    ;* SPI WRB(BUS,ADDR,LEN,DATA)       *
+                                    ;* SPI WRB(IOADDR,BUS,LEN,DATA)     *
                                     ;************************************ 
                                     ;* Write block data to SPI          *
                                     ;************************************
@@ -8275,7 +8304,7 @@ CORE52LOOP:   LD A,(HL)
 
                                     ;************************************
                                     ;* BASIC                            * 
-                                    ;* CALL SPI RD(BUS,ADDR,DATA)       *
+                                    ;* CALL SPI RD(IOADDR,BUS,DATA)     *
                                     ;************************************ 
                                     ;* Read data from SPI               *
                                     ;************************************
@@ -8383,7 +8412,7 @@ FN_CORE53SLT: PUSH BC
               RET                   ; Go back to main routine
 
                                     ;************************************ 
-                                    ;* SPI RD(ADDR,BUS,DATA)            *
+                                    ;* SPI RD(IOADDR,BUS,DATA)          *
                                     ;************************************ 
                                     ;* Read data from SPI               *
                                     ;************************************
@@ -8453,7 +8482,7 @@ CORE53:       PUSH HL               ; Save BASIC Line-Pointer (if CALL is used)
 
                                     ;************************************
                                     ;* BASIC                            * 
-                                    ;* CALL SPI RDB(ADDR,BUS,LEN,DATA)  *
+                                    ;* CALL SPI RDB(IOADDR,BUS,LEN,DATA)*
                                     ;************************************ 
                                     ;* Read block data from SPI         *
                                     ;************************************
@@ -8575,7 +8604,7 @@ FN_CORE54SLT: PUSH BC               ; Save SPI BUS & LEN to stack
               RET                   ; Go back to main routine
 
                                     ;************************************ 
-                                    ;* SPI RDB(ADDR,BUS,LEN,DATA)       *
+                                    ;* SPI RDB(IOADDR,BUS,LEN,DATA)     *
                                     ;************************************ 
                                     ;* Read block data from SPI         *
                                     ;************************************
@@ -8649,7 +8678,8 @@ CORE54LOOP:   IN A,(SWIO)
 
                                     ;************************************
                                     ;* BASIC                            * 
-                                    ;* CALL SPI RDH(ADDR,BUS,LN,LN,DATA)*
+                                    ;* CALL SPI RDH(IOADDR,BUS,LN,LN,   *
+                                    ;*              DATA)               *
                                     ;************************************ 
                                     ;* Read block data from SPI after   *
                                     ;* Header                           *
@@ -8800,7 +8830,7 @@ FN_CORE55SLT: LD A,C                ; Get SPI ADDR
               RET                   ; Go back to main routine
 
                                     ;************************************ 
-                                    ;* SPI RDH(ADDR,BUS,LEN,LEN,DATA)   *
+                                    ;* SPI RDH(IOADDR,BUS,LEN,LEN,DATA) *
                                     ;************************************ 
                                     ;* Read block data from SPI after   *
                                     ;* Header                           *
@@ -8888,7 +8918,7 @@ CORE55LOOPR:  IN A,(SWIO)
 
                                     ;************************************
                                     ;* BASIC                            * 
-                                    ;* CALL SPI MODE(ADDR,BUS,MOD,FQZ)  *
+                                    ;* CALL SPI MODE(IOADDR,BUS,MOD,FQZ)*
                                     ;************************************ 
                                     ;* Write control data to SPI        *
                                     ;************************************
@@ -9028,7 +9058,7 @@ FN_CORE56SLT: PUSH BC               ; Save SPI ADDR & BUS to stack
               RET                   ; Go back to main routine
 
                                     ;************************************ 
-                                    ;* SPI MODE(ADDR,BUS,MOD,FQZ)       *
+                                    ;* SPI MODE(IOADDR,BUS,MOD,FQZ)     *
                                     ;************************************ 
                                     ;* Write MODE to SPI                *
                                     ;************************************
@@ -9095,12 +9125,13 @@ CORE56:       PUSH HL               ; Save BASIC Line-Pointer (if CALL is used)
 ;++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ;+++ RC2014 card with ATMEGA8 ADS1220 measurement board               +++
 ;++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-;+++ Registers (relative to BUS): +0 MODE, +1 CMD, +2 NC, +3 RESULT   +++
+;+++ Registers (relative to IOADDR): +0 MODE, +1 CMD, +2 NC,          +++
+;+++ +3 RESULT                                                        +++
 ;++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
                                     ;************************************
                                     ;* BASIC                            *
-                                    ;* CALL ADS INIT(BUS)               *
+                                    ;* CALL ADS INIT(IOADDR)            *
                                     ;************************************
                                     ;* Initialise ADS1220               *
                                     ;************************************
@@ -9189,7 +9220,7 @@ FN_CORE57OK:  CCF                   ; Clear CARRY flag
 
                                     ;************************************
                                     ;* BASIC                            *
-                                    ;* CALL ADS MODE(BUS,TYPE)          *
+                                    ;* CALL ADS MODE(IOADDR,TYPE)       *
                                     ;************************************
                                     ;* Write ADS1220 MODE register      *
                                     ;************************************
@@ -9335,7 +9366,7 @@ CORE58ERR:    LD HL,PERRVAL         ; Value of parameter
 
                                     ;************************************
                                     ;* BASIC                            *
-                                    ;* CALL ADS CMD(BUS,VAL)            *
+                                    ;* CALL ADS CMD(IOADDR,VAL)         *
                                     ;************************************
                                     ;* Write ADS1220 CMD register       *
                                     ;************************************
@@ -9467,7 +9498,7 @@ CORE59:       PUSH HL               ; Save BASIC Line-Pointer (if CALL is used)
 
                                     ;************************************
                                     ;* BASIC                            *
-                                    ;* CALL ADS STATUS(BUS,VAL)         *
+                                    ;* CALL ADS STATUS(IOADDR,VAL)      *
                                     ;************************************
                                     ;* Read ADS1220 CMD register back   *
                                     ;************************************
@@ -9603,7 +9634,7 @@ CORE60:       PUSH HL               ; Save BASIC Line-Pointer (if CALL is used)
 
                                     ;************************************
                                     ;* BASIC                            *
-                                    ;* CALL ADS READ(BUS,VAL)           *
+                                    ;* CALL ADS READ(IOADDR,VAL)        *
                                     ;************************************
                                     ;* Read one ADS1220 RESULT byte,    *
                                     ;* mCount auto-increments on the    *
@@ -9741,7 +9772,7 @@ CORE61:       PUSH HL               ; Save BASIC Line-Pointer (if CALL is used)
 
                                     ;************************************
                                     ;* BASIC                            *
-                                    ;* CALL ADS GET(BUS,TYPE,VAL)       *
+                                    ;* CALL ADS GET(IOADDR,TYPE,VAL)    *
                                     ;************************************
                                     ;* Set MODE, start conversion,      *
                                     ;* select channel, read all 4       *
@@ -9984,6 +10015,781 @@ CORE62ERR:    LD HL,PERRVAL          ; Value of parameter
                                     ;************************************
 
 ADSCHANMAP:   DEFB 0,1,2,3,0,0,0,1,1,2,1,3
+
+;++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+;+++ Card Type I                                                      +++
+;++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+;+++ RC2014 card with ATMEGA8 and 2x MCP4822 D/A converter            +++
+;++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+;+++ Registers (relative to IOADDR): +0 SELECT, +1 CONFIG,            +++
+;+++ +2 VALUE LOW, +3 VALUE HIGH (bit 6 = HOLD)                       +++
+;++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+                                    ;************************************
+                                    ;* BASIC                            *
+                                    ;* CALL DAC INIT(IOADDR)            *
+                                    ;************************************
+                                    ;* Initialise MCP4822 card          *
+                                    ;************************************
+                                    ;* INPUT:                           *
+                                    ;************************************
+                                    ;* PARA1: DAC ADDR                  *
+                                    ;************************************
+                                    ;* OUTPUT:                          *
+                                    ;************************************
+                                    ;* C = DAC ADDR                     *
+                                    ;************************************
+                                    ;* Modified:                        *
+                                    ;************************************
+                                    ;* AF                               *
+                                    ;************************************
+
+B_CORE63:     CALL CHKCHAR
+              DEFB "("              ; Check for (
+
+              LD B,0
+              CALL EVALBYTEVAR      ; Test integer or variable
+
+              LD C,A                ; Save IO addr
+              PUSH BC               ; Save IO addr on stack
+
+              CALL CHKCHAR
+              DEFB ")"              ; Check for )
+              CALL RCXINIT          ; Module installed?
+              JP NZ,B_NOTINST1      ; No? Prompt error no RCX
+
+              POP BC                ; Get IO addr from stack
+
+              LD B,SDAC             ; Set type SDAC
+
+              PUSH IX               ; Result not used
+              CALL SETRCXSLT        ; Initialize card with BC
+                                    ; IX contains RAM-address
+              POP IX                ; Result not used
+
+              JP NC,SLTFREEERR      ; No free slot found
+
+              OR A                  ; Clear Carry Flag to end routine handler
+              RET                   ; Go back to BASIC
+
+                                    ;************************************
+                                    ;* EXTBIOS                          *
+                                    ;* Routine A = 63                   *
+                                    ;************************************
+                                    ;* Initialise MCP4822 card          *
+                                    ;************************************
+                                    ;* INPUT:                           *
+                                    ;************************************
+                                    ;* C = DAC ADDR                     *
+                                    ;************************************
+                                    ;* OUTPUT:                          *
+                                    ;************************************
+                                    ;* C = DAC ADDR                     *
+                                    ;* CARRY-Flag = 1 -> ERROR          *
+                                    ;************************************
+                                    ;* Modified:                        *
+                                    ;************************************
+                                    ;* AF                               *
+                                    ;************************************
+
+FN_CORE63:    CALL RCXINIT          ; Module installed?
+              JP Z,FN_CORE63SLT     ; Installed? Continue with Slot command
+              SCF                   ; Set CARRY flag for ERROR
+              RET                   ; Go back to main routine
+
+FN_CORE63SLT: PUSH BC               ; Save BC to stack
+              LD B,SDAC             ; Set type SDAC
+              PUSH IX               ; IX not used
+              CALL SETRCXSLT        ; Check card with BC
+                                    ; IX contains RAM-address
+              POP IX                ; IX not used
+              POP BC                ; Get BC from stack
+              JP C,FN_CORE63OK      ; JP if free slot found, CARRY = 1
+
+              SCF                   ; Set CARRY flag for ERROR
+              RET
+
+FN_CORE63OK:  CCF                   ; Clear CARRY flag
+              RET                   ; Go back to main routine
+
+;---------------------------
+
+                                    ;************************************
+                                    ;* BASIC                            *
+                                    ;* CALL DAC SET(IOADDR,CH,VAL)      *
+                                    ;************************************
+                                    ;* Write value to one channel and   *
+                                    ;* update the outputs (/LDAC)       *
+                                    ;************************************
+                                    ;* INPUT:                           *
+                                    ;************************************
+                                    ;* PARA1: DAC ADDR                  *
+                                    ;* PARA2: DAC CHANNEL (0..3)        *
+                                    ;* PARA3: DAC VAL (0..4095)         *
+                                    ;************************************
+                                    ;* OUTPUT:                          *
+                                    ;************************************
+                                    ;* C = DAC ADDR                     *
+                                    ;* B = DAC CHANNEL (0..3)           *
+                                    ;* DE = DAC VAL (0..4095)           *
+                                    ;************************************
+                                    ;* Modified:                        *
+                                    ;************************************
+                                    ;* AF                               *
+                                    ;************************************
+
+B_CORE64:     CALL B_COREDACV       ; Read IOADDR, CHANNEL and VAL
+              JP C,CORE64           ; JP if slot found
+
+              JP SLTERR             ; No suitable slot found
+
+                                    ;************************************
+                                    ;* EXTBIOS                          *
+                                    ;* Routine A = 64                   *
+                                    ;************************************
+                                    ;* Write value to one channel and   *
+                                    ;* update the outputs (/LDAC)       *
+                                    ;************************************
+                                    ;* INPUT:                           *
+                                    ;************************************
+                                    ;* C = DAC ADDR                     *
+                                    ;* B = DAC CHANNEL (0..3)           *
+                                    ;* DE = DAC VAL (0..4095)           *
+                                    ;************************************
+                                    ;* OUTPUT:                          *
+                                    ;************************************
+                                    ;* C = DAC ADDR                     *
+                                    ;* B = DAC CHANNEL (0..3)           *
+                                    ;* DE = DAC VAL (0..4095)           *
+                                    ;************************************
+                                    ;* Modified:                        *
+                                    ;************************************
+                                    ;* AF                               *
+                                    ;************************************
+
+FN_CORE64:    CALL FN_COREDAC       ; Module installed and card found?
+              JP C,CORE64           ; JP if slot found
+              SCF                   ; Set CARRY flag for ERROR
+              RET                   ; Go back to main routine
+
+                                    ;************************************
+                                    ;* Write value to MCP4822 channel   *
+                                    ;* with /LDAC pulse                 *
+                                    ;************************************
+                                    ;* INPUT:                           *
+                                    ;************************************
+                                    ;* C = DAC ADDR                     *
+                                    ;* B = DAC CHANNEL (0..3)           *
+                                    ;* DE = DAC VAL (0..4095)           *
+                                    ;************************************
+                                    ;* OUTPUT:                          *
+                                    ;************************************
+                                    ;* -/-                              *
+                                    ;************************************
+                                    ;* Modified:                        *
+                                    ;************************************
+                                    ;* AF                               *
+                                    ;************************************
+
+CORE64:       PUSH HL               ; Save BASIC Line-Pointer (if CALL is used)
+
+              LD L,#000             ; VALUE HIGH bit 6 = 0 -> /LDAC pulse
+
+CORE64CHK:    LD A,B                ; Check DAC CHANNEL range (0..3)
+              CP #004
+              JP NC,COREDACERRC
+
+              LD A,D                ; Check DAC VAL range (0..4095)
+              CP #010
+              JP NC,COREDACERRV
+
+              DI
+
+              CALL IOEN             ; Switched IO enabled
+
+              LD A,C                ; DAC ADDR+0 = SELECT register
+              OUT (ALE),A
+              LD A,B                ; DAC CHANNEL
+              OUT (SWIO),A
+
+              LD A,C                ; DAC ADDR+2 = VALUE LOW register
+              ADD A,#02
+              OUT (ALE),A
+              LD A,E                ; DAC VAL bit 7..0
+              OUT (SWIO),A
+
+              LD A,C                ; DAC ADDR+3 = VALUE HIGH register
+              ADD A,#03
+              OUT (ALE),A
+              LD A,D                ; DAC VAL bit 11..8
+              OR L                  ; + HOLD bit
+              OUT (SWIO),A          ; Starts the transfer to the MCP4822
+
+              CALL IODIS            ; Switched IO disabled
+
+              EI
+
+              POP HL                ; Get BASIC Line-Pointer (if CALL is used)
+
+              OR A                  ; Clear Carry Flag to end routine handler
+              RET
+
+;---------------------------
+
+                                    ;************************************
+                                    ;* BASIC                            *
+                                    ;* CALL DAC HOLD(IOADDR,CH,VAL)     *
+                                    ;************************************
+                                    ;* Write value to one channel, the  *
+                                    ;* output follows with the next     *
+                                    ;* DAC SET or DAC CONF              *
+                                    ;************************************
+                                    ;* INPUT:                           *
+                                    ;************************************
+                                    ;* PARA1: DAC ADDR                  *
+                                    ;* PARA2: DAC CHANNEL (0..3)        *
+                                    ;* PARA3: DAC VAL (0..4095)         *
+                                    ;************************************
+                                    ;* OUTPUT:                          *
+                                    ;************************************
+                                    ;* C = DAC ADDR                     *
+                                    ;* B = DAC CHANNEL (0..3)           *
+                                    ;* DE = DAC VAL (0..4095)           *
+                                    ;************************************
+                                    ;* Modified:                        *
+                                    ;************************************
+                                    ;* AF                               *
+                                    ;************************************
+
+B_CORE65:     CALL B_COREDACV       ; Read IOADDR, CHANNEL and VAL
+              JP C,CORE65           ; JP if slot found
+
+              JP SLTERR             ; No suitable slot found
+
+                                    ;************************************
+                                    ;* EXTBIOS                          *
+                                    ;* Routine A = 65                   *
+                                    ;************************************
+                                    ;* Write value to one channel, the  *
+                                    ;* output follows with the next     *
+                                    ;* DAC SET or DAC CONF              *
+                                    ;************************************
+                                    ;* INPUT:                           *
+                                    ;************************************
+                                    ;* C = DAC ADDR                     *
+                                    ;* B = DAC CHANNEL (0..3)           *
+                                    ;* DE = DAC VAL (0..4095)           *
+                                    ;************************************
+                                    ;* OUTPUT:                          *
+                                    ;************************************
+                                    ;* C = DAC ADDR                     *
+                                    ;* B = DAC CHANNEL (0..3)           *
+                                    ;* DE = DAC VAL (0..4095)           *
+                                    ;************************************
+                                    ;* Modified:                        *
+                                    ;************************************
+                                    ;* AF                               *
+                                    ;************************************
+
+FN_CORE65:    CALL FN_COREDAC       ; Module installed and card found?
+              JP C,CORE65           ; JP if slot found
+              SCF                   ; Set CARRY flag for ERROR
+              RET                   ; Go back to main routine
+
+                                    ;************************************
+                                    ;* Write value to MCP4822 channel   *
+                                    ;* without /LDAC pulse (HOLD)       *
+                                    ;************************************
+                                    ;* INPUT:                           *
+                                    ;************************************
+                                    ;* C = DAC ADDR                     *
+                                    ;* B = DAC CHANNEL (0..3)           *
+                                    ;* DE = DAC VAL (0..4095)           *
+                                    ;************************************
+                                    ;* OUTPUT:                          *
+                                    ;************************************
+                                    ;* -/-                              *
+                                    ;************************************
+                                    ;* Modified:                        *
+                                    ;************************************
+                                    ;* AF                               *
+                                    ;************************************
+
+CORE65:       PUSH HL               ; Save BASIC Line-Pointer (if CALL is used)
+
+              LD L,#040             ; VALUE HIGH bit 6 = 1 -> HOLD
+
+              JP CORE64CHK          ; Same check and transfer as DAC SET
+
+;---------------------------
+
+                                    ;************************************
+                                    ;* BASIC                            *
+                                    ;* CALL DAC CONF(IOADDR,CH,CFG)     *
+                                    ;************************************
+                                    ;* Write configuration of one       *
+                                    ;* channel (bit 0 = gain x2,        *
+                                    ;* bit 1 = shutdown), with /LDAC    *
+                                    ;************************************
+                                    ;* INPUT:                           *
+                                    ;************************************
+                                    ;* PARA1: DAC ADDR                  *
+                                    ;* PARA2: DAC CHANNEL (0..3)        *
+                                    ;* PARA3: DAC CFG (0..3)            *
+                                    ;************************************
+                                    ;* OUTPUT:                          *
+                                    ;************************************
+                                    ;* C = DAC ADDR                     *
+                                    ;* B = DAC CHANNEL (0..3)           *
+                                    ;* E = DAC CFG (0..3)               *
+                                    ;************************************
+                                    ;* Modified:                        *
+                                    ;************************************
+                                    ;* AF                               *
+                                    ;************************************
+
+B_CORE66:     CALL CHKCHAR
+              DEFB "("              ; Check for (
+
+              LD B,0                ; First PARA = DAC ADDR
+              CALL EVALBYTEVAR      ; A = DAC ADDR
+
+              LD C,A                ; C = DAC ADDR
+
+              CALL CHKCHAR
+              DEFB ","              ; Check for ,
+
+              LD B,1                ; Second PARA = DAC CHANNEL
+              CALL EVALBYTEVAR      ; A = DAC CHANNEL
+
+              LD B,A                ; B = DAC CHANNEL
+              PUSH BC               ; Protect DAC CHANNEL+ADDR across the
+                                    ; third parameter (B = its own index)
+
+              CALL CHKCHAR
+              DEFB ","              ; Check for ,
+
+              LD B,2                ; Third PARA = DAC CFG
+              CALL EVALBYTEVAR      ; A = DAC CFG
+
+              LD E,A                ; E = DAC CFG
+
+              CALL CHKCHAR
+              DEFB ")"              ; Check for )
+              CALL RCXINIT          ; Module installed?
+              JP NZ,B_NOTINST1      ; No? Prompt error no RCX
+
+              POP BC                ; B = DAC CHANNEL, C = DAC ADDR back
+
+              PUSH BC               ; Protect DAC CHANNEL+ADDR across GETRCXSLT
+              LD B,SDAC             ; Set type SDAC
+              PUSH IX               ; Result not used
+              CALL GETRCXSLT        ; Check card with BC
+                                    ; IX contains RAM-address
+              POP IX                ; Result not used
+              POP BC                ; B = DAC CHANNEL, C = DAC ADDR back
+
+              JP C,CORE66           ; JP if slot found
+
+              JP SLTERR             ; No suitable slot found
+
+                                    ;************************************
+                                    ;* EXTBIOS                          *
+                                    ;* Routine A = 66                   *
+                                    ;************************************
+                                    ;* Write configuration of one       *
+                                    ;* channel (bit 0 = gain x2,        *
+                                    ;* bit 1 = shutdown), with /LDAC    *
+                                    ;************************************
+                                    ;* INPUT:                           *
+                                    ;************************************
+                                    ;* C = DAC ADDR                     *
+                                    ;* B = DAC CHANNEL (0..3)           *
+                                    ;* E = DAC CFG (0..3)               *
+                                    ;************************************
+                                    ;* OUTPUT:                          *
+                                    ;************************************
+                                    ;* C = DAC ADDR                     *
+                                    ;* B = DAC CHANNEL (0..3)           *
+                                    ;* E = DAC CFG (0..3)               *
+                                    ;************************************
+                                    ;* Modified:                        *
+                                    ;************************************
+                                    ;* AF                               *
+                                    ;************************************
+
+FN_CORE66:    CALL FN_COREDAC       ; Module installed and card found?
+              JP C,CORE66           ; JP if slot found
+              SCF                   ; Set CARRY flag for ERROR
+              RET                   ; Go back to main routine
+
+                                    ;************************************
+                                    ;* Write CONFIG to MCP4822 channel  *
+                                    ;************************************
+                                    ;* INPUT:                           *
+                                    ;************************************
+                                    ;* C = DAC ADDR                     *
+                                    ;* B = DAC CHANNEL (0..3)           *
+                                    ;* E = DAC CFG (0..3)               *
+                                    ;************************************
+                                    ;* OUTPUT:                          *
+                                    ;************************************
+                                    ;* -/-                              *
+                                    ;************************************
+                                    ;* Modified:                        *
+                                    ;************************************
+                                    ;* AF                               *
+                                    ;************************************
+
+CORE66:       PUSH HL               ; Save BASIC Line-Pointer (if CALL is used)
+
+              LD A,B                ; Check DAC CHANNEL range (0..3)
+              CP #004
+              JP NC,COREDACERRC
+
+              LD A,E                ; Check DAC CFG range (0..3)
+              CP #004
+              JP NC,CORE66ERR
+
+              DI
+
+              CALL IOEN             ; Switched IO enabled
+
+              LD A,C                ; DAC ADDR+0 = SELECT register
+              OUT (ALE),A
+              LD A,B                ; DAC CHANNEL
+              OUT (SWIO),A
+
+              LD A,C                ; DAC ADDR+1 = CONFIG register
+              ADD A,#01
+              OUT (ALE),A
+              LD A,E                ; DAC CFG
+              OUT (SWIO),A
+
+              CALL IODIS            ; Switched IO disabled
+
+              EI
+
+              POP HL                ; Get BASIC Line-Pointer (if CALL is used)
+
+              OR A                  ; Clear Carry Flag to end routine handler
+              RET
+
+CORE66ERR:    LD HL,PERRVAL         ; Value of parameter
+              CALL PROMPT
+              LD A,#032             ; Parameter 2 (DAC CFG)
+              CALL CHPUT
+              LD HL,PERRVAL3        ; must be 0 .. 3
+              CALL PROMPT
+
+              POP HL                ; Get BASIC Line-Pointer (if CALL is used)
+
+              JP B_ERRTYPE
+
+;---------------------------
+
+                                    ;************************************
+                                    ;* BASIC                            *
+                                    ;* CALL DAC GET(IOADDR,CH,VAL)      *
+                                    ;************************************
+                                    ;* Read value of one channel back   *
+                                    ;* (mirror in the ATMEGA8)          *
+                                    ;************************************
+                                    ;* INPUT:                           *
+                                    ;************************************
+                                    ;* PARA1: DAC ADDR                  *
+                                    ;* PARA2: DAC CHANNEL (0..3)        *
+                                    ;* PARA3: DAC VAL (Variable)        *
+                                    ;************************************
+                                    ;* OUTPUT:                          *
+                                    ;************************************
+                                    ;* C = DAC ADDR                     *
+                                    ;* B = DAC CHANNEL (0..3)           *
+                                    ;* DE = varptr(DAC VAL)             *
+                                    ;************************************
+                                    ;* Modified:                        *
+                                    ;************************************
+                                    ;* AF                               *
+                                    ;************************************
+
+B_CORE67:     CALL CHKCHAR
+              DEFB "("              ; Check for (
+
+              LD B,0                ; First PARA = DAC ADDR
+              CALL EVALBYTEVAR      ; A = DAC ADDR
+
+              LD C,A                ; C = DAC ADDR
+
+              CALL CHKCHAR
+              DEFB ","              ; Check for ,
+
+              LD B,1                ; Second PARA = DAC CHANNEL
+              CALL EVALBYTEVAR      ; A = DAC CHANNEL
+
+              LD B,A                ; B = DAC CHANNEL
+              PUSH BC               ; Protect DAC CHANNEL+ADDR across
+                                    ; EVALVARINT (B = its own param index)
+
+              CALL CHKCHAR
+              DEFB ","              ; Check for ,
+
+              LD B,2                ; Third PARA = DAC VAL
+              CALL EVALVARINT       ; DE contains VARPTR to DAC VAL
+
+              CALL CHKCHAR
+              DEFB ")"              ; Check for )
+              CALL RCXINIT          ; Module installed?
+              JP NZ,B_NOTINST1      ; No? Prompt error no RCX
+
+              POP BC                ; B = DAC CHANNEL, C = DAC ADDR back
+
+              PUSH BC               ; Protect DAC CHANNEL+ADDR across GETRCXSLT
+              LD B,SDAC             ; Set type SDAC
+              PUSH IX               ; Result not used
+              CALL GETRCXSLT        ; Check card with BC
+                                    ; IX contains RAM-address
+              POP IX                ; Result not used
+              POP BC                ; B = DAC CHANNEL, C = DAC ADDR back
+
+              JP C,CORE67           ; JP if slot found
+
+              JP SLTERR             ; No suitable slot found
+
+                                    ;************************************
+                                    ;* EXTBIOS                          *
+                                    ;* Routine A = 67                   *
+                                    ;************************************
+                                    ;* Read value of one channel back   *
+                                    ;* (mirror in the ATMEGA8)          *
+                                    ;************************************
+                                    ;* INPUT:                           *
+                                    ;************************************
+                                    ;* C = DAC ADDR                     *
+                                    ;* B = DAC CHANNEL (0..3)           *
+                                    ;* DE = varptr(DAC VAL)             *
+                                    ;************************************
+                                    ;* OUTPUT:                          *
+                                    ;************************************
+                                    ;* C = DAC ADDR                     *
+                                    ;* B = DAC CHANNEL (0..3)           *
+                                    ;* DE = varptr(DAC VAL)             *
+                                    ;************************************
+                                    ;* Modified:                        *
+                                    ;************************************
+                                    ;* AF                               *
+                                    ;************************************
+
+FN_CORE67:    CALL FN_COREDAC       ; Module installed and card found?
+              JP C,CORE67           ; JP if slot found
+              SCF                   ; Set CARRY flag for ERROR
+              RET                   ; Go back to main routine
+
+                                    ;************************************
+                                    ;* Read VALUE LOW/HIGH of MCP4822   *
+                                    ;* channel                          *
+                                    ;************************************
+                                    ;* INPUT:                           *
+                                    ;************************************
+                                    ;* C = DAC ADDR                     *
+                                    ;* B = DAC CHANNEL (0..3)           *
+                                    ;* DE = varptr(DAC VAL)             *
+                                    ;************************************
+                                    ;* OUTPUT:                          *
+                                    ;************************************
+                                    ;* -/-                              *
+                                    ;************************************
+                                    ;* Modified:                        *
+                                    ;************************************
+                                    ;* AF                               *
+                                    ;************************************
+
+CORE67:       PUSH HL               ; Save BASIC Line-Pointer (if CALL is used)
+
+              LD A,B                ; Check DAC CHANNEL range (0..3)
+              CP #004
+              JP NC,COREDACERRC
+
+              PUSH DE               ; Save varptr(DAC VAL)
+              EX DE,HL              ; HL contains varptr(DAC VAL)
+
+              DI
+
+              CALL IOEN             ; Switched IO enabled
+
+              LD A,C                ; DAC ADDR+0 = SELECT register
+              OUT (ALE),A
+              LD A,B                ; DAC CHANNEL
+              OUT (SWIO),A
+
+              LD A,C                ; DAC ADDR+2 = VALUE LOW register
+              ADD A,#02
+              OUT (ALE),A
+              IN A,(SWIO)           ; Get DAC VAL bit 7..0
+              LD (HL),A             ; Save low part of integer
+              INC HL
+
+              LD A,C                ; DAC ADDR+3 = VALUE HIGH register
+              ADD A,#03
+              OUT (ALE),A
+              IN A,(SWIO)           ; Get DAC VAL bit 11..8
+              LD (HL),A             ; Save high part of integer
+
+              CALL IODIS            ; Switched IO disabled
+
+              EI
+
+              POP DE                ; Get varptr(DAC VAL) back
+              POP HL                ; Get BASIC Line-Pointer (if CALL is used)
+
+              OR A                  ; Clear Carry Flag to end routine handler
+              RET
+
+;---------------------------
+
+                                    ;************************************
+                                    ;* BASIC                            *
+                                    ;* Read (IOADDR,CH,VAL) for DAC SET *
+                                    ;* and DAC HOLD, find the card      *
+                                    ;************************************
+                                    ;* INPUT:                           *
+                                    ;************************************
+                                    ;* PARA1: DAC ADDR                  *
+                                    ;* PARA2: DAC CHANNEL (0..3)        *
+                                    ;* PARA3: DAC VAL (0..4095)         *
+                                    ;************************************
+                                    ;* OUTPUT:                          *
+                                    ;************************************
+                                    ;* C = DAC ADDR                     *
+                                    ;* B = DAC CHANNEL (0..3)           *
+                                    ;* DE = DAC VAL (0..4095)           *
+                                    ;* C-Flag set = card found          *
+                                    ;************************************
+                                    ;* Modified:                        *
+                                    ;************************************
+                                    ;* AF                               *
+                                    ;************************************
+
+B_COREDACV:   CALL CHKCHAR
+              DEFB "("              ; Check for (
+
+              LD B,0                ; First PARA = DAC ADDR
+              CALL EVALBYTEVAR      ; A = DAC ADDR
+
+              LD C,A                ; C = DAC ADDR
+
+              CALL CHKCHAR
+              DEFB ","              ; Check for ,
+
+              LD B,1                ; Second PARA = DAC CHANNEL
+              CALL EVALBYTEVAR      ; A = DAC CHANNEL
+
+              LD B,A                ; B = DAC CHANNEL
+              PUSH BC               ; Protect DAC CHANNEL+ADDR across
+                                    ; EVALINTVAR (B = its own param index)
+
+              CALL CHKCHAR
+              DEFB ","              ; Check for ,
+
+              LD B,2                ; Third PARA = DAC VAL
+              CALL EVALINTVAR       ; DE contains DAC VAL
+
+              CALL CHKCHAR
+              DEFB ")"              ; Check for )
+              CALL RCXINIT          ; Module installed?
+              JP NZ,B_COREDACNI     ; No? Prompt error no RCX
+
+              POP BC                ; B = DAC CHANNEL, C = DAC ADDR back
+
+              PUSH BC               ; Protect DAC CHANNEL+ADDR across GETRCXSLT
+              LD B,SDAC             ; Set type SDAC
+              PUSH IX               ; Result not used
+              CALL GETRCXSLT        ; Check card with BC
+                                    ; IX contains RAM-address
+              POP IX                ; Result not used
+              POP BC                ; B = DAC CHANNEL, C = DAC ADDR back
+                                    ; (POP BC keeps the Carry of GETRCXSLT)
+              RET
+
+B_COREDACNI:  POP BC                ; Clear DAC CHANNEL+ADDR from stack
+              POP BC                ; Clear return address of B_COREDACV
+              JP MODERR             ; Prompt error no RCX
+
+;---------------------------
+
+                                    ;************************************
+                                    ;* EXTBIOS                          *
+                                    ;* Module installed and card found  *
+                                    ;************************************
+                                    ;* INPUT:                           *
+                                    ;************************************
+                                    ;* C = DAC ADDR                     *
+                                    ;* B = DAC CHANNEL (0..3)           *
+                                    ;************************************
+                                    ;* OUTPUT:                          *
+                                    ;************************************
+                                    ;* C = DAC ADDR                     *
+                                    ;* B = DAC CHANNEL (0..3)           *
+                                    ;* C-Flag set = card found          *
+                                    ;************************************
+                                    ;* Modified:                        *
+                                    ;************************************
+                                    ;* AF                               *
+                                    ;************************************
+
+FN_COREDAC:   CALL RCXINIT          ; Module installed?
+              JR Z,FN_COREDACSLT    ; Installed? Continue with slt command
+              OR A                  ; Clear CARRY flag = not found
+              RET
+
+FN_COREDACSLT:
+              PUSH BC               ; Save DAC CHANNEL to stack
+              LD B,SDAC             ; Set type SDAC
+              PUSH IX               ; Result not used
+              CALL GETRCXSLT        ; Check card with BC
+                                    ; IX contains RAM-address
+              POP IX                ; Result not used
+              POP BC                ; Get DAC CHANNEL back
+              RET
+
+;---------------------------
+
+                                    ;************************************
+                                    ;* DAC parameter errors             *
+                                    ;************************************
+                                    ;* INPUT:                           *
+                                    ;************************************
+                                    ;* Stack = BASIC Line-Pointer       *
+                                    ;************************************
+                                    ;* OUTPUT:                          *
+                                    ;************************************
+                                    ;* -/-                              *
+                                    ;************************************
+                                    ;* Modified:                        *
+                                    ;************************************
+                                    ;* AF, HL                           *
+                                    ;************************************
+
+COREDACERRC:  LD HL,PERRVAL         ; Value of parameter
+              CALL PROMPT
+              LD A,#031             ; Parameter 1 (DAC CHANNEL)
+              CALL CHPUT
+              LD HL,PERRVAL3        ; must be 0 .. 3
+              CALL PROMPT
+
+              POP HL                ; Get BASIC Line-Pointer (if CALL is used)
+
+              JP B_ERRTYPE
+
+COREDACERRV:  LD HL,PERRVAL         ; Value of parameter
+              CALL PROMPT
+              LD A,#032             ; Parameter 2 (DAC VAL)
+              CALL CHPUT
+              LD HL,PERRVAL6        ; must be 0 .. 4095
+              CALL PROMPT
+
+              POP HL                ; Get BASIC Line-Pointer (if CALL is used)
+
+              JP B_ERRTYPE
 
 ;---------------------------
 
@@ -11381,6 +12187,7 @@ PERRVAL2:     DEFM " must be 0 .. 7",#0D,#0A,0
 PERRVAL3:     DEFM " must be 0 .. 3",#0D,#0A,0
 PERRVAL4:     DEFM " must be 0 .. 11",#0D,#0A,0
 PERRVAL5:     DEFM " must be 0 .. 9",#0D,#0A,0
+PERRVAL6:     DEFM " must be 0 .. 4095",#0D,#0A,0
 PERRTYPE:     DEFM "Type of parameter ",0
 PERRTYPEIV:   DEFM " must be integer variable",#0D,#0A,0
 PERRTYPEI:    DEFM " must be integer",#0D,#0A,0

@@ -10681,14 +10681,15 @@ Source: 008-0260-0_E.pdf</description>
 <sheets>
 <sheet>
 <plain>
-<text x="165.1" y="25.4" size="1.778" layer="91">RC 2014 - ADS1220
+<text x="165.1" y="25.4" size="1.778" layer="91">RC 2014 - MCP4822
 
 (c) Dr.-Ing. Thomas Wiesner</text>
 <text x="24.765" y="127" size="1.778" layer="91">~4700ns</text>
-<text x="6.35" y="5.715" size="1.778" layer="91">A0 = SPI-MODE
-A1 = SPI-GENPURP
-A2 = xBytes + Busnummer
-A3 = SPI-RD/WR</text>
+<text x="44.45" y="114.935" size="1.778" layer="91">A1 A0
+ 0  0 = SELECT (channel)
+ 0  1 = CONFIG (gain / shutdown)
+ 1  0 = VALUE LOW
+ 1  1 = VALUE HIGH (+ HOLD)</text>
 </plain>
 <instances>
 <instance part="FRAME101" gate="G$1" x="0" y="0"/>

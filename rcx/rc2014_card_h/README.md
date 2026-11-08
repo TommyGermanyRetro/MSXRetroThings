@@ -39,7 +39,7 @@ Commands implemented in ROM:
 
 |  | Definition | BASIC* | UNAPI | SDCC |
 | --- | --- | --- | --- | --- |
-| Syntax | COMINI | CALL COMINI() | - | Com_Ini() |
+| Syntax | COMINI | _COMINI() | - | Com_Ini() |
 | PARA 1 | "[n:]data" | string | - | 13 byte table |
 | PARA 2 | Receive baud | integer or variable | - | in the table |
 | PARA 3 | Send baud (default = receive) | integer or variable | - | in the table |
@@ -53,9 +53,9 @@ Commands implemented in ROM:
 
 |  | Definition | BASIC* | SDCC |
 | --- | --- | --- | --- |
-| Syntax | COMDTR | CALL COMDTR(["n:",]value) | Com_Dtr() |
-| Syntax | COMSTAT | CALL COMSTAT(["n:",]variable) | Com_Stat() |
-| Syntax | COMBREAK | CALL COMBREAK(["n:",]count) | Com_SndBrk() |
+| Syntax | COMDTR | _COMDTR(["n:",]value) | Com_Dtr() |
+| Syntax | COMSTAT | _COMSTAT(["n:",]variable) | Com_Stat() |
+| Syntax | COMBREAK | _COMBREAK(["n:",]count) | Com_SndBrk() |
 
 *) BASIC only
 
@@ -69,7 +69,7 @@ Status bits (COMSTAT, STAT): 15 buffer overflow, 14 time out, 13 framing error, 
 _XIO INIT(A)
 _RCX INIT
 _COM INIT(&H80)
-CALL COMINI("1:8N1NHNNN",9600,,10)
+_COMINI("1:8N1NHNNN",9600,,10)
 OPEN "COM1:" AS #1
 PRINT #1,"HELLO"
 A$=INPUT$(LOC(1),#1)

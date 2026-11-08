@@ -175,7 +175,7 @@ Command reference (syntax, parameters, UNAPI numbers, SDCC functions): [rcx/rc20
 
 ## B) RC2014 card SC103 with Z80 PIO
 
-The ROM of RCX contains BASIC and UNAPI commands to steer SC103 from original RC2014 manufactor.
+The original RC2014 card SC103 from Small Computer Central: Z80 PIO with two 8-bit bidirectional ports A and B, each with two handshake lines. Port mode 0 (output), 1 (input), 2 (bidirectional, port A only) and 3 (bit control) are set by a raw control word. The IO base address is selectable (multiple of 4, 0...252), so several cards can be used side by side. Interrupts use the PIO's own IM2 vector through an XIO Z80 interrupt channel (8...15), so the XIO cartridge is needed for interrupt operation only.
 
 #### <b>B.1 Impressions:</b>
 
@@ -185,11 +185,11 @@ RC2014 card on backplane
 
 #### <b>B.2 Hardware:</b>
 
-Please visit RC2014 homepage for further information
+Original SC103 kit from Small Computer Central, no own PCB. The base address is set with the 6-way DIP switch SW1 (switches 1...6 = 128, 64, 32, 16, 8, 4; the address is the sum of the switches in the Off position); the card uses the base address and the next three addresses. Recommended by the manufacturer: `&H68` (second card `&H6C`). The ports are on P2 (2x13 pins, ribbon cable) and P3 (1x29 pins, Dupont). JP1/JP2 open: IEI/IEO only on P4, IEI pulled high on the card. Details: [rcx/rc2014_card_b/README.md](rcx/rc2014_card_b/README.md#hardware-setup).
 
 #### <b>B.3 Software:</b>
 
-The BIOS for the card functions is provided in the RCX slot ROM. It contains the additional BASIC commands (`PIO INIT`, `PIO A/B RD/WR`, `PIO A/B CTRL`) and an instance of UNAPI, so the same functions are callable directly via UNAPI/EXTBIOS from a `.COM` program without the BASIC interpreter. A second test program drives Port B in the Z80 PIO's own IM2 interrupt mode, with a small Z80 machine code service routine registered through `XIO SET ADDR` that reports which channel fired.
+The BIOS for the card functions is provided in the RCX slot ROM. It contains the additional BASIC commands (`PIO INIT`, `PIO A/B RD/WR`, `PIO A/B CTRL`) and an instance of UNAPI, so the same functions are callable directly via UNAPI/EXTBIOS from a `.COM` program without the BASIC interpreter. `PIO A/B CTRL` passes the Z80 PIO control word unchanged (mode, direction, interrupt vector, interrupt mask). The first test program writes Port A in mode 0 and reads Port B in mode 1. The second runs Port B in mode 3 with PB0 as interrupt input: the PIO puts its own IM2 vector on the bus (channel 0...7 → vector = channel * 2), and a small Z80 service routine registered through `XIO SET ADDR` (XIO channel 8...15) reports which channel fired. Both tests exist in BASIC, as `.COM` (`/IO:`, `/INT:`) and in C/SDCC; the `.COM` and SDCC programs also run with the RAM driver `RCXRAM.COM`.
 
 Command reference (syntax, parameters, UNAPI numbers, SDCC functions): [rcx/rc2014_card_b/README.md](rcx/rc2014_card_b/README.md#command-reference)
 

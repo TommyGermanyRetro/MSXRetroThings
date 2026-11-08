@@ -1,6 +1,25 @@
 # Card B - RC2014 card SC103 with Z80 PIO
 
-The ROM of RCX contains BASIC and UNAPI commands to steer SC103 from original RC2014 manufactor.
+The original RC2014 card SC103 (Small Computer Central): Z80 PIO with two 8-bit bidirectional ports A and B, each with two handshake lines. The RCX ROM contains BASIC and UNAPI commands for the card; interrupts use the PIO's own IM2 vector through an XIO Z80 interrupt channel (XIO cartridge needed for interrupt operation only).
+
+## Hardware setup
+
+The IO base address is set with the 6-way DIP switch SW1: the address is the sum of the switches in the Off position (Up = Off, Down = On). Any multiple of 4 from 0 to 252; the card uses the base address and the next three addresses.
+
+| Switch | 1 | 2 | 3 | 4 | 5 | 6 |
+| --- | --- | --- | --- | --- | --- | --- |
+| Value | 128 | 64 | 32 | 16 | 8 | 4 |
+| `&H68` (recommended) | On | Off | Off | On | Off | On |
+
+A second card is recommended at `&H6C`.
+
+| Connector / jumper | Function |
+| --- | --- |
+| P2 (2x13 pins) | ports A and B for a ribbon cable |
+| P3 (1x29 pins) | ports A and B for Dupont wires, pin 15 GND |
+| P4 (1x2 pins) | IEI / IEO for a daisy chain with Dupont wires |
+| JP1, JP2 open | IEI/IEO only on P4, IEI pulled high on the card |
+| JP1, JP2 fitted | IEI/IEO on the RC2014 bus (needs a backplane with the chain, e.g. SC107) |
 
 ## Command reference
 

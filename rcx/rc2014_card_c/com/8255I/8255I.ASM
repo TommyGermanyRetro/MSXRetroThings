@@ -18,7 +18,7 @@
                                     ;* CALLFNXIO (XIO).                 *
                                     ;* Assembled with pasmo.            *
                                     ;************************************
-                                    ;* VERSION: 13/09/26                *
+                                    ;* VERSION: 08/11/26                *
                                     ;************************************
 
               ORG   #0100
@@ -1051,6 +1051,6 @@ BRBUF:        DEFW  0
 XWORKAREA:    EQU   #0C000         ; 97 bytes, #0C000-#0C060
 INTFLAGS:     EQU   #0C100         ; 2 bytes (only low byte used - PIC
                                     ; channel 0..7, not IM2)
-RCXWORKAREA:  EQU   #0C200         ; 816 bytes (#0330), #0C200-#0C52F
+RCXWORKAREA:  EQU   #0C200         ; 1174 bytes (#0496), #0C200-#0C695
 
               END   START

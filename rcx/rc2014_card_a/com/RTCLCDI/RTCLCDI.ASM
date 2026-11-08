@@ -17,7 +17,7 @@
                                     ;* helper), see CALLFN/CALLFNXIO.   *
                                     ;* Assembled with pasmo.            *
                                     ;************************************
-                                    ;* VERSION: 13/09/26                *
+                                    ;* VERSION: 08/11/26                *
                                     ;************************************
 
               ORG   #0100
@@ -1258,7 +1258,7 @@ XISIBUF:      DEFW  0
 TIMEBUF:      DEFS  8
 DATEBUF:      DEFS  8
 
-WORKAREA:     DEFS  #0330
+WORKAREA:     DEFS  #0496
 
                                     ; XWORKAREA/INTFLAGS must NOT live in
                                     ; this .COM's own image (page 0/1) -

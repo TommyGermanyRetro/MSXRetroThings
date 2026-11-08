@@ -25,7 +25,7 @@
                                     ;* PARSEDEC.                        *
                                     ;* Assembled with pasmo.            *
                                     ;************************************
-                                    ;* VERSION: 13/09/26                *
+                                    ;* VERSION: 08/11/26                *
                                     ;************************************
 
               ORG   #0100
@@ -1166,6 +1166,6 @@ XBOUNDFLAG:   EQU   #0C100         ; 2 bytes (mandatory binding for XIO
                                     ; INIT, written on every PIC
                                     ; interrupt even with a registered
                                     ; custom handler)
-RCXWORKAREA:  EQU   #0C200         ; 816 bytes (#0330), #0C200-#0C52F
+RCXWORKAREA:  EQU   #0C200         ; 1174 bytes (#0496), #0C200-#0C695
 
               END   START

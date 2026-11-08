@@ -9,7 +9,7 @@
 //***************************************************************************************************
 //* MSX (c) 2026 by Dr.-Ing. Thomas Wiesner                                                          *
 //***************************************************************************************************
-//* VERSION: 23/09/26                                                                                *
+//* VERSION: 08/11/26                                                                                *
 //***************************************************************************************************
 
 #include "msxgl.h"
@@ -44,7 +44,7 @@ static const c8* const s_NmTab[12] =
 // DATA
 //===================================================================================================
 
-static u8 s_Workarea[0x0330];	// RCX INIT's RAM work area (same size as
+static u8 s_Workarea[0x0496];	// RCX INIT's RAM work area (same size as
 				// ADS1220.ASM's WORKAREA)
 
 static u8 s_Er;		// running failed-check counter across all tests

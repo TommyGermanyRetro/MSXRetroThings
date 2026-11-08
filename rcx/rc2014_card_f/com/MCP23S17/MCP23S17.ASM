@@ -16,7 +16,7 @@
                                     ;* helper), see CALLFN.             *
                                     ;* Assembled with pasmo.            *
                                     ;************************************
-                                    ;* VERSION: 13/09/26                *
+                                    ;* VERSION: 08/11/26                *
                                     ;************************************
 
               ORG   #0100
@@ -816,6 +816,6 @@ JVAR:         DEFB  0
 IVAR:         DEFB  0
 KBUF:         DEFW  0,0,0          ; K(0..2)
 
-WORKAREA:     DEFS  #0330
+WORKAREA:     DEFS  #0496
 
               END   START

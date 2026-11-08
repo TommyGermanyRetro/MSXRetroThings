@@ -10,7 +10,7 @@
 //***************************************************************************************************
 //* MSX (c) 2026 by Dr.-Ing. Thomas Wiesner                                                           *
 //***************************************************************************************************
-//* VERSION: 24/09/26                                                                                 *
+//* VERSION: 08/11/26                                                                                 *
 //***************************************************************************************************
 #pragma once
 
@@ -22,9 +22,10 @@
 // normal (non-fixed) static ends up wherever SDCC's linker places program data, which lands above
 // 0x4000 once the whole .COM file exceeds roughly 16KB - CALSLT would then have the SJA1000 driver
 // read/write the WRONG memory (its own ROM content, not our buffer) for the exact duration of the
-// call, silently. Placed right after rcx_io.h's RCXWORKAREA (0xC300, 822 bytes, ends 0xC635).
-#define MCAN_TX_BUF	0xC636	// 26 bytes (13 x u16), 0xC636-0xC64F
-#define MCAN_RX_BUF	0xC650	// 26 bytes (13 x u16), 0xC650-0xC669
+// call, silently. Placed after rcx_io.h's RCXWORKAREA (0xC300, 1174 bytes, ends 0xC795) and rcx_io's
+// COM buffers (0xC7A0-0xC7BC).
+#define MCAN_TX_BUF	0xC7C0	// 26 bytes (13 x u16), 0xC7C0-0xC7D9
+#define MCAN_RX_BUF	0xC7E0	// 26 bytes (13 x u16), 0xC7E0-0xC7F9
 
 // Logical 13-byte CS2 message array index layout.
 #define MCAN_MSG_LEN	13

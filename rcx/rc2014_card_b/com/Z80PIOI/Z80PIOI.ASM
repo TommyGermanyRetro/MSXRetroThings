@@ -27,7 +27,7 @@
                                     ;* CALLFNXIO (XIO).                 *
                                     ;* Assembled with pasmo.            *
                                     ;************************************
-                                    ;* VERSION: 13/09/26                *
+                                    ;* VERSION: 08/11/26                *
                                     ;************************************
 
               ORG   #0100
@@ -1154,8 +1154,8 @@ INTFLAGS:     EQU   #0C100         ; 2 bytes - high byte holds the
                                     ; written by the ROM on every IM2
                                     ; interrupt regardless of a custom
                                     ; SET ADDR handler being registered
-RCXWORKAREA:  EQU   #0C200         ; 816 bytes (#0330), #0C200-#0C52F
-ISRCODE:      EQU   #0C600         ; ISR stub target, right after
-                                    ; RCXWORKAREA (#0C200-#0C52F)
+RCXWORKAREA:  EQU   #0C200         ; 1174 bytes (#0496), #0C200-#0C695
+ISRCODE:      EQU   #0C700         ; ISR stub target, right after
+                                    ; RCXWORKAREA (#0C200-#0C695)
 
               END   START

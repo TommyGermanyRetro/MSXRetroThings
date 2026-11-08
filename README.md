@@ -319,7 +319,7 @@ Command reference (syntax, parameters, UNAPI numbers, SDCC functions): [rcx/rc20
 
 ## H) RC2014 card SC725 with Z80 SIO and Z80 CTC
 
-The ROM of RCX contains BASIC and UNAPI commands to steer SC725 from original RC2014 manufactor.
+The original RC2014 card SC725 from Small Computer Central as MSX COM port: Z80 SIO/2 with two serial ports, Z80 CTC as baud rate generator (110...19200 baud from the MSX bus clock). Port A and B become `COM0:` and `COM1:`. Interrupt driven receiving through the XIO Z80 interrupt channel 12, so the XIO cartridge is needed.
 
 #### <b>H.1 Impressions:</b>
 
@@ -327,9 +327,20 @@ RC2014 card on backplane
 
 ![RCX system](rcx/rc2014_card_h/pcb/rc2014_sc725_board.png)
 
-Details coming soon. Card page: [rcx/rc2014_card_h/README.md](rcx/rc2014_card_h/README.md)
+#### <b>H.2 Hardware:</b>
+
+Original SC725 kit from Small Computer Central, no own PCB. Jumpers for the MSX bus clock: JP4 1-2 (CTC clock = bus CLK), JP5 5-6 and JP6 5-6 (SIO A/B clock = CTC channel 0/1), JP1/JP2/JP3 open. Fixed IO addresses `&H80`...`&H83` (SIO) and `&H88`...`&H8B` (CTC). Details: [rcx/rc2014_card_h/README.md](rcx/rc2014_card_h/README.md#hardware-setup).
+
+#### <b>H.3 Software:</b>
+
+The BIOS for the card functions is provided in the RCX slot ROM. It contains an MSX RS-232C driver following the "RS-232C Extended BIOS Call Specification" (EXTBIO device 8, multi channel type), so any RS-232C aware MSX program finds the port. BASIC gets `_COM INIT`, the devices `COM0:`/`COM1:` (`OPEN`, `PRINT #`, `INPUT$`, `LOC`, `LOF`, `EOF`) and the CALL statements `COMINI`, `COMDTR`, `COMSTAT` and `COMBREAK`. CTS-RTS handshake, XON/XOFF, auto LF, SI/SO and break are supported. `.COM` and SDCC programs use the same driver via UNAPI/EXTBIOS, also with the RAM driver `RCXRAM.COM`.
+
+Command reference (syntax, parameters, UNAPI numbers, SDCC functions): [rcx/rc2014_card_h/README.md](rcx/rc2014_card_h/README.md#command-reference)
 
 [↑ 2.1](#21-the-rcx-rom-cartridge-contains-these-functions)
+
+[↑ Contents](#contents)
+
 
 ## I) RC2014 card with MCP4822 4 channel 12 bit D/A converter via ATMEGA8
 

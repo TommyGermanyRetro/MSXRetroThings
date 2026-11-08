@@ -5,7 +5,7 @@
 //***************************************************************************************************
 //* MSX (c) 2026 by Dr.-Ing. Thomas Wiesner                                                           *
 //***************************************************************************************************
-//* VERSION: 24/09/26                                                                                 *
+//* VERSION: 08/11/26                                                                                 *
 //***************************************************************************************************
 #include "mbc89_store.h"
 #include "mbc89_base.h"
@@ -42,9 +42,9 @@
 // page during the actual transfer, so a page-1 buffer gets silently overwritten/misread mid-transfer.
 // A plain static here would end up wherever SDCC's linker places program data, which lands above
 // 0x4000 once the .COM file is large enough - fixed page-3 addresses avoid this entirely, right after
-// mbc89_can.h's MCAN_RX_BUF (0xC650-0xC669).
-#define STORE_FCB 0xC66A	// DOS_FCB struct
-#define STORE_BUF 0xC6A0	// 128-byte transfer buffer
+// mbc89_can.h's MCAN_RX_BUF (0xC7E0-0xC7F9).
+#define STORE_FCB 0xC800	// DOS_FCB struct
+#define STORE_BUF 0xC840	// 128-byte transfer buffer, 0xC840-0xC8BF
 
 __at(STORE_FCB) DOS_FCB s_File;
 __at(STORE_BUF) u8      s_Buf[STORE_RECORD_SIZE];

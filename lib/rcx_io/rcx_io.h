@@ -31,9 +31,9 @@
 
 // Fixed page-3 address for Rcx_Init()'s RAM work area - must not overlap xio_io.h's XIO_WORKAREA
 // (0xC000, 102 bytes), XIO_INTFLAGS (0xC100, 2 bytes) or XIO_ISRCODE (0xC200, reserved for a
-// custom ISR stub in other XIO-based projects). Size verified against RCXROM.ASM's own X_HENDE
-// marker (0x336 = 822 bytes), not the previously-assumed 816 bytes.
-#define RCXWORKAREA	0xC300	// 822 bytes (0x0336), 0xC300-0xC635
+// custom ISR stub in other XIO-based projects). Size = RCXROM.ASM's X_HENDE (0x496 = 1174 bytes
+// since the card H COM driver, 0x336 before).
+#define RCXWORKAREA	0xC300	// 1174 bytes (0x0496), 0xC300-0xC795
 
 //===================================================================================================
 // DISCOVERY / INFO
@@ -175,3 +175,33 @@ void Dac_Set(u8 addr, u8 ch, u16 val) __sdcccall(0);	// CORE64 - write + /LDAC (
 void Dac_Hold(u8 addr, u8 ch, u16 val) __sdcccall(0);	// CORE65 - write only, output follows later
 void Dac_Conf(u8 addr, u8 ch, u8 cfg) __sdcccall(0);	// CORE66 - configuration + /LDAC
 u16  Dac_Get(u8 addr, u8 ch);				// CORE67 - last written value (ATMEGA8 mirror)
+
+//===================================================================================================
+// SC725 COM port (CORE68) and the RS-232C Extended BIOS (EXTBIO device 8). Com_Discover() after
+// Com_Init(): the RS-232C entries below call the jump table it found (ROM or RCXRAM) via CALSLT.
+// Page 3 used: 0xC7A0 (EXTBIO entries), 0xC7B0 (INIT parameter copy).
+//===================================================================================================
+
+#define COM_ERR		0x8000	// Com_GetChr: error, details in Com_Stat()
+#define COM_EOF		0x0100	// Com_GetChr: EOF (0x1A) in input mode
+#define COM_TIMEOUT	1	// Com_SndChr: time out waiting for CTS/XON
+#define COM_BREAK	2	// Com_SndChr: CTRL-STOP
+
+extern u8  g_CSlot;		// slot of the RS-232C jump table
+extern u16 g_CTable;		// address of the RS-232C jump table
+
+bool Com_Init(u8 addr);		// CORE68 - registers the SC725 as COM port (SIO at addr)
+bool Com_Discover(void);		// EXTBIO device 8 - finds the RS-232C jump table
+bool Com_Ini(const void* par);		// INIT - 8 chars, rx baud, tx baud, time out (13 bytes)
+bool Com_Open(void* fcb, u8 len, u8 mode) __sdcccall(0);	// OPEN - fcb >= 0x8000, 2 * len + 9 bytes
+u16  Com_Stat(void);			// STAT
+u16  Com_GetChr(void);			// GETCHR - character | flags << 8
+u8   Com_SndChr(u8 c);		// SNDCHR - 0, COM_TIMEOUT or COM_BREAK
+void Com_Close(void);			// CLOSE
+bool Com_Eof(void);			// EOF
+u16  Com_Loc(void);			// LOC
+u16  Com_Lof(void);			// LOF
+void Com_Backup(u8 c);			// BACKUP
+bool Com_SndBrk(u16 count);		// SNDBRK - true if CTRL-STOP
+void Com_Dtr(u8 on);			// DTR
+bool Com_SetChn(u8 ch);			// SETCHN - 0 = port A, 1 = port B

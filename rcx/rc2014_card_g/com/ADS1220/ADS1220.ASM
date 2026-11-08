@@ -10,7 +10,7 @@
                                     ;* the RAM helper) - see CALLFN.    *
                                     ;* Assembled with pasmo.            *
                                     ;************************************
-                                    ;* VERSION: 13/09/26                *
+                                    ;* VERSION: 08/11/26                *
                                     ;************************************
 
               ORG   #0100
@@ -1445,6 +1445,6 @@ FDP:          DEFB  0
 DGARR:        DEFS  6
 GVAL10:       DEFW  0
 
-WORKAREA:     DEFS  #0330
+WORKAREA:     DEFS  #0496
 
               END   START

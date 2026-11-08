@@ -186,6 +186,12 @@ DAC_FN_SET	=	64
 DAC_FN_HOLD	=	65
 DAC_FN_CONF	=	66
 DAC_FN_GET	=	67
+COM_FN_INIT	=	68
+
+RDSLT		=	0x000C
+EXPTBL		=	0xFCC1
+COM_EXTBUF	=	0xC7A0		; EXTBIO device 8 entries (page 3, after RCXWORKAREA)
+COM_PARTBL	=	0xC7B0		; RS-232C INIT parameter copy (page 3, 13 bytes)
 
 	.area _DATA
 _g_RSlot::
@@ -222,6 +228,12 @@ _RADSBUF:
 	.dw	0
 _RDACBUF:
 	.dw	0
+_g_CSlot::
+	.db	0
+_g_CTable::
+	.dw	0
+com_idx:
+	.db	0
 
 	.area _CODE
 
@@ -1322,3 +1334,298 @@ _RIDSTR:
 	.ascii "RCX_INTERFACE"
 	.db	0
 _RIDSTRLEN	=	. - _RIDSTR
+
+;=====================================================================================================
+; SC725 COM PORT (CORE68) AND RS-232C EXTENDED BIOS (EXTBIO DEVICE 8)
+;=====================================================================================================
+
+;---------------------------------------------------------------------------------------------------
+; bool Com_Init(u8 addr)
+; FN_CORE68 wants C=SIO IOADDR. Registers the card as COM port.
+;---------------------------------------------------------------------------------------------------
+	.area _CODE
+_Com_Init::
+	ld	c, a
+	ld	a, #COM_FN_INIT
+	call	_RcxCall
+	jr	c, cominit_fail
+	ld	a, #1
+	ret
+cominit_fail:
+	xor	a
+	ret
+
+;---------------------------------------------------------------------------------------------------
+; bool Com_Discover(void)
+; EXTBIO D=8, E=0 into COM_EXTBUF (page 3, B = its slot); takes the first entry: slot and address
+; of the RS-232C jump table into g_CSlot/g_CTable. False if no RS-232C driver answers.
+;---------------------------------------------------------------------------------------------------
+_Com_Discover::
+	push	ix
+	push	iy
+	call	com_p3slot
+	ld	b, a
+	ld	hl, #COM_EXTBUF
+	ld	de, #0x0800
+	call	EXTBIO
+	ei
+	ld	de, #COM_EXTBUF
+	or	a
+	sbc	hl, de
+	jr	z, comdisc_fail
+	ld	a, (COM_EXTBUF)
+	ld	(_g_CSlot), a
+	ld	hl, (COM_EXTBUF+1)
+	ld	(_g_CTable), hl
+	ld	a, #1
+	jr	comdisc_end
+comdisc_fail:
+	xor	a
+comdisc_end:
+	pop	iy
+	pop	ix
+	ret
+
+;---------------------------------------------------------------------------------------------------
+; _ComCall - calls RS-232C table entry (com_idx) via CALSLT; A, BC, DE, HL passed and returned,
+; IX/IY of the C caller kept, interrupts enabled afterwards (the receive interrupt needs them).
+;---------------------------------------------------------------------------------------------------
+_ComCall:
+	push	ix
+	push	iy
+	push	af
+	push	hl
+	push	de
+	ld	a, (com_idx)
+	ld	e, a
+	add	a, a
+	add	a, e
+	add	a, #3
+	ld	e, a
+	ld	d, #0
+	ld	hl, (_g_CTable)
+	add	hl, de
+	push	hl
+	pop	ix
+	ld	a, (_g_CSlot)
+	ld	h, a
+	ld	l, #0
+	push	hl
+	pop	iy
+	pop	de
+	pop	hl
+	pop	af
+	call	CALSLT
+	ei
+	pop	iy
+	pop	ix
+	ret
+
+com_setidx:
+	push	af
+	ld	a, b
+	ld	(com_idx), a
+	pop	af
+	ret
+
+;---------------------------------------------------------------------------------------------------
+; bool Com_Ini(const void* par)
+; RS-232C INIT: par = 8 ASCII characters, receive baud (word), send baud (word), time out. The
+; table is copied to COM_PARTBL (page 3) and passed as B:HL. False if rejected.
+;---------------------------------------------------------------------------------------------------
+_Com_Ini::
+	ld	de, #COM_PARTBL
+	ld	bc, #13
+	ldir
+	call	com_p3slot
+	ld	b, a
+	ld	hl, #COM_PARTBL
+	xor	a
+	ld	(com_idx), a
+	call	_ComCall
+	ld	a, #0
+	ret	c
+	inc	a
+	ret
+
+;---------------------------------------------------------------------------------------------------
+; bool Com_Open(void* fcb, u8 len, u8 mode) __sdcccall(0)
+; RS-232C OPEN: HL=FCB (0x8000 or higher), C=buffer length 32..254, E=mode (1 input, 2 output,
+; 4 raw input/output). Result in L (and A).
+;---------------------------------------------------------------------------------------------------
+_Com_Open::
+	push	ix
+	ld	ix, #4
+	add	ix, sp
+	ld	l, 0 (ix)
+	ld	h, 1 (ix)
+	ld	c, 2 (ix)
+	ld	e, 3 (ix)
+	pop	ix
+	ld	a, #1
+	ld	(com_idx), a
+	call	_ComCall
+	ld	a, #0
+	jr	c, comopen_end
+	inc	a
+comopen_end:
+	ld	l, a
+	ret
+
+;---------------------------------------------------------------------------------------------------
+; u16 Com_Stat(void)
+; RS-232C STAT: bit 15 overflow, 14 time out, 13 framing, 12 overrun, 11 parity, 10 CTRL-STOP,
+; 7 CTS, 2 break, 0 DCD.
+;---------------------------------------------------------------------------------------------------
+_Com_Stat::
+	ld	a, #2
+	ld	(com_idx), a
+	call	_ComCall
+	ex	de, hl
+	ret
+
+;---------------------------------------------------------------------------------------------------
+; u16 Com_GetChr(void)
+; RS-232C GETCHR (waits for a character): low byte = character, high byte = flags; COM_ERR
+; (0x8000, sign) = error (see Com_Stat), COM_EOF (0x0100, carry) = EOF in input mode.
+;---------------------------------------------------------------------------------------------------
+_Com_GetChr::
+	ld	a, #3
+	ld	(com_idx), a
+	call	_ComCall
+	push	af
+	pop	de		; D = character, E = flags
+	ld	a, d
+	ld	d, e
+	ld	e, a
+	ret
+
+;---------------------------------------------------------------------------------------------------
+; u8 Com_SndChr(u8 c)
+; RS-232C SNDCHR: 0 = sent, COM_TIMEOUT (1) = time out (CTS/XON), COM_BREAK (2) = CTRL-STOP.
+;---------------------------------------------------------------------------------------------------
+_Com_SndChr::
+	ld	b, #4
+	call	com_setidx
+	call	_ComCall
+	ld	a, #2
+	ret	c
+	ld	a, #1
+	ret	z
+	xor	a
+	ret
+
+;---------------------------------------------------------------------------------------------------
+; void Com_Close(void)
+;---------------------------------------------------------------------------------------------------
+_Com_Close::
+	ld	a, #5
+	ld	(com_idx), a
+	jp	_ComCall
+
+;---------------------------------------------------------------------------------------------------
+; bool Com_Eof(void)
+; RS-232C EOF: true if the next character is EOF (0x1A).
+;---------------------------------------------------------------------------------------------------
+_Com_Eof::
+	ld	a, #6
+	ld	(com_idx), a
+	call	_ComCall
+	ld	a, #0
+	ret	nc
+	inc	a
+	ret
+
+;---------------------------------------------------------------------------------------------------
+; u16 Com_Loc(void) / u16 Com_Lof(void)
+; RS-232C LOC: characters in the receive buffer; LOF: free characters.
+;---------------------------------------------------------------------------------------------------
+_Com_Loc::
+	ld	a, #7
+	jr	com_hl
+_Com_Lof::
+	ld	a, #8
+com_hl:
+	ld	(com_idx), a
+	call	_ComCall
+	ex	de, hl
+	ret
+
+;---------------------------------------------------------------------------------------------------
+; void Com_Backup(u8 c)
+; RS-232C BACKUP: C=character, returned first by the next GETCHR.
+;---------------------------------------------------------------------------------------------------
+_Com_Backup::
+	ld	c, a
+	ld	a, #9
+	ld	(com_idx), a
+	jp	_ComCall
+
+;---------------------------------------------------------------------------------------------------
+; bool Com_SndBrk(u16 count)
+; RS-232C SNDBRK: DE=break length in character times. True if aborted by CTRL-STOP.
+;---------------------------------------------------------------------------------------------------
+_Com_SndBrk::
+	ex	de, hl
+	ld	a, #10
+	ld	(com_idx), a
+	call	_ComCall
+	ld	a, #0
+	ret	nc
+	inc	a
+	ret
+
+;---------------------------------------------------------------------------------------------------
+; void Com_Dtr(u8 on)
+; RS-232C DTR: A=0 off, otherwise on.
+;---------------------------------------------------------------------------------------------------
+_Com_Dtr::
+	ld	b, #11
+	call	com_setidx
+	jp	_ComCall
+
+;---------------------------------------------------------------------------------------------------
+; bool Com_SetChn(u8 ch)
+; RS-232C SETCHN: A=channel (0 = port A, 1 = port B). False if the channel does not exist.
+;---------------------------------------------------------------------------------------------------
+_Com_SetChn::
+	ld	b, #12
+	call	com_setidx
+	call	_ComCall
+	ld	a, #0
+	ret	c
+	inc	a
+	ret
+
+;---------------------------------------------------------------------------------------------------
+; com_p3slot - A = slot of page 3 (bit 7 = expanded)
+;---------------------------------------------------------------------------------------------------
+com_p3slot:
+	push	bc
+	push	hl
+	in	a, (0xA8)
+	rlca
+	rlca
+	and	#3
+	ld	c, a
+	ld	b, #0
+	ld	hl, #EXPTBL
+	add	hl, bc
+	ld	a, (hl)
+	and	#0x80
+	jr	z, comp3s1
+	ld	a, (0xFFFF)
+	cpl
+	rlca
+	rlca
+	and	#3
+	add	a, a
+	add	a, a
+	or	c
+	or	#0x80
+	ld	c, a
+comp3s1:
+	ld	a, c
+	pop	hl
+	pop	bc
+	ret

@@ -46,9 +46,9 @@
 #define REC_WAITING 0xFE // "input" pressed, waiting for route selection
 
 // MSX-DOS 1 disk I/O must not transfer through page 1 (see mbc89_store.c) - fixed page-3
-// buffer, directly after mbc89_store.c's STORE_BUF (ends at 0xC71F).
-#define MEM_FCB 0xC720 // DOS_FCB struct
-#define MEM_BUF 0xC756 // 128-Byte Transferpuffer
+// buffer, directly after mbc89_store.c's STORE_BUF (ends at 0xC8BF).
+#define MEM_FCB 0xC8C0 // DOS_FCB struct
+#define MEM_BUF 0xC900 // 128-byte transfer buffer, 0xC900-0xC97F
 
 // Own names (not s_File/s_Buf like mbc89_store.c) - SDCC apparently emits __at() variables as
 // global symbols, "static" does not protect against name collisions across compile units at a

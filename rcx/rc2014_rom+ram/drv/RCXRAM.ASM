@@ -73,7 +73,7 @@ API_V_S:        EQU     0
 ROM_V_P:        EQU     1
 ROM_V_S:        EQU     0
 
-MAX_FN:         EQU     67              ; highest implemented function number
+MAX_FN:         EQU     68              ; highest implemented function number
 MAX_IMPFN:      EQU     0
 
 ;---------------------------
@@ -283,6 +283,8 @@ ALLOC_OK:
 
         LD      HL,(ALLOC_SLOT)
         LD      (MY_SLOT),HL
+        LD      HL,(HELPER_ADD)
+        LD      (MY_HELPER),HL
 
         ;--- Backup and patch the EXTBIO hook
 
@@ -363,7 +365,7 @@ IMPLEM_ENTRY:   DEFW    0
                                     ; current ~5.6 KB body (Kartentyp A,
                                     ; B, C, D, E, F, G).
 
-SEG_CODE_BACKUP_SIZE: EQU      #02000
+SEG_CODE_BACKUP_SIZE: EQU      #03000
 SEG_CODE_BACKUP: DEFS   SEG_CODE_BACKUP_SIZE
 
         ;--- Mapper support routines, used at install time only
@@ -436,6 +438,8 @@ DO_EXTBIO:
         PUSH    BC
         PUSH    AF
         LD      A,D
+        CP      #008            ; Device 8 = RS-232C?
+        JP      Z,DO_EXT8
         CP      #022
         JR      NZ,JUMP_OLD
         CP      E
@@ -618,6 +622,7 @@ FN_TABLE:
         DEFW    FN_CORE65       ; 65 DAC HOLD
         DEFW    FN_CORE66       ; 66 DAC CONF
         DEFW    FN_CORE67       ; 67 DAC GET
+        DEFW    FN_CORE68       ; 68 COM INIT
 
 ;========================================================
 ;===  RCXROM.ASM routines, ported unchanged unless   ===
@@ -645,6 +650,7 @@ SCNT:         EQU  'D'         ; 82C54 TIMER card
 SCAN:         EQU  'E'         ; SJA1000 card (only once allowed)
 SSPI:         EQU  'F'         ; SPI master card
 SDAC:         EQU  'I'         ; MCP4822 D/A board
+SCOM:         EQU  'H'         ; SC725 SIO/CTC card as COM port
 
 X_CD:         EQU  #010
 X_FREE:       EQU  #010
@@ -906,6 +912,8 @@ CORE2:        PUSH  HL
               LD    DE,X_HFLAGS
               CALL  GETRAMIX
               LD    (HL),SINIT
+              XOR   A
+              LD    (R_COM_BASE+X_HCOMFLG),A ; COM not active
 
               POP   DE
               POP   HL
@@ -950,7 +958,9 @@ FN_CORE4:     CALL  RCXINIT
               SCF
               RET
 
-CORE4:        DI
+CORE4:        CALL  COMOFF          ; Close COM channels, XIO interrupt off
+
+              DI
 
               PUSH  HL
               PUSH  DE
@@ -5687,6 +5697,2500 @@ COREDACERR:   POP   HL
               SCF
               RET
 
+;++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+;+++ Card Type H                                                      +++
+;++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+;+++ RC2014 card SC725 (Z80 SIO/2 + Z80 CTC) as MSX COM port          +++
+;+++ RS-232C Extended BIOS (EXTBIO device 8), multi channel type.     +++
+;+++ Driver code from RCXROM.ASM without the BASIC parts (device      +++
+;+++ COMn:, CALL statements). State, interrupt routine and the        +++
+;+++ RS-232C jump table live at fixed page-3 addresses (R_COM_BASE),  +++
+;+++ reachable for the interrupt and for CALSLT callers; the table    +++
+;+++ entries call the routines in this segment via the RAM helper.    +++
+;++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+RDSLT:        EQU    #0000C         ; Read byte from slot
+WRSLT:        EQU    #00014         ; Write byte to slot
+CALSLT:       EQU    #0001C         ; Inter slot call
+IDFREQ:       EQU    #0002B         ; ROM ID, bit 7: 0 = 60 Hz, 1 = 50 Hz
+BREAKX:       EQU    #000B7         ; Carry if CTRL-STOP pressed
+JIFFY:        EQU    #0FC9E         ; Interrupt counter
+EXPTBL:       EQU    #0FCC1         ; Slot expanded
+
+                                    ;************************************
+                                    ;* Page 3 (fixed, after the CAN     *
+                                    ;* area #0CD00-0CF0D)               *
+                                    ;************************************
+
+R_COM_BASE:   EQU  #0CF10           ; COM state, X_HCOMxx relative to it
+X_HCOMFLG:    EQU  #00000           ; COM flags (bit 0 = active,
+                                    ; bit 1 = interrupt registered)
+X_HCOMIO:     EQU  #00001           ; COM SIO IO address
+X_HCOMCH:     EQU  #00002           ; COM active channel
+X_HCOMC0:     EQU  #00003           ; COM channel block 0
+X_COMBLK:     EQU  #00014           ; Size of one COM channel block
+X_HCOMPAR:    EQU  X_HCOMC0+2*X_COMBLK ; COM INIT parameters
+X_HCOMGP:     EQU  X_HCOMPAR+#0E    ; 2 bytes for XIO GET MASK
+X_HCOMINT:    EQU  #00040           ; COM interrupt routine
+X_HCOMI01:    EQU  X_HCOMINT+HCOM001-HCOMINT+1 ; ISR work area pointer
+R_COM_TBL:    EQU  R_COM_BASE+X_HCOMINT+HCOMINTE-HCOMINT ; Jump table
+R_COM_IYA:    EQU  R_COM_TBL+COMSIY-COMTBLT+2 ; Slot/segment in the table
+R_COM_HLPA:   EQU  R_COM_TBL+COMSHLP-COMTBLT+1 ; RAM helper in the table
+
+                                    ; COM channel block (X_COMBLK bytes)
+CB_MODE:      EQU  #00              ; Open mode, 0 = closed
+CB_FLAGS:     EQU  #01              ; Bit 0 XON/XOFF, 1 CTS-RTS, 2 LF RX,
+                                    ; 3 LF TX, 4 SI/SO, 7 initialised
+CB_WR4:       EQU  #02              ; SIO WR4 (clock, stop bits, parity)
+CB_WR3:       EQU  #03              ; SIO WR3 (RX bits, RX enable)
+CB_WR5:       EQU  #04              ; SIO WR5 (DTR, TX bits, TX enable, RTS)
+CB_TC:        EQU  #05              ; CTC time constant
+CB_TOUT:      EQU  #06              ; Time out in seconds, 0 = none
+CB_BKF:       EQU  #07              ; Backup character valid
+CB_BKC:       EQU  #08              ; Backup character
+CB_STL:       EQU  #09              ; Status low of last character
+CB_STH:       EQU  #0A              ; Status high of last character
+CB_FCBL:      EQU  #0B              ; Receive buffer address low
+CB_FCBH:      EQU  #0C              ; Receive buffer address high
+CB_LEN:       EQU  #0D              ; Receive buffer length in characters
+CB_XOFF:      EQU  #0E              ; XOFF received
+CB_TSTL:      EQU  #0F              ; Time out start (JIFFY) low
+CB_TSTH:      EQU  #10              ; Time out start (JIFFY) high
+CB_TLML:      EQU  #11              ; Time out limit in ticks low
+CB_TLMH:      EQU  #12              ; Time out limit in ticks high
+CB_STATE:     EQU  #13              ; Bit 0 RTS held off, 1 XOFF sent,
+                                    ; 2 SO sent, 3 SO received
+
+                                    ; COM receive buffer (OPEN, at FCB);
+                                    ; bytes 0, 4, 6, 8 belong to BASIC
+FC_PUT:       EQU  #01              ; Write index (interrupt routine)
+FC_GET:       EQU  #02              ; Read index (GETCHR)
+FC_CNT:       EQU  #03              ; Characters in buffer
+FC_LEN:       EQU  #05              ; Buffer length in characters
+FC_OVF:       EQU  #07              ; Bit 7 = buffer overflow
+FC_DATA:      EQU  #09              ; Character, status (2 bytes each)
+
+                                    ;************************************
+                                    ;* COM: address in the page-3 COM   *
+                                    ;* state                            *
+                                    ;************************************
+                                    ;* INPUT:                           *
+                                    ;************************************
+                                    ;* DE = X_HCOMxx                    *
+                                    ;************************************
+                                    ;* OUTPUT:                          *
+                                    ;************************************
+                                    ;* HL = R_COM_BASE + DE             *
+                                    ;************************************
+
+GETCOMX:      LD HL,R_COM_BASE
+              ADD HL,DE
+              RET
+
+                                    ;************************************
+                                    ;* EXTBIO device 8, function 0      *
+                                    ;************************************
+                                    ;* If COM INIT was done: appends    *
+                                    ;* slot of page 3, address of the   *
+                                    ;* page-3 jump table (low, high)    *
+                                    ;* and 0 at [B:HL], HL = HL+4, then *
+                                    ;* old hook                         *
+                                    ;************************************
+
+DO_EXT8:      LD A,E
+              OR A                  ; Function 0?
+              JP NZ,JUMP_OLD
+              CALL COMCHK           ; RCX installed, COM active?
+              JP NZ,JUMP_OLD
+
+              POP AF
+              POP BC                ; B = slot of the table
+              POP HL                ; HL = table address
+              PUSH AF               ; Save caller's AF
+              PUSH DE               ; D = 8, E = 0
+
+              CALL COMP3S
+              LD E,A                ; Slot of page 3
+              CALL DO_EXT8W
+              LD E,R_COM_TBL & #0FF ; Jump table low
+              CALL DO_EXT8W
+              LD E,R_COM_TBL / 256  ; Jump table high
+              CALL DO_EXT8W
+              LD E,#000             ; Reserved
+              CALL DO_EXT8W
+              EI
+
+              POP DE
+              POP AF
+              PUSH HL
+              PUSH BC
+              PUSH AF
+              JP JUMP_OLD
+
+DO_EXT8W:     PUSH BC
+              PUSH DE
+              LD A,B
+              CALL WRSLT            ; [B:HL] = E
+              POP DE
+              POP BC
+              INC HL
+              RET
+
+                                    ;************************************
+                                    ;* COM: slot of page 3              *
+                                    ;************************************
+                                    ;* OUTPUT:                          *
+                                    ;************************************
+                                    ;* A = slot (bit 7 = expanded)      *
+                                    ;************************************
+                                    ;* Modified:                        *
+                                    ;************************************
+                                    ;* AF                               *
+                                    ;************************************
+
+COMP3S:       PUSH BC
+              PUSH HL
+              IN A,(#0A8)
+              RLCA
+              RLCA
+              AND #003              ; Primary slot of page 3
+              LD C,A
+              LD B,#000
+              LD HL,EXPTBL
+              ADD HL,BC
+              LD A,(HL)
+              AND #080              ; Expanded?
+              JR Z,COMP3S1
+              LD A,(#0FFFF)         ; Secondary slot register (inverted)
+              CPL
+              RLCA
+              RLCA
+              AND #003
+              ADD A,A
+              ADD A,A
+              OR C
+              OR #080
+              LD C,A
+COMP3S1:      LD A,C
+              POP HL
+              POP BC
+              RET
+
+                                    ;************************************
+                                    ;* RS-232C jump table template,     *
+                                    ;* copied to R_COM_TBL by COM INIT  *
+                                    ;************************************
+                                    ;* Each entry calls its routine in  *
+                                    ;* this segment via the RAM helper  *
+                                    ;* (IYh = slot, IYl = segment, IX = *
+                                    ;* address; AF, BC, DE, HL passed   *
+                                    ;* and returned). Only relative     *
+                                    ;* jumps inside the copy            *
+                                    ;************************************
+
+COMTBLT:      DEFB DVINFB           ; Device information
+              DEFB #01              ; Version 1 = multi channel type
+              DEFB #00              ; Reserved
+              JP R_COM_TBL+COMS00-COMTBLT ; INIT
+              JP R_COM_TBL+COMS01-COMTBLT ; OPEN
+              JP R_COM_TBL+COMS02-COMTBLT ; STAT
+              JP R_COM_TBL+COMS03-COMTBLT ; GETCHR
+              JP R_COM_TBL+COMS04-COMTBLT ; SNDCHR
+              JP R_COM_TBL+COMS05-COMTBLT ; CLOSE
+              JP R_COM_TBL+COMS06-COMTBLT ; EOF
+              JP R_COM_TBL+COMS07-COMTBLT ; LOC
+              JP R_COM_TBL+COMS08-COMTBLT ; LOF
+              JP R_COM_TBL+COMS09-COMTBLT ; BACKUP
+              JP R_COM_TBL+COMS10-COMTBLT ; SNDBRK
+              JP R_COM_TBL+COMS11-COMTBLT ; DTR
+              JP R_COM_TBL+COMS12-COMTBLT ; SETCHN
+              DEFB #0C9,#000,#000   ; No entry
+              DEFB #0C9,#000,#000   ; No entry
+
+COMS00:       PUSH IX
+              LD IX,COMINI
+              JR COMSCALL
+COMS01:       PUSH IX
+              LD IX,COMOPN
+              JR COMSCALL
+COMS02:       PUSH IX
+              LD IX,COMSTA
+              JR COMSCALL
+COMS03:       PUSH IX
+              LD IX,COMGET
+              JR COMSCALL
+COMS04:       PUSH IX
+              LD IX,COMSND
+              JR COMSCALL
+COMS05:       PUSH IX
+              LD IX,COMCLO
+              JR COMSCALL
+COMS06:       PUSH IX
+              LD IX,COMEOF
+              JR COMSCALL
+COMS07:       PUSH IX
+              LD IX,COMLOC
+              JR COMSCALL
+COMS08:       PUSH IX
+              LD IX,COMLOF
+              JR COMSCALL
+COMS09:       PUSH IX
+              LD IX,COMBCK
+              JR COMSCALL
+COMS10:       PUSH IX
+              LD IX,COMBRK
+              JR COMSCALL
+COMS11:       PUSH IX
+              LD IX,COMDTR
+              JR COMSCALL
+COMS12:       PUSH IX
+              LD IX,COMSCH
+COMSCALL:     PUSH IY
+COMSIY:       LD IY,0               ; Slot/segment, set by COM INIT
+COMSHLP:      CALL 0                ; RAM helper, set by COM INIT
+              POP IY
+              POP IX
+              RET
+COMTBLTE:
+
+                                    ;************************************
+                                    ;* COM interrupt routine template,  *
+                                    ;* copied to R_COM_BASE+X_HCOMINT   *
+                                    ;* by COM INIT (from RCXROM.ASM)    *
+                                    ;************************************
+
+DVINFB:       EQU    #000           ; Device information byte
+
+                                    ;************************************
+                                    ;* EXTBIOS                          *
+                                    ;* Routine A = 68                   *
+                                    ;************************************
+                                    ;* Register SC725 card as COM port  *
+                                    ;************************************
+                                    ;* INPUT:                           *
+                                    ;************************************
+                                    ;* C = SIO IOADDR                   *
+                                    ;************************************
+                                    ;* OUTPUT:                          *
+                                    ;************************************
+                                    ;* C = SIO IOADDR                   *
+                                    ;* CARRY-Flag = 1 -> ERROR          *
+                                    ;************************************
+                                    ;* Modified:                        *
+                                    ;************************************
+                                    ;* AF                               *
+                                    ;************************************
+
+FN_CORE68:    CALL RCXINIT          ; Module installed?
+              JP Z,FN_CORE68SLT     ; Installed? Continue with Slot command
+              SCF                   ; Set CARRY flag for ERROR
+              RET                   ; Go back to main routine
+
+FN_CORE68SLT: PUSH BC               ; Save BC to stack
+              LD B,SCOM             ; Set type SCOM
+              PUSH IX               ; IX not used
+              CALL SETRCXSLT        ; Check card with BC
+                                    ; IX contains RAM-address
+              POP IX                ; IX not used
+              POP BC                ; Get BC from stack
+              JP C,CORE68           ; JP if free slot found, CARRY = 1
+
+              SCF                   ; Set CARRY flag for ERROR
+              RET
+
+                                    ;************************************
+                                    ;* COM INIT                         *
+                                    ;************************************
+                                    ;* Resets CTC channel 0..3 (&H03    *
+                                    ;* twice), SIO channel A and B,     *
+                                    ;* clears both channel blocks and   *
+                                    ;* sets COM active                  *
+                                    ;************************************
+                                    ;* INPUT:                           *
+                                    ;************************************
+                                    ;* C = SIO IOADDR                   *
+                                    ;************************************
+                                    ;* OUTPUT:                          *
+                                    ;************************************
+                                    ;* -/-                              *
+                                    ;************************************
+                                    ;* Modified:                        *
+                                    ;************************************
+                                    ;* AF, CARRY-Flag = 0               *
+                                    ;************************************
+
+CORE68:       CALL COMOFF           ; Close open channels of a former INIT
+
+              PUSH HL
+              PUSH DE
+              PUSH BC
+
+              LD HL,HCOMINT         ; Interrupt routine to page 3
+              LD DE,R_COM_BASE+X_HCOMINT
+              LD BC,HCOMINTE-HCOMINT
+              LDIR
+              LD HL,COMTBLT         ; RS-232C jump table to page 3
+              LD DE,R_COM_TBL
+              LD BC,COMTBLTE-COMTBLT
+              LDIR
+              LD HL,(MY_HELPER)     ; RAM helper: call routine in segment
+              LD (R_COM_HLPA),HL
+              LD A,(MY_SEG)         ; IYl = segment
+              LD (R_COM_IYA),A
+              LD A,(MY_SLOT)        ; IYh = slot
+              LD (R_COM_IYA+1),A
+              POP BC
+              PUSH BC
+
+              LD DE,X_HCOMIO
+              CALL GETCOMX         ; [HL] = COM IO address
+              LD (HL),C             ; Save SIO IO addr
+              INC HL
+              LD (HL),#00           ; Channel 0 active
+              INC HL                ; [HL] = channel block 0
+              LD B,2*X_COMBLK
+CORE68CLR:    LD (HL),#00           ; Clear channel blocks
+              INC HL
+              DJNZ CORE68CLR
+
+              LD A,C
+              ADD A,#08
+              LD C,A                ; C = CTC channel 0
+              LD B,#04              ; 4 CTC channels
+CORE68CTC:    LD A,#03              ; Control word, software reset
+              CALL COMWR            ; Taken as TC if one was expected
+              CALL COMWR
+              INC C
+              DJNZ CORE68CTC
+
+              POP BC
+              PUSH BC               ; C = SIO A ctrl
+              LD A,#18              ; Channel reset
+              CALL COMWR
+              INC C
+              INC C                 ; C = SIO B ctrl
+              CALL COMWR
+
+              LD DE,X_HCOMFLG
+              CALL GETCOMX
+              LD (HL),#01           ; COM active
+
+              LD A,#001             ; Defaults for channel 1 and 0
+CORE68DF:     PUSH AF
+              CALL COMSCH
+              LD HL,COMDEFP
+              LD DE,R_COM_BASE+X_HCOMPAR
+              LD BC,#000D
+              LDIR                  ; Defaults to the parameter table
+              CALL COMINIP
+              POP AF
+              SUB #001
+              JR NC,CORE68DF        ; Ends with channel 0 active
+
+              POP BC
+              POP DE
+              POP HL                ; Get BASIC Line-Pointer (if CALL is used)
+              OR A                  ; Clear Carry Flag
+              RET
+
+                                    ;************************************
+                                    ;* COM INIT defaults (as Sony       *
+                                    ;* HBI-232 after power on)          *
+                                    ;************************************
+
+COMDEFP:      DEFM "8N1XHNNN"       ; 8 bit, no parity, 1 stop bit,
+                                    ; XON/XOFF, CTS-RTS
+              DEFW 1200             ; Receive baud
+              DEFW 1200             ; Send baud
+              DEFB 0                ; No time out
+
+;---------------------------
+
+                                    ;************************************
+                                    ;* COM: write switched IO           *
+                                    ;************************************
+                                    ;* INPUT:                           *
+                                    ;************************************
+                                    ;* C = port, A = value              *
+                                    ;************************************
+                                    ;* OUTPUT:                          *
+                                    ;************************************
+                                    ;* -/-                              *
+                                    ;************************************
+                                    ;* Modified:                        *
+                                    ;************************************
+                                    ;* Interrupts enabled at the end    *
+                                    ;************************************
+
+COMWR:        PUSH AF               ; Save value
+              DI
+              CALL IOEN             ; Switched IO enabled
+              LD A,C
+              OUT (ALE),A           ; Set port
+              POP AF
+              OUT (SWIO),A          ; Write value
+              CALL IODIS            ; Switched IO disabled
+              EI
+              RET
+
+                                    ;************************************
+                                    ;* COM: read switched IO            *
+                                    ;************************************
+                                    ;* INPUT:                           *
+                                    ;************************************
+                                    ;* C = port                         *
+                                    ;************************************
+                                    ;* OUTPUT:                          *
+                                    ;************************************
+                                    ;* A = value                        *
+                                    ;************************************
+                                    ;* Modified:                        *
+                                    ;************************************
+                                    ;* F, interrupts enabled at the end *
+                                    ;************************************
+
+COMRD:        DI
+              CALL IOEN             ; Switched IO enabled
+              LD A,C
+              OUT (ALE),A           ; Set port
+              IN A,(SWIO)           ; Read value
+              CALL IODIS            ; Switched IO disabled
+              EI
+              RET
+
+                                    ;************************************
+                                    ;* COM: write SIO register          *
+                                    ;************************************
+                                    ;* Pointer and value without        *
+                                    ;* interrupt in between             *
+                                    ;************************************
+                                    ;* INPUT:                           *
+                                    ;************************************
+                                    ;* C = SIO ctrl port                *
+                                    ;* B = register 1..7                *
+                                    ;* A = value                        *
+                                    ;************************************
+                                    ;* OUTPUT:                          *
+                                    ;************************************
+                                    ;* -/-                              *
+                                    ;************************************
+                                    ;* Modified:                        *
+                                    ;************************************
+                                    ;* Interrupts enabled at the end    *
+                                    ;************************************
+
+COMWRR:       PUSH AF               ; Save value
+              DI
+              CALL IOEN             ; Switched IO enabled
+              LD A,C
+              OUT (ALE),A           ; Set port
+              LD A,B
+              OUT (SWIO),A          ; Register pointer
+              POP AF
+              OUT (SWIO),A          ; Register value
+              CALL IODIS            ; Switched IO disabled
+              EI
+              RET
+
+                                    ;************************************
+                                    ;* COM: check RCX and COM active    *
+                                    ;************************************
+                                    ;* INPUT:                           *
+                                    ;************************************
+                                    ;* -/-                              *
+                                    ;************************************
+                                    ;* OUTPUT:                          *
+                                    ;************************************
+                                    ;* ZERO-Flag = 1 -> active          *
+                                    ;************************************
+                                    ;* Modified:                        *
+                                    ;************************************
+                                    ;* AF                               *
+                                    ;************************************
+
+COMCHK:       CALL RCXINIT          ; ZERO-Flag = 1 -> RCX installed
+              RET NZ
+              PUSH HL
+              PUSH DE
+              LD DE,X_HCOMFLG
+              CALL GETCOMX
+              LD A,(HL)
+              POP DE
+              POP HL
+              AND #01               ; Bit 0 = COM active
+              XOR #01               ; ZERO-Flag = 1 -> active
+              RET
+
+                                    ;************************************
+                                    ;* COM: context of active channel   *
+                                    ;************************************
+                                    ;* INPUT:                           *
+                                    ;************************************
+                                    ;* -/-                              *
+                                    ;************************************
+                                    ;* OUTPUT:                          *
+                                    ;************************************
+                                    ;* IX = channel block               *
+                                    ;* C = SIO ctrl port                *
+                                    ;* B = CTC port                     *
+                                    ;************************************
+                                    ;* Modified:                        *
+                                    ;************************************
+                                    ;* AF, HL                           *
+                                    ;************************************
+
+COMCTX:       PUSH DE
+              LD DE,X_HCOMIO
+              CALL GETCOMX         ; [HL] = IO addr, [HL+1] = channel
+              LD A,(HL)             ; SIO IO addr
+              INC HL
+              LD E,(HL)             ; E = active channel
+              ADD A,E
+              LD B,A                ; B = IO addr + channel
+              ADD A,E
+              LD C,A                ; C = SIO ctrl port
+              LD A,B
+              ADD A,#08
+              LD B,A                ; B = CTC port
+              INC HL                ; [HL] = channel block 0
+              LD A,E
+              OR A
+              JR Z,COMCTX1
+              LD DE,X_COMBLK
+              ADD HL,DE             ; [HL] = channel block 1
+COMCTX1:      PUSH HL
+              POP IX                ; IX = channel block
+              POP DE
+              RET
+
+;---------------------------
+
+                                    ;************************************
+                                    ;* Data length 5..8 to SIO WR3      *
+                                    ;* bits 7-6 (WR5 bits 6-5 = >> 1)   *
+                                    ;************************************
+
+COMBITS:      DEFB #000,#080,#040,#0C0
+
+                                    ;************************************
+                                    ;* Baud rate table: baud, CTC time  *
+                                    ;* constant (0 = 256), SIO WR4      *
+                                    ;* clock bits (#040 x16, #0C0 x64)  *
+                                    ;* CTC input = CLK / 2              *
+                                    ;* (3579545 Hz / 2)                 *
+                                    ;************************************
+
+COMBAUD:      DEFW 110
+              DEFB 254,#0C0
+              DEFW 300
+              DEFB 93,#0C0
+              DEFW 600
+              DEFB 186,#040
+              DEFW 1200
+              DEFB 93,#040
+              DEFW 1800
+              DEFB 62,#040
+              DEFW 2000
+              DEFB 56,#040
+              DEFW 2400
+              DEFB 47,#040
+              DEFW 3600
+              DEFB 31,#040
+              DEFW 4800
+              DEFB 23,#040
+              DEFW 7200
+              DEFB 16,#040
+              DEFW 9600
+              DEFB 12,#040
+              DEFW 19200
+              DEFB 6,#040
+              DEFW 0                ; End of table
+
+;---------------------------
+
+                                    ;************************************
+                                    ;* RS-232C INIT                     *
+                                    ;************************************
+                                    ;* Initialize the active channel    *
+                                    ;************************************
+                                    ;* INPUT:                           *
+                                    ;************************************
+                                    ;* HL = parameter table             *
+                                    ;* B = slot of parameter table      *
+                                    ;************************************
+                                    ;* OUTPUT:                          *
+                                    ;************************************
+                                    ;* CARRY-Flag = 1 -> illegal        *
+                                    ;* parameters                       *
+                                    ;************************************
+                                    ;* Modified:                        *
+                                    ;************************************
+                                    ;* AF                               *
+                                    ;************************************
+
+COMINI:       PUSH HL
+              PUSH DE
+              PUSH BC
+              PUSH IX
+              CALL COMCHK           ; RCX installed, COM active?
+              JP NZ,COMINIER
+
+              PUSH HL               ; Source of parameter table
+              PUSH BC               ; B = slot
+              LD DE,X_HCOMPAR
+              CALL GETCOMX
+              EX DE,HL              ; DE = copy in work area
+              POP BC
+              POP HL
+              LD C,#0E              ; 14 bytes
+COMINIRD:     PUSH BC
+              PUSH DE
+              LD A,B
+              CALL RDSLT            ; A = byte from slot B
+              POP DE
+              POP BC
+              LD (DE),A
+              INC HL
+              INC DE
+              DEC C
+              JR NZ,COMINIRD
+              EI
+              JR COMINIC
+
+                                    ;************************************
+                                    ;* RS-232C INIT from the copy in    *
+                                    ;* the work area (X_HCOMPAR)        *
+                                    ;************************************
+                                    ;* OUTPUT:                          *
+                                    ;************************************
+                                    ;* CARRY-Flag = 1 -> illegal        *
+                                    ;* parameters                       *
+                                    ;************************************
+                                    ;* Modified:                        *
+                                    ;************************************
+                                    ;* AF                               *
+                                    ;************************************
+
+COMINIP:      PUSH HL
+              PUSH DE
+              PUSH BC
+              PUSH IX
+              CALL COMCHK           ; RCX installed, COM active?
+              JP NZ,COMINIER
+
+COMINIC:      CALL COMCTX           ; IX = block, C = SIO, B = CTC
+              PUSH BC               ; Save ports
+              LD DE,X_HCOMPAR
+              CALL GETCOMX         ; [HL] = parameter copy
+
+              LD A,(HL)             ; Data length 5..8
+              SUB '5'
+              CP #04
+              JP NC,COMINIEP
+              LD E,A
+              LD D,#00
+              PUSH HL
+              LD HL,COMBITS
+              ADD HL,DE
+              LD A,(HL)             ; WR3 bits 7-6
+              POP HL
+              LD E,A
+              OR #001               ; RX enable
+              LD (IX+CB_WR3),A
+              LD A,E
+              SRL A                 ; WR5 bits 6-5
+              OR #088               ; DTR on, TX enable, RTS off
+              LD (IX+CB_WR5),A
+
+              INC HL                ; Parity
+              LD A,(HL)
+              LD E,#000             ; No parity
+              CP 'N'
+              JR Z,COMINIPA
+              CP 'I'                ; Ignore parity
+              JR Z,COMINIPA
+              LD E,#003             ; Even parity
+              CP 'E'
+              JR Z,COMINIPA
+              LD E,#001             ; Odd parity
+              CP 'O'
+              JP NZ,COMINIEP
+
+COMINIPA:     INC HL                ; Stop bits 1 / 1.5 / 2
+              LD A,(HL)
+              SUB '0'
+              CP #01
+              JP C,COMINIEP
+              CP #04
+              JP NC,COMINIEP
+              ADD A,A
+              ADD A,A               ; WR4 bits 3-2
+              OR E
+              LD (IX+CB_WR4),A      ; Stop bits and parity
+
+              LD D,#000             ; Flags
+              INC HL                ; XON/XOFF control
+              LD A,(HL)
+              CP 'X'
+              JR NZ,COMINIF1
+              SET 0,D
+              JR COMINIG1
+COMINIF1:     CP 'N'
+              JP NZ,COMINIEP
+COMINIG1:
+              INC HL                ; CTS-RTS handshake
+              LD A,(HL)
+              CP 'H'
+              JR NZ,COMINIF2
+              SET 1,D
+              JR COMINIG2
+COMINIF2:     CP 'N'
+              JP NZ,COMINIEP
+COMINIG2:
+              INC HL                ; Auto LF for receive
+              LD A,(HL)
+              CP 'A'
+              JR NZ,COMINIF3
+              SET 2,D
+              JR COMINIG3
+COMINIF3:     CP 'N'
+              JP NZ,COMINIEP
+COMINIG3:
+              INC HL                ; Auto LF for send
+              LD A,(HL)
+              CP 'A'
+              JR NZ,COMINIF4
+              SET 3,D
+              JR COMINIG4
+COMINIF4:     CP 'N'
+              JP NZ,COMINIEP
+COMINIG4:
+              INC HL                ; SI/SO control
+              LD A,(HL)
+              CP 'S'
+              JR NZ,COMINIF5
+              SET 4,D
+              JR COMINIG5
+COMINIF5:     CP 'N'
+              JP NZ,COMINIEP
+COMINIG5:
+              LD A,D
+              OR #080               ; Channel initialised
+              LD (IX+CB_FLAGS),A
+
+              INC HL                ; Receiver baud rate
+              LD E,(HL)
+              INC HL
+              LD D,(HL)
+              INC HL                ; Transmitter baud rate
+              LD A,(HL)
+              CP E
+              JP NZ,COMINIEP        ; Only one baud clock per channel
+              INC HL
+              LD A,(HL)
+              CP D
+              JP NZ,COMINIEP
+              INC HL                ; Time out
+              LD A,(HL)
+              LD (IX+CB_TOUT),A
+
+              BIT 7,D               ; Negative: value to CTC directly
+              JR Z,COMINIBT
+              XOR A
+              SUB E
+              LD (IX+CB_TC),A
+              LD A,#040             ; x16
+              JR COMINIBC
+
+COMINIBT:     LD HL,COMBAUD
+COMINIBL:     LD C,(HL)
+              INC HL
+              LD B,(HL)
+              INC HL
+              LD A,B
+              OR C
+              JP Z,COMINIEP         ; Baud rate not in table
+              LD A,C
+              CP E
+              JR NZ,COMINIBN
+              LD A,B
+              CP D
+              JR NZ,COMINIBN
+              LD A,(HL)
+              LD (IX+CB_TC),A
+              INC HL
+              LD A,(HL)             ; WR4 clock bits
+              JR COMINIBC
+COMINIBN:     INC HL
+              INC HL
+              JR COMINIBL
+
+COMINIBC:     OR (IX+CB_WR4)
+              LD (IX+CB_WR4),A
+
+              POP BC                ; C = SIO ctrl, B = CTC
+              PUSH BC
+              LD C,B
+              LD A,#057             ; Counter, rising edge, TC follows
+              CALL COMWR
+              LD A,(IX+CB_TC)
+              CALL COMWR
+              POP BC
+              PUSH BC
+              LD A,#018             ; Channel reset
+              CALL COMWR
+              LD B,#004
+              LD A,(IX+CB_WR4)
+              CALL COMWRR
+              LD B,#003
+              LD A,(IX+CB_WR3)
+              CALL COMWRR
+              LD B,#005
+              LD A,(IX+CB_WR5)
+              CALL COMWRR
+              LD B,#001             ; No interrupts
+              XOR A
+              CALL COMWRR
+              LD DE,X_HCOMCH
+              CALL GETCOMX
+              LD A,(HL)
+              OR A
+              JR Z,COMINIOK
+              LD B,#002             ; Channel B: vector 8
+              LD A,#008
+              CALL COMWRR
+COMINIOK:     POP BC
+              POP IX
+              POP BC
+              POP DE
+              POP HL
+              OR A                  ; Clear Carry Flag
+              RET
+
+COMINIEP:     POP BC                ; Remove ports
+COMINIER:     POP IX
+              POP BC
+              POP DE
+              POP HL
+              SCF                   ; Set CARRY flag for ERROR
+              RET
+
+;---------------------------
+
+                                    ;************************************
+                                    ;* RS-232C STAT                     *
+                                    ;************************************
+                                    ;* Read status of the active        *
+                                    ;* channel                          *
+                                    ;************************************
+                                    ;* INPUT:                           *
+                                    ;************************************
+                                    ;* -/-                              *
+                                    ;************************************
+                                    ;* OUTPUT:                          *
+                                    ;************************************
+                                    ;* HL = status (bit 7 CTS, 2 break, *
+                                    ;* 0 DCD, 15..11 errors of the      *
+                                    ;* last character read)             *
+                                    ;************************************
+                                    ;* Modified:                        *
+                                    ;************************************
+                                    ;* -/-                              *
+                                    ;************************************
+
+COMSTA:       PUSH AF
+              PUSH BC
+              PUSH DE
+              PUSH IX
+              LD HL,#0000
+              CALL COMCHK
+              JR NZ,COMSTAE
+              CALL COMCTX
+              CALL COMRR0           ; A = RR0, current state
+              LD E,#000
+              BIT 5,A               ; CTS
+              JR Z,COMSTA1
+              SET 7,E
+COMSTA1:      BIT 3,A               ; DCD
+              JR Z,COMSTA2
+              SET 0,E
+COMSTA2:      BIT 7,A               ; Break
+              JR Z,COMSTA3
+              SET 2,E
+COMSTA3:      LD A,(IX+CB_STL)
+              OR E
+              LD L,A
+              LD H,(IX+CB_STH)
+COMSTAE:      POP IX
+              POP DE
+              POP BC
+              POP AF
+              RET
+
+;---------------------------
+
+                                    ;************************************
+                                    ;* RS-232C SNDCHR                   *
+                                    ;************************************
+                                    ;* Send a character on the active   *
+                                    ;* channel. SI/SO: SO (&H0E) before *
+                                    ;* characters with bit 7, SI (&H0F) *
+                                    ;* back, bit 7 removed. Auto LF:    *
+                                    ;* LF after CR                      *
+                                    ;************************************
+                                    ;* INPUT:                           *
+                                    ;************************************
+                                    ;* A = character                    *
+                                    ;************************************
+                                    ;* OUTPUT:                          *
+                                    ;************************************
+                                    ;* CARRY-Flag = 1 -> CTRL-STOP      *
+                                    ;* ZERO-Flag = 1 -> time out        *
+                                    ;************************************
+                                    ;* Modified:                        *
+                                    ;************************************
+                                    ;* F                                *
+                                    ;************************************
+
+COMSND:       PUSH BC
+              PUSH DE
+              PUSH HL
+              PUSH IX
+              PUSH AF               ; Character
+              CALL COMCHK
+              JR NZ,COMSNDTO
+              CALL COMCTX           ; IX = block, C = SIO ctrl
+              POP AF
+              PUSH AF
+              LD D,A                ; D = character
+
+              BIT 4,(IX+CB_FLAGS)   ; SI/SO?
+              JR Z,COMSNDC
+              BIT 7,D
+              JR Z,COMSNDI
+              BIT 2,(IX+CB_STATE)   ; SO already sent?
+              JR NZ,COMSND7
+              LD A,#00E             ; SO
+              CALL COMSN1
+              JR C,COMSNDE
+              JR Z,COMSNDE
+              SET 2,(IX+CB_STATE)
+COMSND7:      RES 7,D
+              JR COMSNDC
+COMSNDI:      BIT 2,(IX+CB_STATE)   ; SO active?
+              JR Z,COMSNDC
+              LD A,#00F             ; SI
+              CALL COMSN1
+              JR C,COMSNDE
+              JR Z,COMSNDE
+              RES 2,(IX+CB_STATE)
+
+COMSNDC:      LD A,D
+              CALL COMSN1           ; Character
+              JR C,COMSNDE
+              JR Z,COMSNDE
+              LD A,D
+              CP #00D               ; CR?
+              JR NZ,COMSNDOK
+              BIT 3,(IX+CB_FLAGS)   ; Auto LF send?
+              JR Z,COMSNDOK
+              LD A,#00A             ; LF
+              CALL COMSN1
+              JR COMSNDE
+
+COMSNDOK:     LD A,#001
+              OR A                  ; ZERO-Flag = 0, CARRY-Flag = 0
+              JR COMSNDE
+
+COMSNDTO:     XOR A                 ; ZERO-Flag = 1, CARRY-Flag = 0
+
+COMSNDE:      POP BC                ; B = character
+              LD A,B                ; Flags stay
+              POP IX
+              POP HL
+              POP DE
+              POP BC
+              RET
+
+                                    ;************************************
+                                    ;* COM: send one character          *
+                                    ;************************************
+                                    ;* Waits for TX empty, CTS (CTS-RTS *
+                                    ;* handshake) and XON (XON/XOFF;    *
+                                    ;* not for XON/XOFF themselves),    *
+                                    ;* CTRL-STOP, time out (INIT)       *
+                                    ;************************************
+                                    ;* INPUT:                           *
+                                    ;************************************
+                                    ;* A = character                    *
+                                    ;* IX = block, C = SIO ctrl         *
+                                    ;************************************
+                                    ;* OUTPUT:                          *
+                                    ;************************************
+                                    ;* CARRY-Flag = 1 -> CTRL-STOP      *
+                                    ;* ZERO-Flag = 1 -> time out        *
+                                    ;************************************
+                                    ;* Modified:                        *
+                                    ;************************************
+                                    ;* F, B, E, HL                      *
+                                    ;************************************
+
+COMSN1:       PUSH AF               ; Character
+              PUSH DE
+              CALL COMTOS           ; Start time out
+              POP DE
+
+COMSN1L:      CALL COMBRKX          ; CTRL-STOP?
+              JR C,COMSN1B
+              CALL COMRR0           ; A = RR0, current state
+              LD E,A
+              BIT 1,(IX+CB_FLAGS)   ; CTS-RTS handshake?
+              JR Z,COMSN1X
+              BIT 5,E               ; CTS?
+              JR Z,COMSN1W
+COMSN1X:      BIT 0,(IX+CB_FLAGS)   ; XON/XOFF?
+              JR Z,COMSN1G
+              POP AF
+              PUSH AF
+              CP #011               ; XON and XOFF always
+              JR Z,COMSN1G
+              CP #013
+              JR Z,COMSN1G
+              LD A,(IX+CB_XOFF)
+              OR A                  ; XOFF received?
+              JR NZ,COMSN1W
+COMSN1G:      POP AF
+              PUSH AF
+              CALL COMPUT           ; Written?
+              JR NZ,COMSN1OK
+COMSN1W:      PUSH DE
+              CALL COMTOC           ; Time out reached?
+              POP DE
+              JR C,COMSN1L          ; No? Wait
+
+              POP AF                ; Time out
+              LD B,A
+              XOR A                 ; ZERO-Flag = 1, CARRY-Flag = 0
+              LD A,B
+              RET
+
+COMSN1B:      POP AF                ; CTRL-STOP
+              LD B,A
+              LD A,#001
+              OR A                  ; ZERO-Flag = 0
+              SCF                   ; CARRY-Flag = 1
+              LD A,B
+              RET
+
+COMSN1OK:     POP AF
+              LD B,A
+              LD A,#001
+              OR A                  ; ZERO-Flag = 0, CARRY-Flag = 0
+              LD A,B
+              RET
+
+                                    ;************************************
+                                    ;* COM: write character if TX empty *
+                                    ;************************************
+                                    ;* Test and write without interrupt *
+                                    ;* in between (the interrupt        *
+                                    ;* routine may send XOFF)           *
+                                    ;************************************
+                                    ;* INPUT:                           *
+                                    ;************************************
+                                    ;* A = character, C = SIO ctrl      *
+                                    ;************************************
+                                    ;* OUTPUT:                          *
+                                    ;************************************
+                                    ;* ZERO-Flag = 0 -> written         *
+                                    ;* ZERO-Flag = 1 -> TX busy         *
+                                    ;************************************
+                                    ;* Modified:                        *
+                                    ;************************************
+                                    ;* F, interrupts enabled at the end *
+                                    ;************************************
+
+COMPUT:       PUSH BC
+              LD B,A                ; B = character
+              DI
+              CALL IOEN             ; Switched IO enabled
+              LD A,C
+              OUT (ALE),A
+              IN A,(SWIO)           ; RR0
+              AND #004              ; TX buffer empty?
+              JR Z,COMPUTE          ; No? ZERO-Flag = 1
+              LD A,C
+              INC A
+              OUT (ALE),A
+              LD A,B
+              OUT (SWIO),A          ; Character
+              LD A,#001
+              OR A                  ; ZERO-Flag = 0
+COMPUTE:      CALL IODIS            ; Switched IO disabled
+              EI
+              LD A,B
+              POP BC
+              RET
+
+;---------------------------
+
+                                    ;************************************
+                                    ;* RS-232C DTR                      *
+                                    ;************************************
+                                    ;* Turn DTR of the active channel   *
+                                    ;* on or off                        *
+                                    ;************************************
+                                    ;* INPUT:                           *
+                                    ;************************************
+                                    ;* A = 0 off, otherwise on          *
+                                    ;************************************
+                                    ;* OUTPUT:                          *
+                                    ;************************************
+                                    ;* -/-                              *
+                                    ;************************************
+                                    ;* Modified:                        *
+                                    ;************************************
+                                    ;* F                                *
+                                    ;************************************
+
+COMDTR:       PUSH AF
+              PUSH BC
+              PUSH DE
+              PUSH HL
+              PUSH IX
+              LD D,A
+              CALL COMCHK
+              JR NZ,COMDTRE
+              CALL COMCTX
+              LD A,(IX+CB_WR5)
+              RES 7,A               ; DTR off
+              INC D
+              DEC D
+              JR Z,COMDTR1
+              SET 7,A               ; DTR on
+COMDTR1:      LD (IX+CB_WR5),A
+              XOR A
+              CALL COMW5            ; RTS stays off if held
+COMDTRE:      POP IX
+              POP HL
+              POP DE
+              POP BC
+              POP AF
+              RET
+
+;---------------------------
+
+                                    ;************************************
+                                    ;* RS-232C SETCHN                   *
+                                    ;************************************
+                                    ;* Set the active channel           *
+                                    ;* (0 = SIO A, 1 = SIO B)           *
+                                    ;************************************
+                                    ;* INPUT:                           *
+                                    ;************************************
+                                    ;* A = channel                      *
+                                    ;************************************
+                                    ;* OUTPUT:                          *
+                                    ;************************************
+                                    ;* CARRY-Flag = 1 -> channel not    *
+                                    ;* in the cartridge                 *
+                                    ;************************************
+                                    ;* Modified:                        *
+                                    ;************************************
+                                    ;* AF, BC                           *
+                                    ;************************************
+
+COMSCH:       CP #002
+              CCF                   ; CARRY-Flag = 1 if A >= 2
+              RET C
+              PUSH HL
+              PUSH DE
+              PUSH AF
+              CALL COMCHK
+              JR NZ,COMSCHE
+              LD DE,X_HCOMCH
+              CALL GETCOMX
+              POP AF
+              LD (HL),A
+              POP DE
+              POP HL
+              OR A                  ; Clear Carry Flag
+              RET
+COMSCHE:      POP AF
+              POP DE
+              POP HL
+              SCF                   ; Set CARRY flag for ERROR
+              RET
+
+;---------------------------
+
+                                    ;************************************
+                                    ;* RS-232C OPEN                     *
+                                    ;************************************
+                                    ;* Open the active channel: receive *
+                                    ;* buffer at FCB (9 bytes control + *
+                                    ;* 2 bytes per character), register *
+                                    ;* the interrupt routine at XIO,    *
+                                    ;* receive interrupt on, RTS on     *
+                                    ;************************************
+                                    ;* INPUT:                           *
+                                    ;************************************
+                                    ;* HL = FCB (>= &H8000)             *
+                                    ;* C = buffer length 32..254        *
+                                    ;* E = mode 1 input, 2 output,      *
+                                    ;* 4 raw input/output               *
+                                    ;************************************
+                                    ;* OUTPUT:                          *
+                                    ;************************************
+                                    ;* CARRY-Flag = 1 -> error          *
+                                    ;************************************
+                                    ;* Modified:                        *
+                                    ;************************************
+                                    ;* AF                               *
+                                    ;************************************
+
+COMOPN:       PUSH BC
+              PUSH DE
+              PUSH HL
+              PUSH IX
+              PUSH IY
+              PUSH HL
+              POP IY                ; IY = FCB
+              CALL COMCHK           ; RCX installed, COM active?
+              JP NZ,COMOPNE
+              BIT 7,H               ; FCB >= &H8000?
+              JP Z,COMOPNE
+              LD A,C
+              CP 32                 ; Length 32..254?
+              JP C,COMOPNE
+              CP 255
+              JP NC,COMOPNE
+              LD A,E
+              CP #001               ; Input
+              JR Z,COMOPNM
+              CP #002               ; Output
+              JR Z,COMOPNM
+              CP #004               ; Raw input/output
+              JP NZ,COMOPNE
+COMOPNM:      LD D,C                ; D = length, E = mode
+              CALL COMCTX           ; IX = block, C = SIO ctrl
+              BIT 7,(IX+CB_FLAGS)   ; Channel initialised?
+              JP Z,COMOPNE
+              LD A,(IX+CB_MODE)
+              OR A                  ; Already open?
+              JP NZ,COMOPNE
+
+              PUSH IY
+              POP HL
+              LD (IX+CB_FCBL),L
+              LD (IX+CB_FCBH),H
+              LD (IY+FC_PUT),#000   ; Clear buffer control (the
+              LD (IY+FC_GET),#000   ; other FCB bytes belong to BASIC)
+              LD (IY+FC_CNT),#000
+              LD (IY+FC_OVF),#000
+              LD (IY+FC_LEN),D
+              LD (IX+CB_LEN),D
+              LD (IX+CB_BKF),#000
+              LD (IX+CB_STL),#000
+              LD (IX+CB_STH),#000
+              LD (IX+CB_XOFF),#000
+              LD (IX+CB_STATE),#000
+
+              PUSH BC
+              PUSH DE
+              CALL COMXON           ; Register interrupt at XIO
+              POP DE
+              POP BC
+              JP C,COMOPNE
+
+              CALL COMFLU           ; Discard old characters
+              LD (IX+CB_MODE),E     ; Channel open
+
+              PUSH BC
+              LD DE,X_HCOMIO
+              CALL GETCOMX
+              LD A,(HL)
+              ADD A,#02
+              LD C,A                ; C = SIO B ctrl
+              LD B,#002             ; Vector 8 -> XIO Z80 channel 4
+              LD A,#008
+              CALL COMWRR
+              POP BC
+
+              LD B,#001             ; Interrupt on all received
+              LD A,#018             ; characters
+              CALL COMWRR
+              LD A,(IX+CB_WR5)
+              SET 1,A               ; RTS on
+              LD (IX+CB_WR5),A
+              LD B,#005
+              CALL COMWRR
+              OR A                  ; Clear Carry Flag
+              JR COMOPNR
+
+COMOPNE:      SCF                   ; Set CARRY flag for ERROR
+COMOPNR:      POP IY
+              POP IX
+              POP HL
+              POP DE
+              POP BC
+              RET
+
+;---------------------------
+
+                                    ;************************************
+                                    ;* RS-232C GETCHR                   *
+                                    ;************************************
+                                    ;* Get a character of the active    *
+                                    ;* channel: backed up character     *
+                                    ;* first, then receive buffer.      *
+                                    ;* Waits for a character with       *
+                                    ;* CTRL-STOP and time out (INIT)    *
+                                    ;************************************
+                                    ;* INPUT:                           *
+                                    ;************************************
+                                    ;* -/-                              *
+                                    ;************************************
+                                    ;* OUTPUT:                          *
+                                    ;************************************
+                                    ;* A = character                    *
+                                    ;* SIGN-Flag = 1 -> error (STAT:    *
+                                    ;* overflow, framing, overrun,      *
+                                    ;* parity, time out, CTRL-STOP)     *
+                                    ;* CARRY-Flag = 1 -> EOF (&H1A) in  *
+                                    ;* input mode                       *
+                                    ;************************************
+                                    ;* Modified:                        *
+                                    ;************************************
+                                    ;* AF                               *
+                                    ;************************************
+
+COMGET:       PUSH BC
+              PUSH DE
+              PUSH HL
+              PUSH IX
+              PUSH IY
+              CALL COMCHK           ; RCX installed, COM active?
+              JP NZ,COMGETN
+              CALL COMCTX           ; IX = block
+              LD A,(IX+CB_MODE)
+              OR A                  ; Channel open?
+              JP Z,COMGETN
+              LD L,(IX+CB_FCBL)
+              LD H,(IX+CB_FCBH)
+              PUSH HL
+              POP IY                ; IY = receive buffer
+              CALL COMTOS           ; Start time out
+
+COMGETL:      DI
+              LD A,(IX+CB_BKF)
+              OR A                  ; Backed up character?
+              JR Z,COMGET1
+              LD (IX+CB_BKF),#000
+              LD D,(IX+CB_BKC)
+              LD E,#000             ; No error
+              JR COMGETS
+
+COMGET1:      LD A,(IY+FC_CNT)
+              OR A                  ; Character in buffer?
+              JR NZ,COMGET2
+              EI                    ; Receive interrupt must run
+              CALL COMBRKX          ; CTRL-STOP?
+              JR C,COMGETB
+              CALL COMTOC           ; Time out reached?
+              JR C,COMGETL          ; No? Wait
+              LD E,#040             ; Status bit 14: time out
+              JR COMGETX
+COMGETB:      LD E,#004             ; Status bit 10: CTRL-STOP
+COMGETX:      LD (IX+CB_STH),E
+              LD HL,#0080           ; A = 0, SIGN-Flag = 1
+              JR COMGETF
+
+COMGET2:      LD L,(IY+FC_GET)
+              LD H,#000
+              ADD HL,HL
+              LD DE,FC_DATA
+              ADD HL,DE
+              PUSH IY
+              POP DE
+              ADD HL,DE             ; HL = FCB + 9 + 2 * read index
+              LD D,(HL)             ; D = character
+              INC HL
+              LD E,(HL)             ; E = status
+              LD A,(IY+FC_GET)
+              INC A
+              CP (IY+FC_LEN)
+              JR C,COMGET3
+              XOR A                 ; Ring index back to 0
+COMGET3:      LD (IY+FC_GET),A
+              DEC (IY+FC_CNT)
+              LD A,(IY+FC_OVF)
+              OR E                  ; Status bit 15: overflow
+              LD E,A
+              LD (IY+FC_OVF),#000
+              CALL COMFLW           ; RTS on / XON if space again
+
+COMGETS:      EI
+              LD (IX+CB_STH),E      ; Status of this character
+              LD L,#000             ; Flags
+              LD A,E
+              OR A
+              JR Z,COMGET4
+              LD L,#080             ; SIGN-Flag = 1 -> error
+COMGET4:      LD A,(IX+CB_MODE)
+              CP #001               ; Input mode?
+              JR NZ,COMGET5
+              LD A,D
+              CP #01A               ; EOF?
+              JR NZ,COMGET5
+              SET 0,L               ; CARRY-Flag = 1 -> EOF
+COMGET5:      LD H,D                ; H = character
+              JR COMGETF
+
+COMGETN:      LD HL,#0080           ; A = 0, SIGN-Flag = 1
+
+COMGETF:      PUSH HL
+              POP AF                ; A = character, F = flags
+              POP IY
+              POP IX
+              POP HL
+              POP DE
+              POP BC
+              RET
+
+;---------------------------
+
+                                    ;************************************
+                                    ;* RS-232C CLOSE                    *
+                                    ;************************************
+                                    ;* Close the active channel: EOF    *
+                                    ;* in output mode, receive          *
+                                    ;* interrupt off, RTS off; after    *
+                                    ;* the last channel the interrupt   *
+                                    ;* is removed from XIO              *
+                                    ;************************************
+                                    ;* INPUT:                           *
+                                    ;************************************
+                                    ;* -/-                              *
+                                    ;************************************
+                                    ;* OUTPUT:                          *
+                                    ;************************************
+                                    ;* CARRY-Flag = 0                   *
+                                    ;************************************
+                                    ;* Modified:                        *
+                                    ;************************************
+                                    ;* AF                               *
+                                    ;************************************
+
+COMCLO:       PUSH BC
+              PUSH DE
+              PUSH HL
+              PUSH IX
+              CALL COMCHK           ; RCX installed, COM active?
+              JR NZ,COMCLOR
+              CALL COMCTX           ; IX = block, C = SIO ctrl
+              LD A,(IX+CB_MODE)
+              OR A                  ; Channel open?
+              JR Z,COMCLOR
+              CP #002               ; Output mode?
+              JR NZ,COMCLO1
+              LD A,#01A
+              CALL COMSND           ; Send EOF
+COMCLO1:      CALL COMCLS1          ; Interrupt off, RTS off, closed
+              CALL COMANY           ; Other channel open?
+              CALL Z,COMXOF         ; No? Remove interrupt from XIO
+COMCLOR:      POP IX
+              POP HL
+              POP DE
+              POP BC
+              OR A                  ; Clear Carry Flag
+              RET
+
+;---------------------------
+
+                                    ;************************************
+                                    ;* RS-232C EOF                      *
+                                    ;************************************
+                                    ;* Is the next character EOF?       *
+                                    ;************************************
+                                    ;* INPUT:                           *
+                                    ;************************************
+                                    ;* -/-                              *
+                                    ;************************************
+                                    ;* OUTPUT:                          *
+                                    ;************************************
+                                    ;* HL = -1, CARRY-Flag = 1 -> EOF   *
+                                    ;* HL = 0, CARRY-Flag = 0 -> no EOF *
+                                    ;* or no character                  *
+                                    ;************************************
+                                    ;* Modified:                        *
+                                    ;************************************
+                                    ;* AF                               *
+                                    ;************************************
+
+COMEOF:       PUSH BC
+              PUSH DE
+              PUSH IX
+              CALL COMCUR           ; Channel open?
+              JR Z,COMEOFN
+              LD A,(IX+CB_BKF)
+              OR A                  ; Backed up character?
+              LD A,(IX+CB_BKC)
+              JR NZ,COMEOF1
+              DI
+              LD A,(HL)             ; Characters in buffer
+              OR A
+              JR Z,COMEOFE
+              LD L,(IX+CB_FCBL)
+              LD H,(IX+CB_FCBH)
+              PUSH HL
+              LD DE,FC_GET
+              ADD HL,DE
+              LD E,(HL)             ; Read index
+              LD D,#000
+              EX DE,HL
+              ADD HL,HL
+              LD BC,FC_DATA
+              ADD HL,BC
+              POP DE
+              ADD HL,DE             ; HL = FCB + 9 + 2 * read index
+              LD A,(HL)             ; Next character
+              EI
+COMEOF1:      CP #01A               ; EOF?
+              JR NZ,COMEOFN
+              LD HL,#0FFFF
+              SCF                   ; Set CARRY flag for EOF
+              JR COMEOFR
+COMEOFE:      EI
+COMEOFN:      LD HL,#0000
+              OR A                  ; Clear Carry Flag
+COMEOFR:      POP IX
+              POP DE
+              POP BC
+              RET
+
+;---------------------------
+
+                                    ;************************************
+                                    ;* RS-232C LOC                      *
+                                    ;************************************
+                                    ;* Characters in the receive buffer *
+                                    ;* including a backed up character  *
+                                    ;************************************
+                                    ;* INPUT:                           *
+                                    ;************************************
+                                    ;* -/-                              *
+                                    ;************************************
+                                    ;* OUTPUT:                          *
+                                    ;************************************
+                                    ;* HL = number of characters        *
+                                    ;************************************
+                                    ;* Modified:                        *
+                                    ;************************************
+                                    ;* AF                               *
+                                    ;************************************
+
+COMLOC:       PUSH BC
+              PUSH DE
+              PUSH IX
+              CALL COMCUR           ; Channel open?
+              LD A,(HL)             ; Characters in buffer
+              LD HL,#0000
+              JR Z,COMLOCR
+              LD L,A
+              LD A,(IX+CB_BKF)
+              OR A                  ; Backed up character?
+              JR Z,COMLOCR
+              INC HL
+COMLOCR:      POP IX
+              POP DE
+              POP BC
+              RET
+
+;---------------------------
+
+                                    ;************************************
+                                    ;* RS-232C LOF                      *
+                                    ;************************************
+                                    ;* Free space in the receive buffer *
+                                    ;************************************
+                                    ;* INPUT:                           *
+                                    ;************************************
+                                    ;* -/-                              *
+                                    ;************************************
+                                    ;* OUTPUT:                          *
+                                    ;************************************
+                                    ;* HL = free characters             *
+                                    ;************************************
+                                    ;* Modified:                        *
+                                    ;************************************
+                                    ;* AF                               *
+                                    ;************************************
+
+COMLOF:       PUSH BC
+              PUSH DE
+              PUSH IX
+              CALL COMCUR           ; Channel open?
+              LD HL,#0000
+              JR Z,COMLOFR
+              LD A,(IX+CB_LEN)
+              SUB D                 ; Length - characters in buffer
+              LD L,A
+COMLOFR:      POP IX
+              POP DE
+              POP BC
+              RET
+
+;---------------------------
+
+                                    ;************************************
+                                    ;* RS-232C BACKUP                   *
+                                    ;************************************
+                                    ;* Back up a character; GETCHR      *
+                                    ;* returns it first. A former one   *
+                                    ;* is lost                          *
+                                    ;************************************
+                                    ;* INPUT:                           *
+                                    ;************************************
+                                    ;* C = character                    *
+                                    ;************************************
+                                    ;* OUTPUT:                          *
+                                    ;************************************
+                                    ;* -/-                              *
+                                    ;************************************
+                                    ;* Modified:                        *
+                                    ;************************************
+                                    ;* F                                *
+                                    ;************************************
+
+COMBCK:       PUSH AF
+              PUSH BC
+              PUSH DE
+              PUSH HL
+              PUSH IX
+              LD D,C                ; D = character
+              CALL COMCHK           ; RCX installed, COM active?
+              JR NZ,COMBCKE
+              CALL COMCTX           ; IX = block
+              LD (IX+CB_BKC),D
+              LD (IX+CB_BKF),#001
+COMBCKE:      POP IX
+              POP HL
+              POP DE
+              POP BC
+              POP AF
+              RET
+
+;---------------------------
+
+                                    ;************************************
+                                    ;* RS-232C SNDBRK                   *
+                                    ;************************************
+                                    ;* Send break (WR5 bit 4) for DE    *
+                                    ;* character times: the transmitter *
+                                    ;* keeps shifting dummy characters  *
+                                    ;* while TXD is held on space       *
+                                    ;************************************
+                                    ;* INPUT:                           *
+                                    ;************************************
+                                    ;* DE = number of break characters  *
+                                    ;************************************
+                                    ;* OUTPUT:                          *
+                                    ;************************************
+                                    ;* CARRY-Flag = 1 -> CTRL-STOP      *
+                                    ;************************************
+                                    ;* Modified:                        *
+                                    ;************************************
+                                    ;* AF, DE                           *
+                                    ;************************************
+
+COMBRK:       PUSH BC
+              PUSH HL
+              PUSH IX
+              CALL COMCHK           ; RCX installed, COM active?
+              JR NZ,COMBRKOK
+              CALL COMCTX           ; IX = block, C = SIO ctrl
+              LD A,#010             ; Send break on
+              CALL COMW5
+
+COMBRKL:      LD A,D
+              OR E                  ; All break characters?
+              JR Z,COMBRKS
+              CALL COMBRKX          ; CTRL-STOP?
+              JR C,COMBRKB
+              XOR A                 ; Dummy character
+              CALL COMPUT
+              JR Z,COMBRKL          ; TX busy? Wait
+              DEC DE
+              JR COMBRKL
+
+COMBRKS:      CALL COMBRKX          ; CTRL-STOP?
+              JR C,COMBRKB
+              CALL COMRR1           ; A = RR1
+              RRCA                  ; All sent?
+              JR NC,COMBRKS
+
+              XOR A                 ; Send break off
+              CALL COMW5
+COMBRKOK:     OR A                  ; Clear Carry Flag
+              JR COMBRKE
+
+COMBRKB:      XOR A                 ; Send break off
+              CALL COMW5
+              SCF                   ; Set CARRY flag for CTRL-STOP
+COMBRKE:      POP IX
+              POP HL
+              POP BC
+              RET
+
+;---------------------------
+
+                                    ;************************************
+                                    ;* COM: write WR5                   *
+                                    ;************************************
+                                    ;* CB_WR5 OR A; RTS stays off while *
+                                    ;* held by CTS-RTS handshake        *
+                                    ;************************************
+                                    ;* INPUT:                           *
+                                    ;************************************
+                                    ;* A = additional bits (#010 break) *
+                                    ;* IX = block, C = SIO ctrl         *
+                                    ;************************************
+                                    ;* Modified:                        *
+                                    ;************************************
+                                    ;* AF, interrupts enabled at the end*
+                                    ;************************************
+
+COMW5:        PUSH BC
+              OR (IX+CB_WR5)
+              BIT 0,(IX+CB_STATE)   ; RTS held off?
+              JR Z,COMW51
+              RES 1,A
+COMW51:       LD B,#005
+              CALL COMWRR
+              POP BC
+              RET
+
+                                    ;************************************
+                                    ;* COM: read current RR0            *
+                                    ;************************************
+                                    ;* The SIO latches CTS, DCD and     *
+                                    ;* break in RR0 after a change;     *
+                                    ;* WR0 &H10 (reset external/status  *
+                                    ;* interrupts) first gives the      *
+                                    ;* current state                    *
+                                    ;************************************
+                                    ;* INPUT:                           *
+                                    ;************************************
+                                    ;* C = SIO ctrl                     *
+                                    ;************************************
+                                    ;* OUTPUT:                          *
+                                    ;************************************
+                                    ;* A = RR0                          *
+                                    ;************************************
+                                    ;* Modified:                        *
+                                    ;************************************
+                                    ;* F, interrupts enabled at the end *
+                                    ;************************************
+
+COMRR0:       DI
+              CALL IOEN             ; Switched IO enabled
+              LD A,C
+              OUT (ALE),A
+              LD A,#010             ; Reset external/status interrupts
+              OUT (SWIO),A
+              IN A,(SWIO)           ; RR0
+              CALL IODIS            ; Switched IO disabled
+              EI
+              RET
+
+                                    ;************************************
+                                    ;* COM: read RR1                    *
+                                    ;************************************
+                                    ;* INPUT:                           *
+                                    ;************************************
+                                    ;* C = SIO ctrl                     *
+                                    ;************************************
+                                    ;* OUTPUT:                          *
+                                    ;************************************
+                                    ;* A = RR1 (bit 0 all sent)         *
+                                    ;************************************
+                                    ;* Modified:                        *
+                                    ;************************************
+                                    ;* F, interrupts enabled at the end *
+                                    ;************************************
+
+COMRR1:       DI
+              CALL IOEN             ; Switched IO enabled
+              LD A,C
+              OUT (ALE),A
+              LD A,#001
+              OUT (SWIO),A          ; Pointer RR1
+              IN A,(SWIO)           ; RR1
+              CALL IODIS            ; Switched IO disabled
+              EI
+              RET
+
+                                    ;************************************
+                                    ;* COM: receive flow control back   *
+                                    ;************************************
+                                    ;* After GETCHR: with 16 or more    *
+                                    ;* free characters RTS on again     *
+                                    ;* (CTS-RTS) and XON (XON/XOFF), if *
+                                    ;* the interrupt routine turned     *
+                                    ;* them off                         *
+                                    ;************************************
+                                    ;* INPUT:                           *
+                                    ;************************************
+                                    ;* IX = block, IY = FCB,            *
+                                    ;* C = SIO ctrl                     *
+                                    ;************************************
+                                    ;* Modified:                        *
+                                    ;************************************
+                                    ;* AF, interrupts enabled if a      *
+                                    ;* signal was changed               *
+                                    ;************************************
+
+COMFLW:       LD A,(IY+FC_LEN)
+              SUB (IY+FC_CNT)
+              CP #010               ; 16 or more free?
+              RET C
+              BIT 0,(IX+CB_STATE)   ; RTS held off?
+              JR Z,COMFLW1
+              RES 0,(IX+CB_STATE)
+              XOR A
+              CALL COMW5            ; RTS on
+COMFLW1:      BIT 1,(IX+CB_STATE)   ; XOFF sent?
+              RET Z
+              RES 1,(IX+CB_STATE)
+COMFLW2:      LD A,#011             ; XON
+              CALL COMPUT
+              JR Z,COMFLW2          ; TX busy? Wait
+              RET
+
+;---------------------------
+
+                                    ;************************************
+                                    ;* COM: active channel open?        *
+                                    ;************************************
+                                    ;* INPUT:                           *
+                                    ;************************************
+                                    ;* -/-                              *
+                                    ;************************************
+                                    ;* OUTPUT:                          *
+                                    ;************************************
+                                    ;* ZERO-Flag = 1 -> not open        *
+                                    ;* ZERO-Flag = 0 -> IX = block,     *
+                                    ;* HL = FCB + FC_CNT, D = count     *
+                                    ;************************************
+                                    ;* Modified:                        *
+                                    ;************************************
+                                    ;* AF, BC, D, HL, IX                *
+                                    ;************************************
+
+COMCUR:       LD HL,COMCURZ         ; [HL] = 0 if not open
+              CALL COMCHK           ; RCX installed, COM active?
+              JR NZ,COMCURN
+              CALL COMCTX           ; IX = block
+              LD L,(IX+CB_FCBL)
+              LD H,(IX+CB_FCBH)
+              LD A,(IX+CB_MODE)
+              LD BC,FC_CNT
+              ADD HL,BC             ; [HL] = characters in buffer
+              LD D,(HL)
+              OR A                  ; ZERO-Flag = 1 -> not open
+              RET NZ
+              LD HL,COMCURZ
+              RET
+COMCURN:      XOR A                 ; ZERO-Flag = 1
+              RET
+
+COMCURZ:      DEFB #000
+
+                                    ;************************************
+                                    ;* COM: discard received characters *
+                                    ;************************************
+                                    ;* INPUT:                           *
+                                    ;************************************
+                                    ;* C = SIO ctrl                     *
+                                    ;************************************
+                                    ;* Modified:                        *
+                                    ;************************************
+                                    ;* AF, B                            *
+                                    ;************************************
+
+COMFLU:       LD B,#004             ; SIO FIFO 3 characters
+COMFLUL:      CALL COMRD            ; RR0
+              RRCA                  ; Character available?
+              JR NC,COMFLUE
+              INC C
+              CALL COMRD            ; Read and discard
+              DEC C
+              DJNZ COMFLUL
+COMFLUE:      LD A,#030             ; Error reset
+              JP COMWR
+
+                                    ;************************************
+                                    ;* COM: close one channel without   *
+                                    ;* EOF: receive interrupt off, RTS  *
+                                    ;* off, mode = closed               *
+                                    ;************************************
+                                    ;* INPUT:                           *
+                                    ;************************************
+                                    ;* IX = block, C = SIO ctrl         *
+                                    ;************************************
+                                    ;* Modified:                        *
+                                    ;************************************
+                                    ;* AF, B                            *
+                                    ;************************************
+
+COMCLS1:      LD B,#001             ; No interrupts
+              XOR A
+              CALL COMWRR
+              LD A,(IX+CB_WR5)
+              RES 1,A               ; RTS off
+              LD (IX+CB_WR5),A
+              LD B,#005
+              CALL COMWRR
+              LD (IX+CB_MODE),#000  ; Closed
+              LD (IX+CB_STATE),#000
+              RET
+
+                                    ;************************************
+                                    ;* COM: any channel open?           *
+                                    ;************************************
+                                    ;* OUTPUT:                          *
+                                    ;************************************
+                                    ;* ZERO-Flag = 1 -> none            *
+                                    ;************************************
+                                    ;* Modified:                        *
+                                    ;************************************
+                                    ;* AF, DE, HL                       *
+                                    ;************************************
+
+COMANY:       LD DE,X_HCOMC0+CB_MODE
+              CALL GETCOMX
+              LD A,(HL)
+              LD DE,X_COMBLK
+              ADD HL,DE
+              OR (HL)
+              RET
+
+                                    ;************************************
+                                    ;* COM: close all channels and      *
+                                    ;* remove the interrupt from XIO    *
+                                    ;* (RCX DEINIT, COM INIT)           *
+                                    ;************************************
+                                    ;* Modified:                        *
+                                    ;************************************
+                                    ;* -/-                              *
+                                    ;************************************
+
+COMOFF:       PUSH AF
+              PUSH BC
+              PUSH DE
+              PUSH HL
+              PUSH IX
+              CALL COMCHK           ; RCX installed, COM active?
+              JR NZ,COMOFFE
+              LD DE,X_HCOMCH
+              CALL GETCOMX
+              LD A,(HL)
+              PUSH AF               ; Save active channel
+              XOR A
+COMOFFL:      LD (HL),A             ; Channel 0, 1
+              PUSH AF
+              PUSH HL
+              CALL COMCTX           ; IX = block, C = SIO ctrl
+              LD A,(IX+CB_MODE)
+              OR A
+              CALL NZ,COMCLS1       ; Open? Close
+              POP HL
+              POP AF
+              INC A
+              CP #002
+              JR C,COMOFFL
+              POP AF
+              LD (HL),A             ; Restore active channel
+              CALL COMXOF           ; Remove interrupt from XIO
+COMOFFE:      POP IX
+              POP HL
+              POP DE
+              POP BC
+              POP AF
+              RET
+
+                                    ;************************************
+                                    ;* COM: start time out              *
+                                    ;************************************
+                                    ;* INPUT:                           *
+                                    ;************************************
+                                    ;* IX = block (CB_TOUT seconds)     *
+                                    ;************************************
+                                    ;* Modified:                        *
+                                    ;************************************
+                                    ;* AF, B, DE, HL                    *
+                                    ;************************************
+
+COMTOS:       LD E,(IX+CB_TOUT)     ; Time out limit in ticks
+              LD D,#000
+              LD HL,#0000
+              LD B,60
+              CALL COMFREQ          ; A = IDFREQ
+              BIT 7,A               ; 50 Hz?
+              JR Z,COMTOSM
+              LD B,50
+COMTOSM:      ADD HL,DE
+              DJNZ COMTOSM
+              LD (IX+CB_TLML),L
+              LD (IX+CB_TLMH),H
+              LD HL,(JIFFY)
+              LD (IX+CB_TSTL),L
+              LD (IX+CB_TSTH),H
+              RET
+
+                                    ;************************************
+                                    ;* COM: check time out              *
+                                    ;************************************
+                                    ;* INPUT:                           *
+                                    ;************************************
+                                    ;* IX = block                       *
+                                    ;************************************
+                                    ;* OUTPUT:                          *
+                                    ;************************************
+                                    ;* CARRY-Flag = 1 -> go on waiting  *
+                                    ;* CARRY-Flag = 0 -> time out       *
+                                    ;************************************
+                                    ;* Modified:                        *
+                                    ;************************************
+                                    ;* AF, DE, HL                       *
+                                    ;************************************
+
+COMTOC:       LD A,(IX+CB_TOUT)
+              OR A                  ; No time out?
+              SCF
+              RET Z
+              LD HL,(JIFFY)
+              LD E,(IX+CB_TSTL)
+              LD D,(IX+CB_TSTH)
+              OR A
+              SBC HL,DE             ; Elapsed ticks
+              LD E,(IX+CB_TLML)
+              LD D,(IX+CB_TLMH)
+              OR A
+              SBC HL,DE             ; CARRY-Flag = 1 -> elapsed < limit
+              RET
+
+                                    ;************************************
+                                    ;* COM: CTRL-STOP via the BIOS      *
+                                    ;************************************
+                                    ;* BREAKX in the main ROM by        *
+                                    ;* CALSLT: page 0 is RAM under      *
+                                    ;* MSX-DOS. Interrupts enabled at   *
+                                    ;* the end (receive interrupt)      *
+                                    ;************************************
+                                    ;* OUTPUT:                          *
+                                    ;************************************
+                                    ;* CARRY-Flag = 1 -> CTRL-STOP      *
+                                    ;************************************
+                                    ;* Modified:                        *
+                                    ;************************************
+                                    ;* AF                               *
+                                    ;************************************
+
+COMBRKX:      PUSH IX
+              PUSH IY
+              LD IX,BREAKX
+              LD IY,(EXPTBL-1)      ; IYh = slot of the main ROM
+              CALL CALSLT
+              EI
+              POP IY
+              POP IX
+              RET
+
+                                    ;************************************
+                                    ;* COM: IDFREQ via the BIOS         *
+                                    ;************************************
+                                    ;* Reads IDFREQ from the main ROM   *
+                                    ;* by RDSLT (page 0 is RAM under    *
+                                    ;* MSX-DOS). Interrupts enabled at  *
+                                    ;* the end                          *
+                                    ;************************************
+                                    ;* OUTPUT:                          *
+                                    ;************************************
+                                    ;* A = IDFREQ (bit 7 = 50 Hz)       *
+                                    ;************************************
+                                    ;* Modified:                        *
+                                    ;************************************
+                                    ;* AF                               *
+                                    ;************************************
+
+COMFREQ:      PUSH BC
+              PUSH DE
+              PUSH HL
+              LD A,(EXPTBL)         ; Slot of the main ROM
+              LD HL,IDFREQ
+              CALL RDSLT
+              EI
+              POP HL
+              POP DE
+              POP BC
+              RET
+
+;---------------------------
+
+                                    ;************************************
+                                    ;* COM: register the interrupt      *
+                                    ;* routine at XIO (once)            *
+                                    ;************************************
+                                    ;* Sets the work area pointer in    *
+                                    ;* the routine, XIO SET ADDR        *
+                                    ;* (channel 12, page 3), GET MASK,  *
+                                    ;* SET MASK with bit 12             *
+                                    ;************************************
+                                    ;* OUTPUT:                          *
+                                    ;************************************
+                                    ;* CARRY-Flag = 1 -> XIO missing    *
+                                    ;************************************
+                                    ;* Modified:                        *
+                                    ;************************************
+                                    ;* AF, BC, DE, HL                   *
+                                    ;************************************
+
+COMXON:       LD DE,X_HCOMFLG
+              CALL GETCOMX
+              LD A,(HL)
+              AND #002              ; Already registered?
+              RET NZ                ; Yes? CARRY-Flag = 0
+
+              LD DE,X_HCOMIO
+              CALL GETCOMX
+              PUSH HL
+              LD DE,X_HCOMI01
+              CALL GETCOMX         ; [HL] = pointer in the routine
+              POP DE
+              LD (HL),E
+              INC HL
+              LD (HL),D             ; Routine points to HCOMIO
+
+              LD DE,X_HCOMINT
+              CALL GETCOMX
+              EX DE,HL              ; DE = interrupt routine
+              LD BC,#0CFF           ; Z80 channel 12, page 3
+              LD A,#007             ; XIO SET ADDR
+              CALL COMXIO
+              RET C
+
+              LD DE,X_HCOMGP
+              CALL GETCOMX
+              EX DE,HL              ; DE = 2 bytes for the mask
+              PUSH DE
+              LD A,#00A             ; XIO GET MASK
+              CALL COMXIO
+              POP HL
+              RET C
+              LD E,(HL)             ; PIC mask
+              INC HL
+              LD A,(HL)
+              OR #010               ; Z80 channel 12
+              LD D,A
+              LD A,#008             ; XIO SET MASK
+              CALL COMXIO
+              RET C
+
+              LD DE,X_HCOMFLG
+              CALL GETCOMX
+              SET 1,(HL)            ; Registered
+              OR A                  ; Clear Carry Flag
+              RET
+
+                                    ;************************************
+                                    ;* COM: remove the interrupt        *
+                                    ;* routine from XIO                 *
+                                    ;************************************
+                                    ;* XIO GET MASK, SET MASK without   *
+                                    ;* bit 12, SET ADDR(12,0)           *
+                                    ;************************************
+                                    ;* Modified:                        *
+                                    ;************************************
+                                    ;* AF, BC, DE, HL                   *
+                                    ;************************************
+
+COMXOF:       LD DE,X_HCOMFLG
+              CALL GETCOMX
+              LD A,(HL)
+              AND #002              ; Registered?
+              RET Z
+              RES 1,(HL)
+
+              LD DE,X_HCOMGP
+              CALL GETCOMX
+              EX DE,HL              ; DE = 2 bytes for the mask
+              PUSH DE
+              LD A,#00A             ; XIO GET MASK
+              CALL COMXIO
+              POP HL
+              JR C,COMXOFA
+              LD E,(HL)             ; PIC mask
+              INC HL
+              LD A,(HL)
+              AND #0EF              ; Without Z80 channel 12
+              LD D,A
+              LD A,#008             ; XIO SET MASK
+              CALL COMXIO
+COMXOFA:      LD DE,#0000           ; Standard routine of XIO
+              LD BC,#0CFF           ; Z80 channel 12
+              LD A,#007             ; XIO SET ADDR
+              CALL COMXIO
+              OR A
+              RET
+
+                                    ;************************************
+                                    ;* COM: call XIO UNAPI function     *
+                                    ;************************************
+                                    ;* Looks up "XIO_IO_EXPANDER" via   *
+                                    ;* EXTBIO and calls the entry with  *
+                                    ;* CALSLT                           *
+                                    ;************************************
+                                    ;* INPUT:                           *
+                                    ;************************************
+                                    ;* A = function                     *
+                                    ;* BC, DE = parameters              *
+                                    ;************************************
+                                    ;* OUTPUT:                          *
+                                    ;************************************
+                                    ;* CARRY-Flag = 1 -> error or XIO   *
+                                    ;* not installed                    *
+                                    ;************************************
+                                    ;* Modified:                        *
+                                    ;************************************
+                                    ;* AF, BC, DE                       *
+                                    ;************************************
+
+COMXIO:       PUSH HL
+              PUSH IX
+              PUSH IY
+              PUSH AF               ; Function
+              PUSH BC
+              PUSH DE
+              LD HL,COMXIOID
+              LD DE,ARG
+              LD BC,#0010           ; Name with 0
+              LDIR
+              LD HL,#0000
+              LD DE,#02222          ; UNAPI
+              LD A,#001             ; First implementation
+              CALL EXTBIO           ; A = slot, HL = entry
+              LD C,A
+              LD A,H
+              OR L
+              JR Z,COMXIOE          ; Not found
+              PUSH HL
+              POP IX                ; IX = entry
+              LD H,C
+              LD L,#000
+              PUSH HL
+              POP IY                ; IYH = slot
+              POP DE
+              POP BC
+              POP AF                ; A = function
+              CALL CALSLT
+              JR COMXIOR
+COMXIOE:      POP DE
+              POP BC
+              POP AF
+              SCF                   ; Set CARRY flag for ERROR
+COMXIOR:      POP IY
+              POP IX
+              POP HL
+              RET
+
+COMXIOID:     DEFM "XIO_IO_EXPANDER",0
+
+                                    ;************************************
+                                    ;* COM interrupt routine            *
+                                    ;************************************
+                                    ;* Called by XIO (Z80 channel 4,    *
+                                    ;* SIO vector 8). For SIO A and B:  *
+                                    ;* if the channel is open, all      *
+                                    ;* received characters with error   *
+                                    ;* bits (RR1) into the ring buffer  *
+                                    ;* at FCB; WR0 &H30 error reset.    *
+                                    ;* Then WR0 A &H38 (return from     *
+                                    ;* interrupt, the SIO does not see  *
+                                    ;* the RETI through XIO) and RETI.  *
+                                    ;* Only relative jumps: runs as     *
+                                    ;* copy in the work area            *
+                                    ;************************************
+
+HCOMINT:      LD A,WTEC
+              OUT (IOENDIS),A
+
+HCOM001:      LD HL,0               ; Will be filled by OPEN
+                                    ; HL points to HCOMIO in work area
+              LD C,(HL)             ; C = SIO A ctrl
+              INC HL
+              INC HL                ; HL = channel block 0
+              LD B,#02              ; 2 channels
+
+HCOMICH:      PUSH BC
+              PUSH HL
+              PUSH HL
+              POP IX                ; IX = channel block
+              LD A,(IX+CB_MODE)
+              OR A
+              JR Z,HCOMINX          ; Channel closed
+              LD L,(IX+CB_FCBL)
+              LD H,(IX+CB_FCBH)
+              PUSH HL
+              POP IY                ; IY = receive buffer (FCB)
+              JR HCOMIRX
+
+HCOMINX:      POP HL
+              LD DE,X_COMBLK
+              ADD HL,DE             ; HL = next channel block
+              POP BC
+              INC C
+              INC C                 ; C = next SIO ctrl
+              DJNZ HCOMICH
+
+              DEC C
+              DEC C
+              DEC C
+              DEC C                 ; C = SIO A ctrl
+              LD A,C
+              OUT (ALE),A
+              LD A,#038             ; Return from interrupt
+              OUT (SWIO),A
+
+              XOR A
+              OUT (IOENDIS),A
+
+              RETI
+
+
+HCOMIRX:      LD A,C
+              OUT (ALE),A           ; SIO ctrl
+              IN A,(SWIO)           ; RR0
+              RRCA                  ; RX character available?
+              JR NC,HCOMINX         ; No? Next channel
+              LD A,#01
+              OUT (SWIO),A          ; Pointer RR1
+              IN A,(SWIO)           ; RR1
+              RRCA                  ; Framing, overrun, parity error
+              AND #038              ; to status bits 5, 4, 3
+              LD E,A                ; E = status
+              LD A,C
+              INC A
+              OUT (ALE),A           ; SIO data
+              IN A,(SWIO)
+              LD D,A                ; D = character
+              LD A,C
+              OUT (ALE),A           ; SIO ctrl
+              LD A,#030             ; Error reset
+              OUT (SWIO),A
+
+              BIT 0,(IX+CB_FLAGS)   ; XON/XOFF?
+              JR Z,HCOMISI
+              LD A,D
+              CP #013               ; XOFF: stop sending
+              JR NZ,HCOMIXN
+              LD (IX+CB_XOFF),#001
+              JR HCOMIRX
+HCOMIXN:      CP #011               ; XON: send again
+              JR NZ,HCOMISI
+              LD (IX+CB_XOFF),#000
+              JR HCOMIRX
+
+HCOMISI:      BIT 4,(IX+CB_FLAGS)   ; SI/SO?
+              JR Z,HCOMIBF
+              LD A,D
+              CP #00E               ; SO: bit 7 on
+              JR NZ,HCOMISO
+              SET 3,(IX+CB_STATE)
+              JR HCOMIRX
+HCOMISO:      CP #00F               ; SI: bit 7 off
+              JR NZ,HCOMIS7
+              RES 3,(IX+CB_STATE)
+HCOMIRH:      JR HCOMIRX
+HCOMIS7:      BIT 3,(IX+CB_STATE)
+              JR Z,HCOMIBF
+              SET 7,D
+
+HCOMIBF:      LD A,(IY+FC_CNT)
+              CP (IY+FC_LEN)        ; Buffer full?
+              JR C,HCOMIST
+              SET 7,(IY+FC_OVF)     ; Yes? Character lost
+              JR HCOMIFL
+
+HCOMIST:      INC (IY+FC_CNT)
+              PUSH BC
+              LD L,(IY+FC_PUT)
+              LD H,#00
+              ADD HL,HL
+              LD BC,FC_DATA
+              ADD HL,BC
+              PUSH IY
+              POP BC
+              ADD HL,BC             ; HL = FCB + 9 + 2 * write index
+              LD (HL),D             ; Character
+              INC HL
+              LD (HL),E             ; Status
+              POP BC
+              LD A,(IY+FC_PUT)
+              INC A
+              CP (IY+FC_LEN)
+              JR C,HCOMIPT
+              XOR A                 ; Ring index back to 0
+HCOMIPT:      LD (IY+FC_PUT),A
+
+              LD A,D
+              CP #00D               ; CR?
+              JR NZ,HCOMIFL
+              BIT 2,(IX+CB_FLAGS)   ; Auto LF receive?
+              JR Z,HCOMIFL
+              LD DE,#00A00          ; LF without error
+              JR HCOMIBF
+HCOMIRK:      JR HCOMIRH            ; Next character
+
+HCOMIFL:      LD A,(IY+FC_LEN)      ; Flow control
+              SUB (IY+FC_CNT)
+              CP #010               ; Less than 16 free?
+              JR NC,HCOMIRK         ; No? Next character
+              BIT 1,(IX+CB_FLAGS)   ; CTS-RTS?
+              JR Z,HCOMIXF
+              BIT 0,(IX+CB_STATE)   ; RTS already off?
+              JR NZ,HCOMIXF
+              SET 0,(IX+CB_STATE)
+              LD A,C
+              OUT (ALE),A           ; SIO ctrl
+              LD A,#005
+              OUT (SWIO),A          ; Pointer WR5
+              LD A,(IX+CB_WR5)
+              AND #0FD              ; RTS off
+              OUT (SWIO),A
+HCOMIXF:      BIT 0,(IX+CB_FLAGS)   ; XON/XOFF?
+              JR Z,HCOMIRK
+              BIT 1,(IX+CB_STATE)   ; XOFF already sent?
+              JR NZ,HCOMIRK
+              LD A,C
+              OUT (ALE),A           ; SIO ctrl
+              IN A,(SWIO)           ; RR0
+              AND #004              ; TX buffer empty?
+              JR Z,HCOMIRK          ; No? Next received character
+              SET 1,(IX+CB_STATE)
+              LD A,C
+              INC A
+              OUT (ALE),A           ; SIO data
+              LD A,#013             ; XOFF
+              OUT (SWIO),A
+              JR HCOMIRK            ; Next character
+
+
+HCOMINTE:
+
+;---------------------------
+
 ;---------------------------
 
                                     ;************************************
@@ -5708,11 +8212,12 @@ TOUPPER:      CP    'a'
 
 MY_SLOT:      DEFB  0
 MY_SEG:       DEFB  0
+MY_HELPER:    DEFW  0              ; RAM helper: call routine in segment
 
 UNAPI_ID:     DEFM  "RCX_INTERFACE",0
 UNAPI_ID_END:
 
-APIINFO:      DEFM  "RCX Interface UNAPI RAM implementation (Kartentyp A-G/I)",0
+APIINFO:      DEFM  "RCX Interface UNAPI RAM implementation (Kartentyp A-I)",0
 
                                     ;************************************
                                     ;* WORKTEMPLATE - pristine copy of  *

@@ -8,7 +8,7 @@
                                     ;* and CALL statement posted on     *
                                     ;* https://www.msx.org              *
                                     ;************************************
-                                    ;* VERSION: 28/10/26                *
+                                    ;* VERSION: 03/11/26                *
                                     ;************************************
 
               ORG    #04000
@@ -39,6 +39,7 @@ FRESTR:       EQU    #067D0         ; BASIC routine clear string
 VALTYP:       EQU    #0F663         ; BASIC type of parameter
 MEMSIZ:       EQU    #0F672         ; Stringarea
 STKTOP:       EQU    #0F674         ; Stacktop
+FRETOP:       EQU    #0F69B         ; Next free byte in string area
 SAVSTK:       EQU    #0F6B1         ; Pointer to valid stack bottom
 USRVAR:       EQU    #0F7F8         ; BASIC parameter
 ARG:          EQU    #0F847         ; Value used to be calculate with DAC
@@ -1580,6 +1581,9 @@ CORE7Z80:     LD B,#08              ; Sub 8 from A
               JP NZ,CORE7SETZ80
               POP DE
               POP BC
+              LD A,B                ; Channel 8..15 from stack
+              SUB #08               ; Vector index 0..7
+              LD B,A
               LD DE,INTZ80ST        ; Yes? Reset to standard
               CALL GETSLT
               LD C,A                ; Slot set to module
@@ -3080,7 +3084,7 @@ ALLOC:        LD A,L                ; is requested size 0?
               LD HL,(HIMEM)
               ADD HL,BC
               LD (HIMEM),HL
-              LD DE,-2*(2+9+256)
+              CALL FILSIZ           ; DE = -size of the I/O buffers
               ADD HL,DE
               LD (FILTAB),HL        ; pointer to first FCB
               EX DE,HL
@@ -3097,10 +3101,13 @@ ALLOC:        LD A,L                ; is requested size 0?
                                     ; Re-build BASIC's file structures
                                     ;
 
-DEFILE:       LD A,1                ; load default MAXFIL
-              LD (MAXFIL),A
+DEFILE:       LD HL,(MEMSIZ)        ; keep MAXFIL and the size of
+              LD DE,(STKTOP)        ; the string space (MEMSIZ - STKTOP)
+              OR A
+              SBC HL,DE
+              PUSH HL               ; save string space
               LD HL,(HIMEM)
-              LD DE,-2*(256+9+2)
+              CALL FILSIZ           ; DE = -size of the I/O buffers
               ADD HL,DE
               LD (FILTAB),HL        ; pointer to first FCB
               LD E,L
@@ -3108,11 +3115,17 @@ DEFILE:       LD A,1                ; load default MAXFIL
               DEC HL
               DEC HL
               LD (MEMSIZ),HL
-              LD BC,200             ; load default string space
+              LD (FRETOP),HL        ; string area empty below new MEMSIZ
+              POP BC                ; string space
               OR A
               SBC HL,BC
               PUSH HL               ; save new STKTOP
-              LD HL,2*2+9           ; 4 for two FCB pointers, 9 for flags
+              LD A,(MAXFIL)
+              INC A
+              ADD A,A               ; 2 bytes per FCB pointer
+              ADD A,9               ; 9 for flags of FCB 0
+              LD L,A
+              LD H,0
               ADD HL,DE
               LD (NULBUF),HL
               POP HL
@@ -3123,11 +3136,14 @@ CLRFCB:       LD (STKTOP),HL
               LD (SAVSTK),HL
               LD L,E                ; get FILTAB in [HL]
               LD H,D
-              INC HL                ; point to first FCB
-              INC HL
-              INC HL
-              INC HL
-              LD A,2
+              LD A,(MAXFIL)
+              INC A
+              ADD A,A               ; skip the FCB pointers
+              LD C,A
+              LD B,0
+              ADD HL,BC             ; point to first FCB
+              LD A,(MAXFIL)
+              INC A                 ; MAXFIL + 1 FCBs (with buffer 0)
 
 DSKFLL:       EX DE,HL
               LD (HL),E             ; set address in FILTAB
@@ -3145,6 +3161,39 @@ DSKFLL:       EX DE,HL
               JR NZ,DSKFLL
           
               RET    
+
+                                    ;************************************
+                                    ;* Size of BASIC's I/O buffers      *
+                                    ;************************************
+                                    ;* (MAXFIL + 1) x (2 + 9 + 256):    *
+                                    ;* FCB pointer, FCB and buffer      *
+                                    ;************************************
+                                    ;* Output:                          *
+                                    ;************************************
+                                    ;* DE = -size                       *
+                                    ;************************************
+                                    ;* Modified:                        *
+                                    ;************************************
+                                    ;* AF, DE                           *
+                                    ;************************************
+
+FILSIZ:       PUSH BC
+              PUSH HL
+              LD A,(MAXFIL)
+              INC A
+              LD B,A
+              LD HL,0
+              LD DE,2+9+256
+FILSIZL:      ADD HL,DE
+              DJNZ FILSIZL
+              EX DE,HL
+              LD HL,0
+              OR A
+              SBC HL,DE
+              EX DE,HL              ; DE = -size
+              POP HL
+              POP BC
+              RET
 
 ;++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ;+++ Auxillary functions                                              +++

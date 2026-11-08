@@ -14,7 +14,7 @@
 //***************************************************************************************************
 //* MSX (c) 2026 by Dr.-Ing. Thomas Wiesner                                                          *
 //***************************************************************************************************
-//* VERSION: 23/09/26                                                                                *
+//* VERSION: 08/11/26                                                                                *
 //***************************************************************************************************
 
 #include "msxgl.h"
@@ -183,7 +183,7 @@ void main(void)
 	DOS_StringOutput("[XIO] is installed\r\n$");
 
 	// Setup: RCX ISINIT/DEINIT/INIT
-	static u8 s_Workarea[0x0330];	// RCX INIT's RAM work area (same size as
+	static u8 s_Workarea[0x0496];	// RCX INIT's RAM work area (same size as
 					// Z80PIOI.ASM's WORKAREA)
 	if (Rcx_IsInit() == 1)
 		Rcx_Deinit();

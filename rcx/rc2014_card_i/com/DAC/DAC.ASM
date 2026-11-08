@@ -11,7 +11,7 @@
                                     ;* the RAM helper) - see CALLFN.    *
                                     ;* Assembled with pasmo.            *
                                     ;************************************
-                                    ;* VERSION: 02/11/26                *
+                                    ;* VERSION: 08/11/26                *
                                     ;************************************
 
               ORG   #0100
@@ -844,4 +844,4 @@ IVAR:         DEFB  0
 VAL16:        DEFW  0
 GETBUF:       DEFW  0
 
-WORKAREA:     DEFS  #0330
+WORKAREA:     DEFS  #0496
